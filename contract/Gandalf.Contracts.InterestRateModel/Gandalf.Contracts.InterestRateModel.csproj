@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <!-- The root namespace -->
+        <RootNamespace>Gandalf.Contracts.InterestRateModel</RootNamespace>
+        <!-- Mark this project as a contract -->
+        <IsContract>true</IsContract>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
+    </PropertyGroup>
+    <ItemGroup>
+        <!-- Reference the protobuf definition of the contract -->
+        <ContractCode Include="..\..\protobuf\interest_rate_model_contract.proto">
+            <Link>Protobuf\Proto\interest_rate_model_contract.proto</Link>
+        </ContractCode>
+    </ItemGroup>
+</Project>
