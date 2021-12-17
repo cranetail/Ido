@@ -1,7 +1,6 @@
 
 syntax = "proto3";
 
-import "aelf/core.proto";
 import "aelf/options.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
@@ -11,13 +10,18 @@ option csharp_namespace = "Gandalf.Contracts.InterestRateModel";
 service InterestRateModelContract {
 
     option (aelf.csharp_state) = "InterestRateModelContractState";
+    rpc Initialize(UpdateJumpRateModelInput)returns(google.protobuf.Empty){
+    }
     rpc UpdateJumpRateModel(UpdateJumpRateModelInput)returns(google.protobuf.Empty){
     }
     rpc GetBorrowRate(GetBorrowRateInput)returns(google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
     }
     rpc GetSupplyRate(GetSupplyRateInput)returns(google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
     }
-    rpc GetUtilizationRate(UtilizationRateInput)returns(google.protobuf.Int64Value){  
+    rpc GetUtilizationRate(GetUtilizationRateInput)returns(google.protobuf.Int64Value){  
+    option (aelf.is_view) = true;
     }
     
     rpc GetMultiplierPerBlock(google.protobuf.Empty)returns(google.protobuf.Int64Value){
@@ -38,24 +42,31 @@ service InterestRateModelContract {
 
 }
 message UpdateJumpRateModelInput{
-  int64 base_rate_per_year=1; 
-  int64 multiplier_per_year=2;
-  int64 jumpMultiplierPerYear=3;
-  int64 kink=4;
+    int64 base_rate_per_year=1; 
+    int64 multiplier_per_year=2;
+    int64 jump_multiplier_per_year=3;
+    int64 kink=4;
 }
 message GetBorrowRateInput{
-int64 cash=1; 
-int64 borrows=2; 
-int64 reserves=3; 
+    int64 cash=1; 
+    int64 borrows=2; 
+    int64 reserves=3; 
 }
 message GetSupplyRateInput{
-int64 cash=1; 
-int64 borrows=2; 
-int64 reserves=3; 
-int64 reserve_factor=4;  
+    int64 cash=1; 
+    int64 borrows=2; 
+    int64 reserves=3; 
+    int64 reserve_factor=4;  
 }
-message UtilizationRateInput{
-  int64 cash=1; 
-  int64 borrows=2;
-  int64 reserves=3; 
+message GetUtilizationRateInput{
+    int64 cash=1; 
+    int64 borrows=2;
+    int64 reserves=3; 
+}
+message NewInterestParams{
+    option (aelf.is_event) = true;
+    int64 base_rate_per_year=1; 
+    int64 multiplier_per_year=2;
+    int64 jump_multiplier_per_year=3;
+    int64 kink=4;
 }
