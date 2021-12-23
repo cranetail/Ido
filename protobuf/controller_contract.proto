@@ -1,32 +1,355 @@
 
-
-// the version of the language, use proto3 for contracts
 syntax = "proto3";
-
-// some core imports for aelf chain types
 import "aelf/core.proto";
 import "aelf/options.proto";
-
-// import for using the google.protobuf.Empty type.
 import "google/protobuf/empty.proto";
-
-// the name of the C# namespace in which the contract code will be,
-// generated code will also be in this namespace.
+import "google/protobuf/wrappers.proto";
 option csharp_namespace = "Gandalf.Contracts.Controller";
 
-// the contract definition: a gRPC service definition.
 service ControllerContract {
-
-    // the full name of the C# class that will contain the state (here <namespace>.<state-class-name> format).
-    option (aelf.csharp_state) = "ControllerContractState";
-
-    // an action defined as a gRPC service method.
-    // this action take a google.protobuf.Empty (placeholder for void) as input
-    // and returns a custom defined type: HelloReturn.
-    rpc Hello (google.protobuf.Empty) returns (HelloReturn) { }
+option (aelf.csharp_state) = "ControllerContractState";
+ 
+ 
+rpc EnterMarkets(GTokens)returns(google.protobuf.Empty){
+} 
+rpc ExitMarket(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc MintAllowed(MintAllowedInput)returns(google.protobuf.Empty){
+}
+rpc MintVerify(MintVerifyInput)returns(google.protobuf.Empty){
+}
+rpc RedeemAllowed(RedeemAllowedInput)returns(google.protobuf.Empty){
+}
+rpc RedeemVerify(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc BorrowAllowed(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc BorrowVerify(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc RepayBorrowAllowed(RepayBorrowAllowedInput)returns(google.protobuf.Empty){
+}
+rpc RepayBorrowVerify(RepayBorrowVerifyInput)returns(google.protobuf.Empty){
+}
+rpc LiquidateBorrowAllowed(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc LiquidateBorrowVerify(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc SeizeAllowed(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc SeizeVerify(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc TransferAllowed(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc TransferVerify(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc LiquidateCalculateSeizeTokens(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc SetCloseFactor(google.protobuf.Int64Value)returns(google.protobuf.Empty){
+}
+rpc SetCollateralFactor(SetCollateralFactorInput)returns(google.protobuf.Empty){
+}
+rpc SetMaxAssets(google.protobuf.Int64Value)returns(google.protobuf.Empty){
+}
+rpc SetLiquidationIncentive(google.protobuf.Int64Value)returns(google.protobuf.Empty){  
+}
+rpc SupportMarket(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc SetMarketBorrowCaps(SetMarketBorrowCapsInput)returns(google.protobuf.Empty){
+}
+rpc SetBorrowCapGuardian(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc SetPauseGuardian(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc SetMintPaused(SetPausedInput)returns(google.protobuf.BoolValue){
+}
+rpc SetBorrowPaused(SetPausedInput)returns(google.protobuf.BoolValue){
+}  
+rpc SetTransferPaused(google.protobuf.BoolValue)returns(google.protobuf.BoolValue){
+}  
+rpc SetSeizePaused(google.protobuf.BoolValue)returns(google.protobuf.BoolValue){
+}  
+rpc RefreshPlatformTokenSpeeds(google.protobuf.Empty)returns(google.protobuf.Empty){
+}
+rpc ClaimPlatformToken(aelf.Address)returns(google.protobuf.Empty){
+}
+rpc SetPlatformTokenRate(google.protobuf.Int64Value)returns(google.protobuf.Empty){
+}
+rpc AddPlatformTokenMarkets(GTokens)returns(google.protobuf.Empty){
+}
+rpc DropPlatformTokenMarket(aelf.Address)returns(google.protobuf.Empty){
 }
 
-// a custom message, used as the return type of the Hello action
-message HelloReturn {
-    string Value = 1;
+// Views
+rpc GetAssetsIn (aelf.Address) returns (AssetList) {
+option (aelf.is_view) = true;
+}
+rpc CheckMembership (Account) returns (google.protobuf.BoolValue) {
+option (aelf.is_view) = true;
+}
+rpc GetAllMarkets(google.protobuf.Empty)  returns (SymbolList) {
+option (aelf.is_view) = true;
+}
+rpc GetAdmin(google.protobuf.Empty)returns(aelf.Address){
+option (aelf.is_view) = true;
+}
+rpc GetPendingAdmin(google.protobuf.Empty)returns(aelf.Address){
+option (aelf.is_view) = true;
+}
+rpc GetCloseFactor(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+option (aelf.is_view) = true;
+}
+rpc GetCollateralFactor(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+option (aelf.is_view) = true;
+}
+rpc GetMaxAssets(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+option (aelf.is_view) = true;
+}
+rpc GetLiquidationIncentive(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+option (aelf.is_view) = true;
+}
+rpc GetMarketBorrowCaps(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+option (aelf.is_view) = true;
+}
+rpc GetBorrowCapGuardian(google.protobuf.Empty)returns(aelf.Address){
+option (aelf.is_view) = true;
+}
+}
+
+
+message SetMarketBorrowCapsInput{
+repeated MarketBorrowCap market_borrow_cap = 1;
+}
+message MarketBorrowCap{
+aelf.Address g_token=1;
+int64 new_borrow_cap=2;
+}
+message SetPausedInput{
+aelf.Address g_token=1;
+bool state=2;
+}
+message SeizeAllowedInput{
+aelf.Address g_token_collateral=1;
+aelf.Address g_token_borrowed=2;
+aelf.Address liquidator=3;
+aelf.Address borrower=4;
+int64 seize_tokens=5; 
+}
+message SeizeVerifyInput{
+aelf.Address g_token_collateral=1;
+aelf.Address g_token_borrowed=2;
+aelf.Address liquidator=3; 
+aelf.Address borrower=4; 
+int64 seize_tokens=5;  
+}
+message TransferAllowedInput{
+aelf.Address g_token=1; 
+aelf.Address src=2; 
+aelf.Address dst=3; 
+int64 transfer_tokens=4; 
+}    
+message TransferVerifyInput{
+aelf.Address g_token=1; 
+aelf.Address src=2; 
+aelf.Address dst=3; 
+int64 transfer_tokens=4;  
+}
+message LiquidateCalculateSeizeTokensInput{
+aelf.Address g_token_borrowed=1; 
+aelf.Address g_token_collateral=2; 
+int64 actual_repay_amount=3; 
+}
+message SetCollateralFactorInput{
+aelf.Address g_token=1;
+int64 new_collateral_factor=2;
+}
+message RepayBorrowVerifyInput{
+aelf.Address g_token=1; 
+aelf.Address payer=2; 
+aelf.Address borrower=3; 
+int64 repay_amount=4; 
+int64 borrower_index=5; 
+}
+message LiquidateBorrowAllowedInput{
+aelf.Address g_token_borrowed=1; 
+aelf.Address g_token_collateral=2; 
+aelf.Address liquidator=3; 
+aelf.Address borrower=4; 
+int64 repay_amount=5; 
+}
+message LiquidateBorrowVerifyInput{
+aelf.Address g_token_borrowed=1; 
+aelf.Address g_token_collateral=2; 
+aelf.Address liquidator=3; 
+aelf.Address borrower=4; 
+int64 actual_repay_amount=5; 
+int64 seize_tokens=6;
+}
+message MintAllowedInput{
+aelf.Address g_token=1; 
+aelf.Address minter=2; 
+int64 mint_amount=3; 
+}
+message MintVerifyInput{
+aelf.Address g_token=1; 
+aelf.Address minter=2; 
+int64 actual_mint_amount=3; 
+int64 mint_tokens=4; 
+}
+message RedeemAllowedInput{
+aelf.Address g_token=1; 
+aelf.Address redeemer=2; 
+int64 redeem_tokens=3; 
+}
+message RedeemVerifyInput{
+aelf.Address g_token=1; 
+aelf.Address minter=2; 
+int64 redeem_amount=3; 
+int64 redeem_tokens=4; 
+}
+message BorrowAllowedInput{
+aelf.Address g_token=1; 
+aelf.Address borrower=2; 
+int64 borrow_amount=3; 
+}
+message BorrowVerifyInput{
+aelf.Address g_token=1; 
+aelf.Address borrower=2; 
+int64 borrow_amount=3; 
+}
+message RepayBorrowAllowedInput{
+aelf.Address g_token=1; 
+aelf.Address payer=2; 
+aelf.Address borrower=3; 
+int64 repay_amount=4; 
+}
+
+//struct
+message PlatformTokenMarketState{
+int64 index=1;
+int64 block=2;
+}
+message AssetList{
+    repeated aelf.Address assets = 1;
+}
+message Account{
+    string symbol = 1;
+    aelf.Address address = 2;
+}
+message SymbolList {
+    repeated string symbols = 1;
+}
+message GTokens{
+repeated aelf.Address g_token = 1;
+}
+message Market {
+    bool is_listed = 1;
+    int64 collateral_factor = 2;
+    map<string,bool> account_membership = 3;
+}
+//event
+message MarketListed{
+option (aelf.is_event) = true;
+aelf.Address g_Token=1;
+}
+
+message MarketEntered{
+option (aelf.is_event) = true;
+aelf.Address g_Token=1;
+aelf.Address account=2;
+}
+
+message MarketExited{
+option (aelf.is_event) = true;
+aelf.Address g_Token=1;
+aelf.Address account=2;
+}
+
+message NewCloseFactor{
+option (aelf.is_event) = true;
+int64 old_close_factor=1;
+int64 new_close_factor=2;
+} 
+
+message NewCollateralFactor{
+option (aelf.is_event) = true;
+aelf.Address g_token=1;
+int64 old_collateral_factor=2;
+int64 new_collateral_factor=3;
+}
+
+message NewLiquidationIncentive{
+option (aelf.is_event) = true;
+int64 old_liquidation_incentive=1;
+int64 new_liquidation_incentive=2;
+}
+
+message NewMaxAssets{
+option (aelf.is_event) = true;
+int64 old_max_assets=1;
+int64 new_max_assets=2;
+}
+
+message NewPriceOracle{
+option (aelf.is_event) = true;
+aelf.Address old_price_oracle=1;
+aelf.Address new_price_oracle=2;
+}
+
+message NewPauseGuardian{
+option (aelf.is_event) = true;
+aelf.Address old_pause_guardian=1;
+aelf.Address new_pause_guardian=2;
+}
+
+message ActionPaused{
+option (aelf.is_event) = true;
+aelf.Address g_token=1;
+string action=2;
+bool pauseState=3;
+}
+
+message MarketPlatformTokened{
+option (aelf.is_event) = true;
+aelf.Address g_token=1;
+bool isPlatformTokened=2;
+}
+
+message NewPlatformTokenRate{
+option (aelf.is_event) = true;
+int64 old_platform_token_rate=1;
+int64 new_platform_token_rate=2;
+}
+
+message PlatformTokenSpeedUpdated{
+option (aelf.is_event) = true;
+aelf.Address g_token=1;
+int64 new_speed=2;
+}
+
+message DistributedSupplierPlatformToken{
+option (aelf.is_event) = true;
+aelf.Address g_token =1; 
+aelf.Address supplier=2; 
+int64 platform_token_delta=3; 
+int64 platform_token_supply_index=4;
+}
+
+message DistributedBorrowerPlatformToken{
+option (aelf.is_event) = true;
+aelf.Address g_token =1; 
+aelf.Address borrower=2; 
+int64 platform_token_delta=3; 
+int64 platform_token_borrow_index=4;
+}
+
+message NewBorrowCap{
+option (aelf.is_event) = true;
+aelf.Address g_Token=1;
+int64 new_borrow_cap=2;
+}
+
+message NewBorrowCapGuardian{
+option (aelf.is_event) = true;
+aelf.Address old_borrow_cap_guardian=1;
+aelf.Address new_borrow_cap_guardian=2;
 }

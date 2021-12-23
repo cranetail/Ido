@@ -1,0 +1,330 @@
+syntax = "proto3";
+
+import "aelf/core.proto";
+import "aelf/options.proto";
+
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+
+import "acs1.proto";
+import "acs2.proto";
+import "transaction_fee.proto";
+import "authority_info.proto";
+
+option csharp_namespace = "Gandalf.Contracts.GToken";
+
+service GTokenContract {
+    option (aelf.csharp_state) = "Gandalf.Contracts.GToken.GTokenContractState";
+    
+    // Actions
+    rpc Initialize(google.protobuf.Empty)returns(google.protobuf.Empty){
+    }
+  
+    rpc Mint (MintInput) returns (google.protobuf.Empty) {
+    }
+ 
+    rpc Redeem (RedeemInput) returns (google.protobuf.Empty) {
+    }
+     
+    rpc RedeemUnderlying (RedeemUnderlyingInput) returns (google.protobuf.Empty) {
+    }
+    
+    rpc Borrow (BorrowInput) returns (google.protobuf.Empty) {
+    }
+ 
+    rpc RepayBorrow (RepayBorrowInput) returns (google.protobuf.Empty) {
+    }
+ 
+    rpc RepayBorrowBehalf (RepayBorrowBehalfInput) returns (google.protobuf.Empty) {
+    
+    }
+ 
+    rpc LiquidateBorrow (LiquidateBorrowInput) returns (google.protobuf.Empty) {
+    
+    }
+ 
+    rpc AddReserves (AddReservesInput) returns (google.protobuf.Empty) {
+    }
+ 
+    rpc AccrueInterest(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    }
+ 
+    rpc Seize(SeizeInput) returns (google.protobuf.Empty) {
+    }
+    //set function
+    rpc SetAdmin (aelf.Address) returns(google.protobuf.Empty){
+    }
+
+    rpc SetComptroller(aelf.Address) returns (google.protobuf.Empty) {
+    }
+ 
+    rpc SetReserveFactor(google.protobuf.Int64Value) returns (google.protobuf.Empty) {
+    }
+    
+    rpc SetInterestRateModel (aelf.Address) returns (google.protobuf.Empty) {
+    }
+
+
+    // Views
+    rpc GetBalance (Account) returns (google.protobuf.Int64Value) {
+        option (aelf.is_view) = true;
+    }
+ 
+    rpc GetUnderlyingBalance (Account) returns (google.protobuf.Int64Value) {
+        option (aelf.is_view) = true;
+    }
+  
+    rpc GetAccountSnapshot (Account) returns (GetAccountSnapshotOutput) {
+        option (aelf.is_view) = true;
+    }
+  
+    rpc GetBorrowRatePerBlock (google.protobuf.StringValue) returns (google.protobuf.StringValue) {
+        option (aelf.is_view) = true;
+    }
+   
+    rpc GetSupplyRatePerBlock (google.protobuf.StringValue) returns (google.protobuf.StringValue) {
+        option (aelf.is_view) = true;
+    }
+  
+    rpc GetTotalBorrows (google.protobuf.StringValue) returns (google.protobuf.Int64Value) {
+        option (aelf.is_view) = true;
+    }
+  
+    rpc GetCurrentBorrowBalance (Account) returns (google.protobuf.Int64Value) {
+        option (aelf.is_view) = true;
+    }
+  
+    rpc GetBorrowBalanceStored (Account) returns (google.protobuf.Int64Value) {
+        option (aelf.is_view) = true;
+    }
+   
+    rpc GetCurrentExchangeRate (google.protobuf.StringValue) returns (google.protobuf.StringValue) {
+        option (aelf.is_view) = true;
+    }
+ 
+    rpc GetExchangeRateStored (google.protobuf.StringValue) returns (google.protobuf.StringValue) {
+        option (aelf.is_view) = true;
+    }
+   
+    rpc GetCash (google.protobuf.StringValue) returns (google.protobuf.Int64Value) {
+        option (aelf.is_view) = true;
+    }
+    
+    rpc GetReserveFactor (google.protobuf.StringValue) returns (google.protobuf.StringValue){
+        option (aelf.is_view) = true;
+    }
+    rpc GetAdmin (google.protobuf.Empty) returns (aelf.Address){
+        option (aelf.is_view) = true;
+    }
+    rpc GetInterestRate (google.protobuf.StringValue) returns (GetInterestRateOutput){
+        option (aelf.is_view) = true;
+    
+    }
+    rpc GetComptroller(google.protobuf.Empty)returns(aelf.Address){
+      option (aelf.is_view) = true;
+    }
+  
+    rpc GetInterestRateModel(google.protobuf.Empty)returns(aelf.Address){
+      option (aelf.is_view) = true;
+    }
+     
+    rpc GetInitialExchangeRate(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+      option (aelf.is_view) = true;
+    }
+     
+    rpc GetTotalReserves(google.protobuf.StringValue) returns(google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }
+  
+    rpc GetAccrualBlockNumber(google.protobuf.StringValue) returns(google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }
+
+
+}
+
+// Structs
+message Account{
+    aelf.Address g_token = 1;
+    aelf.Address user = 2;
+}
+
+// Inputs
+message MintInput{
+    aelf.Address g_token = 1;
+    int64 mint_amount=2; 
+    string channel=3; 
+}
+
+message RedeemInput{
+    aelf.Address g_token = 1;
+    int64 amount = 2; 
+}
+message RedeemUnderlyingInput{
+    aelf.Address g_token = 1;
+    int64 amount = 2; 
+}
+message BorrowInput{
+    aelf.Address g_token = 1;
+    int64 amount = 2; 
+    string channel=3; 
+}
+message RepayBorrowInput{
+    aelf.Address g_token = 1;
+    int64 amount = 2; 
+}
+message RepayBorrowBehalfInput{
+    aelf.Address g_token = 1; 
+    int64 amount = 2; 
+    aelf.Address borrower = 3; 
+}
+message LiquidateBorrowInput{
+    aelf.Address borrow_token = 1; 
+    aelf.Address collateral_symbol = 2; 
+    int64 repay_amount = 3; 
+    aelf.Address borrower = 4; 
+}
+message AddReservesInput{
+      aelf.Address g_token = 1; 
+    int64 amount = 2; 
+}
+message SeizeInput{
+    aelf.Address liquidator=1;
+    aelf.Address borrower=2;
+    int64 seizeTokens=3;
+}
+//output
+message GetAccountSnapshotOutput{
+    int64 g_token_balance = 1;
+    int64 borrow_balance = 2;
+    string exchange_rate = 3;
+}
+
+message GetInterestRateOutput{
+    string base_rate_per_block = 2;
+    string multiplier_per_block = 3;
+}
+// Events
+message AccrueInterest {
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    int64 cash = 2;
+    int64 interestAccumulated = 3;
+    string borrowIndex = 4;
+    int64 total_borrows = 5;
+    string borrow_rate_per_block = 6;
+    string supply_rate_per_block = 7;
+}
+message Mint{
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    aelf.Address address = 2;
+    int64 amount = 3;
+    int64 c_token_amount = 4;
+}
+message Redeem {
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    aelf.Address address = 2;
+    int64 amount = 3;
+    int64 c_token_amount = 4;
+}
+message Borrow{
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    aelf.Address address = 2;
+    int64 amount = 3;
+    int64 borrow_balance = 4;
+    int64 total_borrows = 5;
+  //  string borrow_rate = 6;
+}
+message RepayBorrow{
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    aelf.Address payer = 2;
+    aelf.Address borrower = 3;
+    int64 amount = 4;
+    int64 borrow_balance = 5;
+    int64 total_borrows = 6;
+}
+message LiquidateBorrow{
+    option (aelf.is_event) = true;
+    string repay_symbol = 1;
+    aelf.Address liquidator = 2;
+    aelf.Address borrower = 3;
+    int64 repay_amount = 4;
+    string seize_symbol = 5;
+    int64 seize_token_amount = 6;
+}
+message PendingAdminChanged{
+    option (aelf.is_event) = true;
+    aelf.Address old_pending_admin = 1;
+    aelf.Address new_pending_admin = 2;
+}
+message AdminChanged{
+    option (aelf.is_event) = true;
+    aelf.Address old_admin = 1;
+    aelf.Address new_admin = 2;
+}
+message ReserveFactorChanged{
+    option (aelf.is_event) = true;
+    string old_reserve_factor = 1;
+    string new_reserve_factor = 2;
+    string symbol=3;
+}
+message ReservesAdded{
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    aelf.Address address = 2;
+    int64 amount = 3;
+    int64 total_reserves = 4;
+}
+message ReservesReduced{
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    aelf.Address address = 2;
+    int64 amount = 3;
+    int64 total_reserves = 4;
+}
+
+message MarketListed{
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    string base_rate_per_block = 2;
+    string multiplier_per_block = 3;
+    string reserve_factor = 4;
+};
+
+message CloseFactorChanged{
+    option (aelf.is_event) = true;
+    string old_close_factor = 1;
+    string new_close_factor = 2;
+}
+message CollateralFactorChanged{
+    option (aelf.is_event) = true;
+    string old_collateral_factor = 1;
+    string new_collateral_factor = 2;
+    string symbol=3;
+}
+message LiquidationIncentiveChanged{
+    option (aelf.is_event) = true;
+    string old_liquidation_incentive = 1;
+    string new_liquidation_incentive = 2;
+}
+message MaxAssetsChanged{
+    option (aelf.is_event) = true;
+    int32 old_max_assets = 1;
+    int32 new_max_assets = 2;
+}
+message PauseGuardianChanged{
+    option (aelf.is_event) = true;
+    aelf.Address old_pause_guardian = 1;
+    aelf.Address new_pause_guardian = 2;
+}
+message InterestRateChanged{
+    option (aelf.is_event) = true;
+    string symbol = 1;
+    string base_rate_per_block = 2;
+    string multiplier_per_block = 3;
+}
+

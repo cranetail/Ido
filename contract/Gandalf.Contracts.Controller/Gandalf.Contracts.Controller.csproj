@@ -13,6 +13,33 @@
         <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     </PropertyGroup>
     <ItemGroup>
+        <ContractBase Include="..\..\protobuf\acs1.proto">
+            <Link>Protobuf\Proto\reference\acs1.proto</Link>
+        </ContractBase>
+        <ContractBase Include="..\..\protobuf\acs2.proto">
+            <Link>Protobuf\Proto\reference\acs2.proto</Link>
+        </ContractBase>
+        <ContractBase Include="..\..\protobuf\transaction_fee.proto">
+            <Link>Protobuf\Proto\reference\transaction_fee.proto</Link>
+        </ContractBase>
+        <ContractBase Include="..\..\protobuf\authority_info.proto">
+            <Link>Protobuf\Proto\reference\authority_info.proto</Link>
+        </ContractBase>
+        <ContractReference Include="..\..\protobuf\gandalf_token_contract.proto">
+            <Link>Protobuf\Proto\reference\gandalf_token_contract.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\price_contract.proto">
+            <Link>Protobuf\Proto\reference\price_contract.proto</Link>
+        </ContractReference>
+       
+        <ContractReference Include="..\..\protobuf\g_token_contract.proto">
+            <Link>Protobuf\Proto\reference\g_token_contract.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\token_contract.proto">
+            <Link>Protobuf\Proto\reference\token_contract.proto</Link>
+        </ContractReference>
+    </ItemGroup>
+    <ItemGroup>
         <!-- Reference the protobuf definition of the contract -->
         <ContractCode Include="..\..\protobuf\controller_contract.proto">
             <Link>Protobuf\Proto\controller_contract.proto</Link>
