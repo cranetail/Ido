@@ -78,15 +78,15 @@ service GTokenContract {
         option (aelf.is_view) = true;
     }
   
-    rpc GetBorrowRatePerBlock (google.protobuf.StringValue) returns (google.protobuf.StringValue) {
+    rpc GetBorrowRatePerBlock (aelf.Address) returns (google.protobuf.StringValue) {
         option (aelf.is_view) = true;
     }
    
-    rpc GetSupplyRatePerBlock (google.protobuf.StringValue) returns (google.protobuf.StringValue) {
+    rpc GetSupplyRatePerBlock (aelf.Address) returns (google.protobuf.StringValue) {
         option (aelf.is_view) = true;
     }
   
-    rpc GetTotalBorrows (google.protobuf.StringValue) returns (google.protobuf.Int64Value) {
+    rpc GetTotalBorrows (aelf.Address) returns (google.protobuf.Int64Value) {
         option (aelf.is_view) = true;
     }
   
@@ -98,25 +98,25 @@ service GTokenContract {
         option (aelf.is_view) = true;
     }
    
-    rpc GetCurrentExchangeRate (google.protobuf.StringValue) returns (google.protobuf.StringValue) {
+    rpc GetCurrentExchangeRate (aelf.Address) returns (google.protobuf.StringValue) {
         option (aelf.is_view) = true;
     }
  
-    rpc GetExchangeRateStored (google.protobuf.StringValue) returns (google.protobuf.StringValue) {
+    rpc GetExchangeRateStored (aelf.Address) returns (google.protobuf.StringValue) {
         option (aelf.is_view) = true;
     }
    
-    rpc GetCash (google.protobuf.StringValue) returns (google.protobuf.Int64Value) {
+    rpc GetCash (aelf.Address) returns (google.protobuf.Int64Value) {
         option (aelf.is_view) = true;
     }
     
-    rpc GetReserveFactor (google.protobuf.StringValue) returns (google.protobuf.StringValue){
+    rpc GetReserveFactor (aelf.Address) returns (google.protobuf.StringValue){
         option (aelf.is_view) = true;
     }
     rpc GetAdmin (google.protobuf.Empty) returns (aelf.Address){
         option (aelf.is_view) = true;
     }
-    rpc GetInterestRate (google.protobuf.StringValue) returns (GetInterestRateOutput){
+    rpc GetInterestRate (aelf.Address) returns (GetInterestRateOutput){
         option (aelf.is_view) = true;
     
     }
@@ -132,11 +132,11 @@ service GTokenContract {
       option (aelf.is_view) = true;
     }
      
-    rpc GetTotalReserves(google.protobuf.StringValue) returns(google.protobuf.Int64Value){
+    rpc GetTotalReserves(aelf.Address) returns(google.protobuf.Int64Value){
     option (aelf.is_view) = true;
     }
   
-    rpc GetAccrualBlockNumber(google.protobuf.StringValue) returns(google.protobuf.Int64Value){
+    rpc GetAccrualBlockNumber(aelf.Address) returns(google.protobuf.Int64Value){
     option (aelf.is_view) = true;
     }
 

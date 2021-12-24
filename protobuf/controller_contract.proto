@@ -20,29 +20,29 @@ rpc MintVerify(MintVerifyInput)returns(google.protobuf.Empty){
 }
 rpc RedeemAllowed(RedeemAllowedInput)returns(google.protobuf.Empty){
 }
-rpc RedeemVerify(aelf.Address)returns(google.protobuf.Empty){
+rpc RedeemVerify(RedeemVerifyInput)returns(google.protobuf.Empty){
 }
-rpc BorrowAllowed(aelf.Address)returns(google.protobuf.Empty){
+rpc BorrowAllowed(BorrowAllowedInput)returns(google.protobuf.Empty){
 }
-rpc BorrowVerify(aelf.Address)returns(google.protobuf.Empty){
+rpc BorrowVerify(BorrowVerifyInput)returns(google.protobuf.Empty){
 }
 rpc RepayBorrowAllowed(RepayBorrowAllowedInput)returns(google.protobuf.Empty){
 }
 rpc RepayBorrowVerify(RepayBorrowVerifyInput)returns(google.protobuf.Empty){
 }
-rpc LiquidateBorrowAllowed(aelf.Address)returns(google.protobuf.Empty){
+rpc LiquidateBorrowAllowed(LiquidateBorrowAllowedInput)returns(google.protobuf.Empty){
 }
-rpc LiquidateBorrowVerify(aelf.Address)returns(google.protobuf.Empty){
+rpc LiquidateBorrowVerify(LiquidateBorrowVerifyInput)returns(google.protobuf.Empty){
 }
-rpc SeizeAllowed(aelf.Address)returns(google.protobuf.Empty){
+rpc SeizeAllowed(SeizeAllowedInput)returns(google.protobuf.Empty){
 }
-rpc SeizeVerify(aelf.Address)returns(google.protobuf.Empty){
+rpc SeizeVerify(SeizeVerifyInput)returns(google.protobuf.Empty){
 }
-rpc TransferAllowed(aelf.Address)returns(google.protobuf.Empty){
+rpc TransferAllowed(TransferAllowedInput)returns(google.protobuf.Empty){
 }
-rpc TransferVerify(aelf.Address)returns(google.protobuf.Empty){
+rpc TransferVerify(TransferVerifyInput)returns(google.protobuf.Empty){
 }
-rpc LiquidateCalculateSeizeTokens(aelf.Address)returns(google.protobuf.Empty){
+rpc LiquidateCalculateSeizeTokens(LiquidateCalculateSeizeTokensInput)returns(google.protobuf.Empty){
 }
 rpc SetCloseFactor(google.protobuf.Int64Value)returns(google.protobuf.Empty){
 }
