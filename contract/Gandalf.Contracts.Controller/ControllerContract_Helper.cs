@@ -46,13 +46,13 @@ namespace Gandalf.Contracts.Controller
             var shortfall = GetHypotheticalAccountLiquidityInternal(redeemer, gToken, redeemTokens, 0);
             Assert(shortfall <= 0, "Insufficient Liquidity");
         }
-        private decimal GetHypotheticalAccountLiquidityInternal(Address account, Address gTokenModify, long redeemTokens,
+        private long GetHypotheticalAccountLiquidityInternal(Address account, Address gTokenModify, long redeemTokens,
             long borrowAmount)
         {
             var assets = State.AccountAssets[account];
-            decimal sumCollateral = 0;
-            decimal sumBorrowPlusEffects = 0;
-            for (int i = 0; i < assets.Assets.Count; i++)
+            long sumCollateral = 0;
+            long sumBorrowPlusEffects = 0;
+            for (var i = 0; i < assets.Assets.Count; i++)
             {
                 var gToken = assets.Assets[i];
                 // Read the balances and exchange rate from the cToken
@@ -62,16 +62,10 @@ namespace Gandalf.Contracts.Controller
                     User = account
                 });
                 var cTokenBalance = accountSnapshot.GTokenBalance;
-                var exchangeRate = decimal.Parse(accountSnapshot.ExchangeRate);
-                var symbol = "";
-                // var price = State.PriceContract.GetExchangeTokenPriceInfo.Call(
-                //     new Price.GetExchangeTokenPriceInfoInput()
-                //     {
-                //
-                //     });
-                 var price = decimal.Parse(symbol);
+                var exchangeRate = accountSnapshot.ExchangeRate;
+                var price = GetUnderlyingPrice(gToken);
                  
-                var collateralFactor = decimal.Parse(State.Markets[gTokenModify].CollateralFactor.ToString());
+                var collateralFactor = State.Markets[gTokenModify].CollateralFactor;
                 var tokensToDenom = exchangeRate * price * collateralFactor;
                 sumCollateral += cTokenBalance * tokensToDenom;
                 sumBorrowPlusEffects += accountSnapshot.BorrowBalance * price;
@@ -161,6 +155,12 @@ namespace Gandalf.Contracts.Controller
         private static long Fraction(long a, long b)
         {
             return Convert.ToInt64(new BigIntValue(a).Mul(Decimals).Div(b));
+        }
+        
+        // TO Do:GetUnderlyingPrice from price oracle 
+        private long GetUnderlyingPrice(Address gToken)
+        {
+            return 1000000000000000000;
         }
     }
 }

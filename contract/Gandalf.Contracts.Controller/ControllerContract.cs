@@ -1,3 +1,4 @@
+using AElf.Contracts.Price;
 using AElf.CSharp.Core;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
@@ -148,5 +149,59 @@ namespace Gandalf.Contracts.Controller
         {
             return new Empty();
         }
+
+        public override Empty SeizeAllowed(SeizeAllowedInput input)
+        {
+            Assert(!State.SeizeGuardianPaused.Value, "Seize is paused");
+            MarketVerify(input.GTokenBorrowed);
+            MarketVerify(input.GTokenCollateral);
+            UpdatePlatformTokenSupplyIndex(input.GTokenCollateral);
+            DistributeSupplierPlatformToken(input.GTokenCollateral, input.Borrower, false);
+            DistributeSupplierPlatformToken(input.GTokenCollateral,input.Liquidator,false);
+            return new Empty();
+        }
+
+        public override Empty SeizeVerify(SeizeVerifyInput input)
+        {
+            return new Empty();
+        }
+
+        public override Empty TransferAllowed(TransferAllowedInput input)
+        {
+            RedeemAllowedInternal(input.GToken, input.Src, input.TransferTokens);
+            UpdatePlatformTokenSupplyIndex(input.GToken);
+            DistributeSupplierPlatformToken(input.GToken,input.Src,false);
+            DistributeSupplierPlatformToken(input.GToken,input.Dst,false);
+            return base.TransferAllowed(input);
+        }
+
+        public override Empty TransferVerify(TransferVerifyInput input)
+        {
+            return new Empty();
+        }
+
+        public override Empty LiquidateCalculateSeizeTokens(LiquidateCalculateSeizeTokensInput input)
+        {
+            var priceBorrow = GetUnderlyingPrice(input.GTokenBorrowed);
+            var priceCollateral= GetUnderlyingPrice(input.GTokenCollateral);
+           
+             
+            // Assert(priceBorrow != 0 && priceCollateral != 0, "Error Price");
+            // var exchangeRate = ExchangeRateStoredInternal(collateralSymbol);
+            // //Get the exchange rate and calculate the number of collateral tokens to seize:
+            // // *  seizeAmount = actualRepayAmount * liquidationIncentive * priceBorrowed / priceCollateral
+            // //    seizeTokens = seizeAmount / exchangeRate
+            // //   = actualRepayAmount * (liquidationIncentive * priceBorrowed) / (priceCollateral * exchangeRate)
+            // var seizeAmount = repayAmount * decimal.Parse(State.LiquidationIncentive.Value) *
+            //     priceBorrow / priceCollateral;
+            // var seizeTokens = decimal.ToInt64(seizeAmount / exchangeRate);
+            // return seizeTokens;
+            // return new Int64Value()
+            // {
+            //     Value = seizeTokens
+            // };
+            return base.LiquidateCalculateSeizeTokens(input);
+        }
+         
     }
 }

@@ -84,7 +84,7 @@ namespace Gandalf.Contracts.Controller
         public MappedState<Address, Int64State> PlatformTokenAccrued;
         // @notice The borrowCapGuardian can set borrowCaps to any number for any market. Lowering the borrow cap could disable borrowing on the given market.
 
-        public SingletonState<Address> BorrowCapGuardian;
+        public SingletonState<Address> BorrowCapGuardian{ get; set; }
         // @notice Borrow caps enforced by borrowAllowed for each gToken address. Defaults to zero which corresponds to unlimited borrowing.
         public MappedState<Address, Int64State> BorrowCaps { get; set; }
     }

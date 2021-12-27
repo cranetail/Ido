@@ -48,7 +48,7 @@ rpc SetCloseFactor(google.protobuf.Int64Value)returns(google.protobuf.Empty){
 }
 rpc SetCollateralFactor(SetCollateralFactorInput)returns(google.protobuf.Empty){
 }
-rpc SetMaxAssets(google.protobuf.Int64Value)returns(google.protobuf.Empty){
+rpc SetMaxAssets(google.protobuf.Int32Value)returns(google.protobuf.Empty){
 }
 rpc SetLiquidationIncentive(google.protobuf.Int64Value)returns(google.protobuf.Empty){  
 }
@@ -113,8 +113,10 @@ option (aelf.is_view) = true;
 rpc GetBorrowCapGuardian(google.protobuf.Empty)returns(aelf.Address){
 option (aelf.is_view) = true;
 }
+rpc GetHypotheticalAccountLiquidity(GetHypotheticalAccountLiquidityInput)returns(GetHypotheticalAccountLiquidityOutput){
+option (aelf.is_view) = true;
 }
-
+}
 
 message SetMarketBorrowCapsInput{
 repeated MarketBorrowCap market_borrow_cap = 1;
@@ -222,7 +224,17 @@ aelf.Address payer=2;
 aelf.Address borrower=3; 
 int64 repay_amount=4; 
 }
-
+message GetHypotheticalAccountLiquidityInput{
+aelf.Address account=1;
+aelf.Address g_token_modify=2;
+int64 redeem_tokens=3;
+int64 borrow_amount=4;
+}
+//output
+message GetHypotheticalAccountLiquidityOutput{
+int64 liquidity=1;
+int64 shortfall=2;
+}
 //struct
 message PlatformTokenMarketState{
 int64 index=1;
@@ -264,38 +276,38 @@ aelf.Address g_Token=1;
 aelf.Address account=2;
 }
 
-message NewCloseFactor{
+message CloseFactorChanged{
 option (aelf.is_event) = true;
 int64 old_close_factor=1;
 int64 new_close_factor=2;
 } 
 
-message NewCollateralFactor{
+message CollateralFactorChanged{
 option (aelf.is_event) = true;
 aelf.Address g_token=1;
 int64 old_collateral_factor=2;
 int64 new_collateral_factor=3;
 }
 
-message NewLiquidationIncentive{
+message LiquidationIncentiveChanged{
 option (aelf.is_event) = true;
 int64 old_liquidation_incentive=1;
 int64 new_liquidation_incentive=2;
 }
 
-message NewMaxAssets{
+message MaxAssetsChanged{
 option (aelf.is_event) = true;
 int64 old_max_assets=1;
 int64 new_max_assets=2;
 }
 
-message NewPriceOracle{
+message PriceOracleChanged{
 option (aelf.is_event) = true;
 aelf.Address old_price_oracle=1;
 aelf.Address new_price_oracle=2;
 }
 
-message NewPauseGuardian{
+message PauseGuardianChanged{
 option (aelf.is_event) = true;
 aelf.Address old_pause_guardian=1;
 aelf.Address new_pause_guardian=2;
@@ -314,7 +326,7 @@ aelf.Address g_token=1;
 bool isPlatformTokened=2;
 }
 
-message NewPlatformTokenRate{
+message PlatformTokenRateChanged{
 option (aelf.is_event) = true;
 int64 old_platform_token_rate=1;
 int64 new_platform_token_rate=2;
@@ -342,13 +354,13 @@ int64 platform_token_delta=3;
 int64 platform_token_borrow_index=4;
 }
 
-message NewBorrowCap{
+message BorrowCapChanged{
 option (aelf.is_event) = true;
 aelf.Address g_Token=1;
 int64 new_borrow_cap=2;
 }
 
-message NewBorrowCapGuardian{
+message BorrowCapGuardianChanged{
 option (aelf.is_event) = true;
 aelf.Address old_borrow_cap_guardian=1;
 aelf.Address new_borrow_cap_guardian=2;
