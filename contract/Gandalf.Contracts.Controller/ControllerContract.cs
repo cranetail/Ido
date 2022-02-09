@@ -1,3 +1,4 @@
+using System;
 using AElf.Contracts.Price;
 using AElf.CSharp.Core;
 using AElf.Types;
@@ -180,28 +181,108 @@ namespace Gandalf.Contracts.Controller
             return new Empty();
         }
 
-        public override Empty LiquidateCalculateSeizeTokens(LiquidateCalculateSeizeTokensInput input)
+        public override Int64Value LiquidateCalculateSeizeTokens(LiquidateCalculateSeizeTokensInput input)
         {
             var priceBorrow = GetUnderlyingPrice(input.GTokenBorrowed);
             var priceCollateral= GetUnderlyingPrice(input.GTokenCollateral);
            
              
-            // Assert(priceBorrow != 0 && priceCollateral != 0, "Error Price");
-            // var exchangeRate = ExchangeRateStoredInternal(collateralSymbol);
-            // //Get the exchange rate and calculate the number of collateral tokens to seize:
-            // // *  seizeAmount = actualRepayAmount * liquidationIncentive * priceBorrowed / priceCollateral
-            // //    seizeTokens = seizeAmount / exchangeRate
-            // //   = actualRepayAmount * (liquidationIncentive * priceBorrowed) / (priceCollateral * exchangeRate)
-            // var seizeAmount = repayAmount * decimal.Parse(State.LiquidationIncentive.Value) *
-            //     priceBorrow / priceCollateral;
-            // var seizeTokens = decimal.ToInt64(seizeAmount / exchangeRate);
-            // return seizeTokens;
-            // return new Int64Value()
-            // {
-            //     Value = seizeTokens
-            // };
-            return base.LiquidateCalculateSeizeTokens(input);
+            Assert(priceBorrow != 0 && priceCollateral != 0, "Error Price");
+            var exchangeRate = State.GTokenContract.GetExchangeRateStored.Call(input.GTokenCollateral).Value;
+            var numerator = new BigIntValue(priceBorrow).Mul(State.LiquidationIncentive.Value);
+            var denominator = new BigIntValue(priceCollateral).Mul(exchangeRate);
+            var seizeTokens = numerator.Div(denominator).Mul(input.ActualRepayAmount);
+            
+            return new Int64Value()
+            {
+                Value = Convert.ToInt64(seizeTokens.ToString())
+            };
         }
-         
+
+        public override Empty SupportMarket(Address input)
+        {
+            Assert(Context.Sender == State.Admin.Value, "Unauthorized");
+            var market = State.Markets[input];
+            if (market != null)
+            {
+                Assert(!market.IsListed, "Support market exists"); //
+            }
+            State.Markets[input] = new Market()
+            {
+                IsListed = true
+            };
+            AddMarketInternal(input);
+            Context.Fire(new MarketListed
+            {
+                GToken = input
+            });
+
+            return new Empty();
+        }
+
+        public override Empty RefreshPlatformTokenSpeeds(Empty input)
+        {
+            Assert(Context.Origin == Context.Sender, "Only externally owned accounts may refresh speeds");
+            RefreshPlatformTokenSpeedsInternal();
+            return new Empty();
+        }
+
+        public override Empty ClaimPlatformToken(ClaimPlatformTokenInput input)
+        {
+            foreach (var gToken in input.GTokens)
+            {
+                Assert(State.Markets[gToken].IsListed, "market must be listed");
+                if (input.Borrowers)
+                {
+                    var borrowIndex = State.GTokenContract.GetBorrowIndex.Call(gToken).Value;
+                    UpdatePlatformTokenBorrowIndex(gToken, borrowIndex);
+                    foreach (var t in input.Holders)
+                    {
+                        DistributeBorrowerPlatformToken(gToken, t, borrowIndex, true);
+                    }
+                }
+
+                if (!input.Suppliers) continue;
+                {
+                    UpdatePlatformTokenSupplyIndex(gToken);
+                    foreach (var t in input.Holders)
+                    {
+                        DistributeSupplierPlatformToken(gToken, t, true);
+                    }
+                }
+            }
+
+            return new Empty();
+        }
+
+        
+        public override Empty AddPlatformTokenMarkets(GTokens input)
+        {
+            Assert(Context.Sender == State.Admin.Value, "Only admin can add platformToken market");
+            foreach (var t in input.GToken)
+            {
+                AddPlatformTokenMarketInternal(t);
+            }
+
+            return new Empty();
+        }
+
+        public override Empty DropPlatformTokenMarket(Address input)
+        {
+            Assert(Context.Sender == State.Admin.Value, "Only admin can drop platformToken market");
+            var market = State.Markets[input];
+            Assert(market.IsListed, "platformToken market is not listed");
+            Assert(market.IsPlatformTokened, "platformToken market already added");
+            market.IsPlatformTokened = false;
+            Context.Fire(new MarketPlatformTokened()
+            {
+                GToken = input,
+                IsPlatformTokened = false
+            });
+            RefreshPlatformTokenSpeedsInternal();
+            return new Empty();
+        }
+
+       
     }
 }

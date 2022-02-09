@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using AElf.Sdk.CSharp;
 using AElf.Types;
 using AElf.CSharp.Core;
@@ -161,6 +162,85 @@ namespace Gandalf.Contracts.Controller
         private long GetUnderlyingPrice(Address gToken)
         {
             return 1000000000000000000;
+        }
+
+        private void AddMarketInternal(Address gToken)
+        {
+            var list = State.AllMarkets.Value ?? new GTokens();
+            foreach (var t in list.GToken)
+            {
+                Assert(t == gToken,"Market already added");
+            }
+            list.GToken.Add(gToken);
+            State.AllMarkets.Value = list;
+        }
+
+        private void RefreshPlatformTokenSpeedsInternal()
+        {
+            var list = State.AllMarkets.Value ?? new GTokens();
+            foreach (var g in list.GToken)
+            {
+                var borrowIndex = State.GTokenContract.GetBorrowIndex.Call(g).Value;
+                UpdatePlatformTokenSupplyIndex(g);
+                UpdatePlatformTokenBorrowIndex(g,borrowIndex);
+            }
+            long totalUtility = 0;
+            var length = list.GToken.Count;
+            var utilities = new List<long>(length);
+            for (var i = 0; i < list.GToken.Count; i++)
+            {
+               
+                if (State.IsPlatformTokened[list.GToken[i]].Value)
+                {
+                   var price = GetUnderlyingPrice(list.GToken[i]);
+                   var totalBorrows = State.GTokenContract.GetTotalBorrows.Call(list.GToken[i]).Value;
+                   utilities[i] = price.Mul(totalBorrows);
+                   totalUtility = totalUtility.Add(utilities[i]);
+                }
+                 
+            }
+            
+            for (var i = 0; i < list.GToken.Count; i++)
+            {
+                var newSpeed = totalUtility > 0 ? State.PlatformTokenRate.Value.Mul(utilities[i]).Div(totalUtility) : 0;
+                State.PlatformTokenSpeeds[list.GToken[i]].Value = newSpeed;
+                Context.Fire(new PlatformTokenSpeedUpdated()
+                {
+                    GToken = list.GToken[i],
+                    NewSpeed = newSpeed
+                });
+            }
+        }
+
+        private void AddPlatformTokenMarketInternal(Address gToken)
+        {
+            var market = State.Markets[gToken];
+            Assert(market.IsListed, "platformToken market is not listed");
+            Assert(market.IsPlatformTokened == false, "platformToken market already added");
+            
+            market.IsPlatformTokened = true;
+            Context.Fire(new MarketPlatformTokened()
+            {
+                GToken = gToken,
+                IsPlatformTokened = true
+            }); 
+            
+            if (State.PlatformTokenSupplyState[gToken] == null)
+            {
+                State.PlatformTokenSupplyState[gToken] = new PlatformTokenMarketState()
+                {
+                    Index = PlatformTokenInitialIndex,
+                    Block = Context.CurrentHeight
+                };
+            }
+            
+            if (State.PlatformTokenBorrowState[gToken] == null) {
+                State.PlatformTokenBorrowState[gToken] = new PlatformTokenMarketState()
+                {
+                    Index = PlatformTokenInitialIndex,
+                    Block = Context.CurrentHeight
+                };
+            }
         }
     }
 }

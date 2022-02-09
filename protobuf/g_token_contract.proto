@@ -46,7 +46,7 @@ service GTokenContract {
     rpc AddReserves (AddReservesInput) returns (google.protobuf.Empty) {
     }
  
-    rpc AccrueInterest(google.protobuf.Empty) returns (google.protobuf.Empty) {
+    rpc AccrueInterest(aelf.Address) returns (google.protobuf.Empty) {
     }
  
     rpc Seize(SeizeInput) returns (google.protobuf.Empty) {
@@ -78,11 +78,11 @@ service GTokenContract {
         option (aelf.is_view) = true;
     }
   
-    rpc GetBorrowRatePerBlock (aelf.Address) returns (google.protobuf.StringValue) {
+    rpc GetBorrowRatePerBlock (aelf.Address) returns (google.protobuf.Int64Value) {
         option (aelf.is_view) = true;
     }
    
-    rpc GetSupplyRatePerBlock (aelf.Address) returns (google.protobuf.StringValue) {
+    rpc GetSupplyRatePerBlock (aelf.Address) returns (google.protobuf.Int64Value) {
         option (aelf.is_view) = true;
     }
   
@@ -98,11 +98,11 @@ service GTokenContract {
         option (aelf.is_view) = true;
     }
    
-    rpc GetCurrentExchangeRate (aelf.Address) returns (google.protobuf.StringValue) {
+    rpc GetCurrentExchangeRate (aelf.Address) returns (google.protobuf.Int64Value) {
         option (aelf.is_view) = true;
     }
  
-    rpc GetExchangeRateStored (aelf.Address) returns (google.protobuf.StringValue) {
+    rpc GetExchangeRateStored (aelf.Address) returns (google.protobuf.Int64Value) {
         option (aelf.is_view) = true;
     }
    
@@ -110,7 +110,7 @@ service GTokenContract {
         option (aelf.is_view) = true;
     }
     
-    rpc GetReserveFactor (aelf.Address) returns (google.protobuf.StringValue){
+    rpc GetReserveFactor (aelf.Address) returns (google.protobuf.Int64Value){
         option (aelf.is_view) = true;
     }
     rpc GetAdmin (google.protobuf.Empty) returns (aelf.Address){
@@ -139,6 +139,10 @@ service GTokenContract {
     rpc GetAccrualBlockNumber(aelf.Address) returns(google.protobuf.Int64Value){
     option (aelf.is_view) = true;
     }
+    
+    rpc GetBorrowIndex(aelf.Address)returns(google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }
 
 
 }
@@ -147,6 +151,11 @@ service GTokenContract {
 message Account{
     aelf.Address g_token = 1;
     aelf.Address user = 2;
+}
+
+message BorrowSnapshot {
+    int64 principal = 1;
+    string interest_index = 2;
 }
 
 // Inputs
@@ -201,37 +210,37 @@ message GetAccountSnapshotOutput{
 }
 
 message GetInterestRateOutput{
-    string base_rate_per_block = 2;
-    string multiplier_per_block = 3;
+    int64 base_rate_per_block = 2;
+    int64 multiplier_per_block = 3;
 }
 // Events
 message AccrueInterest {
     option (aelf.is_event) = true;
-    string symbol = 1;
+    aelf.Address symbol = 1;
     int64 cash = 2;
     int64 interestAccumulated = 3;
-    string borrowIndex = 4;
+    int64 borrowIndex = 4;
     int64 total_borrows = 5;
-    string borrow_rate_per_block = 6;
-    string supply_rate_per_block = 7;
+    int64 borrow_rate_per_block = 6;
+    int64 supply_rate_per_block = 7;
 }
 message Mint{
     option (aelf.is_event) = true;
-    string symbol = 1;
+    aelf.Address symbol = 1;
     aelf.Address address = 2;
     int64 amount = 3;
     int64 c_token_amount = 4;
 }
 message Redeem {
     option (aelf.is_event) = true;
-    string symbol = 1;
+    aelf.Address symbol = 1;
     aelf.Address address = 2;
     int64 amount = 3;
     int64 c_token_amount = 4;
 }
 message Borrow{
     option (aelf.is_event) = true;
-    string symbol = 1;
+    aelf.Address symbol = 1;
     aelf.Address address = 2;
     int64 amount = 3;
     int64 borrow_balance = 4;
@@ -240,7 +249,7 @@ message Borrow{
 }
 message RepayBorrow{
     option (aelf.is_event) = true;
-    string symbol = 1;
+    aelf.Address symbol = 1;
     aelf.Address payer = 2;
     aelf.Address borrower = 3;
     int64 amount = 4;
@@ -249,11 +258,11 @@ message RepayBorrow{
 }
 message LiquidateBorrow{
     option (aelf.is_event) = true;
-    string repay_symbol = 1;
+    aelf.Address repay_symbol = 1;
     aelf.Address liquidator = 2;
     aelf.Address borrower = 3;
     int64 repay_amount = 4;
-    string seize_symbol = 5;
+    aelf.Address seize_symbol = 5;
     int64 seize_token_amount = 6;
 }
 message PendingAdminChanged{
@@ -268,20 +277,20 @@ message AdminChanged{
 }
 message ReserveFactorChanged{
     option (aelf.is_event) = true;
-    string old_reserve_factor = 1;
-    string new_reserve_factor = 2;
-    string symbol=3;
+    int64 old_reserve_factor = 1;
+    int64 new_reserve_factor = 2;
+    aelf.Address symbol=3;
 }
 message ReservesAdded{
     option (aelf.is_event) = true;
-    string symbol = 1;
+    aelf.Address symbol = 1;
     aelf.Address address = 2;
     int64 amount = 3;
     int64 total_reserves = 4;
 }
 message ReservesReduced{
     option (aelf.is_event) = true;
-    string symbol = 1;
+    aelf.Address symbol = 1;
     aelf.Address address = 2;
     int64 amount = 3;
     int64 total_reserves = 4;
@@ -289,27 +298,27 @@ message ReservesReduced{
 
 message MarketListed{
     option (aelf.is_event) = true;
-    string symbol = 1;
-    string base_rate_per_block = 2;
-    string multiplier_per_block = 3;
-    string reserve_factor = 4;
+    aelf.Address symbol = 1;
+    int64 base_rate_per_block = 2;
+    int64 multiplier_per_block = 3;
+    int64 reserve_factor = 4;
 };
 
 message CloseFactorChanged{
     option (aelf.is_event) = true;
-    string old_close_factor = 1;
-    string new_close_factor = 2;
+    int64 old_close_factor = 1;
+    int64 new_close_factor = 2;
 }
 message CollateralFactorChanged{
     option (aelf.is_event) = true;
-    string old_collateral_factor = 1;
-    string new_collateral_factor = 2;
+    int64 old_collateral_factor = 1;
+    int64 new_collateral_factor = 2;
     string symbol=3;
 }
 message LiquidationIncentiveChanged{
     option (aelf.is_event) = true;
-    string old_liquidation_incentive = 1;
-    string new_liquidation_incentive = 2;
+    int64 old_liquidation_incentive = 1;
+    int64 new_liquidation_incentive = 2;
 }
 message MaxAssetsChanged{
     option (aelf.is_event) = true;
@@ -323,8 +332,8 @@ message PauseGuardianChanged{
 }
 message InterestRateChanged{
     option (aelf.is_event) = true;
-    string symbol = 1;
-    string base_rate_per_block = 2;
-    string multiplier_per_block = 3;
+    aelf.Address symbol = 1;
+    int64 base_rate_per_block = 2;
+    int64 multiplier_per_block = 3;
 }
 

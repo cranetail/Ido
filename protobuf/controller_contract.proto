@@ -42,7 +42,7 @@ rpc TransferAllowed(TransferAllowedInput)returns(google.protobuf.Empty){
 }
 rpc TransferVerify(TransferVerifyInput)returns(google.protobuf.Empty){
 }
-rpc LiquidateCalculateSeizeTokens(LiquidateCalculateSeizeTokensInput)returns(google.protobuf.Empty){
+rpc LiquidateCalculateSeizeTokens(LiquidateCalculateSeizeTokensInput)returns(google.protobuf.Int64Value){
 }
 rpc SetCloseFactor(google.protobuf.Int64Value)returns(google.protobuf.Empty){
 }
@@ -70,7 +70,7 @@ rpc SetSeizePaused(google.protobuf.BoolValue)returns(google.protobuf.BoolValue){
 }  
 rpc RefreshPlatformTokenSpeeds(google.protobuf.Empty)returns(google.protobuf.Empty){
 }
-rpc ClaimPlatformToken(aelf.Address)returns(google.protobuf.Empty){
+rpc ClaimPlatformToken(ClaimPlatformTokenInput)returns(google.protobuf.Empty){
 }
 rpc SetPlatformTokenRate(google.protobuf.Int64Value)returns(google.protobuf.Empty){
 }
@@ -86,7 +86,7 @@ option (aelf.is_view) = true;
 rpc CheckMembership (Account) returns (google.protobuf.BoolValue) {
 option (aelf.is_view) = true;
 }
-rpc GetAllMarkets(google.protobuf.Empty)  returns (SymbolList) {
+rpc GetAllMarkets(google.protobuf.Empty)  returns (GTokens) {
 option (aelf.is_view) = true;
 }
 rpc GetAdmin(google.protobuf.Empty)returns(aelf.Address){
@@ -98,16 +98,16 @@ option (aelf.is_view) = true;
 rpc GetCloseFactor(google.protobuf.Empty)returns(google.protobuf.Int64Value){
 option (aelf.is_view) = true;
 }
-rpc GetCollateralFactor(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+rpc GetCollateralFactor(aelf.Address)returns(google.protobuf.Int64Value){
 option (aelf.is_view) = true;
 }
-rpc GetMaxAssets(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+rpc GetMaxAssets(google.protobuf.Empty)returns(google.protobuf.Int32Value){
 option (aelf.is_view) = true;
 }
 rpc GetLiquidationIncentive(google.protobuf.Empty)returns(google.protobuf.Int64Value){
 option (aelf.is_view) = true;
 }
-rpc GetMarketBorrowCaps(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+rpc GetMarketBorrowCaps(aelf.Address)returns(google.protobuf.Int64Value){
 option (aelf.is_view) = true;
 }
 rpc GetBorrowCapGuardian(google.protobuf.Empty)returns(aelf.Address){
@@ -230,6 +230,13 @@ aelf.Address g_token_modify=2;
 int64 redeem_tokens=3;
 int64 borrow_amount=4;
 }
+
+message ClaimPlatformTokenInput{
+repeated aelf.Address holders = 1;
+repeated aelf.Address g_tokens = 2;
+bool borrowers = 3;
+bool suppliers = 4;
+}
 //output
 message GetHypotheticalAccountLiquidityOutput{
 int64 liquidity=1;
@@ -244,11 +251,8 @@ message AssetList{
     repeated aelf.Address assets = 1;
 }
 message Account{
-    string symbol = 1;
+    aelf.Address g_token = 1;
     aelf.Address address = 2;
-}
-message SymbolList {
-    repeated string symbols = 1;
 }
 message GTokens{
 repeated aelf.Address g_token = 1;
@@ -257,6 +261,7 @@ message Market {
     bool is_listed = 1;
     int64 collateral_factor = 2;
     map<string,bool> account_membership = 3;
+    bool is_platform_tokened = 4;
 }
 //event
 message MarketListed{

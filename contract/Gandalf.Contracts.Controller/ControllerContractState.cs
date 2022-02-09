@@ -60,7 +60,7 @@ namespace Gandalf.Contracts.Controller
         /// <summary>
         /// A list of all markets
         /// </summary>
-        public SingletonState<SymbolList> AllMarkets { get; set; }
+        public SingletonState<GTokens> AllMarkets { get; set; }
 
         /// @notice The rate at which the flywheel distributes PLATFORMTOKEN, per block
         public Int64State PlatformTokenRate { get; set; }
@@ -87,5 +87,7 @@ namespace Gandalf.Contracts.Controller
         public SingletonState<Address> BorrowCapGuardian{ get; set; }
         // @notice Borrow caps enforced by borrowAllowed for each gToken address. Defaults to zero which corresponds to unlimited borrowing.
         public MappedState<Address, Int64State> BorrowCaps { get; set; }
+        
+        public MappedState<Address,BoolValue> IsPlatformTokened { get; set; }
     }
 }

@@ -22,5 +22,7 @@ namespace Gandalf.Contracts.Controller
 
         // liquidationIncentiveMantissa must be no greater than this value
         private const long MaxLiquidationIncentive = 1500000000000000000; // 1.5 scaled by 1e18
+
+        private const long PlatformTokenInitialIndex = 1000000000000000000;
     }
 }

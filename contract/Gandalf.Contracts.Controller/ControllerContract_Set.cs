@@ -205,7 +205,7 @@ namespace Gandalf.Contracts.Controller
                 OldPlatformTokenRate = oldRate,
                 NewPlatformTokenRate = input.Value
             });
-            return base.SetPlatformTokenRate(input);
+            return new Empty();
         }
     }
 }
