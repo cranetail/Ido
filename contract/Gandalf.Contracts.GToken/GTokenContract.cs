@@ -69,5 +69,47 @@ namespace Gandalf.Contracts.GToken
             MintInternal(input.GToken, input.MintAmount, input.Channel);
             return new Empty();
         }
+
+        public override Empty Borrow(BorrowInput input)
+        {
+            BorrowInternal(input.GToken, input.Amount, input.Channel);
+            return base.Borrow(input);
+        }
+
+        public override Empty Redeem(RedeemInput input)
+        {
+            RedeemInternal(input.GToken, input.Amount);
+            return new Empty();
+        }
+
+        public override Empty RedeemUnderlying(RedeemUnderlyingInput input)
+        {
+            RedeemUnderlyingInternal(input.GToken,input.Amount);
+            return new Empty();
+        }
+        public override Empty Seize(SeizeInput input)
+        {
+            SeizeInternal(input.CollateralToken,input.SeizerToken,input.Liquidator,input.Borrower,input.SeizeTokens);
+            return new Empty();
+        }
+
+        public override Empty LiquidateBorrow(LiquidateBorrowInput input)
+        {
+            LiquidateBorrowInternal(input.CollateralSymbol, input.BorrowToken, input.Borrower, input.RepayAmount);
+            return new Empty();
+        }
+
+        public override Empty RepayBorrow(RepayBorrowInput input)
+        {
+            RepayBorrowInternal(input.Amount,input.GToken);
+            return new Empty();
+        }
+
+        public override Empty AddReserves(AddReservesInput input)
+        {
+            
+            return base.AddReserves(input);
+        }
+         
     }
 }

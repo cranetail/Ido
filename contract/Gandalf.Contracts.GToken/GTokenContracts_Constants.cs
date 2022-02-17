@@ -34,6 +34,6 @@ namespace Gandalf.Contracts.GToken
 
         public const long InitialBorrowIndex = 1000000000000000000;
 
-    
+        private const long Mantissa = 1000000000000000000;
     }
 }

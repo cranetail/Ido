@@ -155,7 +155,7 @@ message Account{
 
 message BorrowSnapshot {
     int64 principal = 1;
-    string interest_index = 2;
+    int64 interest_index = 2;
 }
 
 // Inputs
@@ -198,9 +198,11 @@ message AddReservesInput{
     int64 amount = 2; 
 }
 message SeizeInput{
-    aelf.Address liquidator=1;
-    aelf.Address borrower=2;
-    int64 seizeTokens=3;
+    aelf.Address collateral_token = 1; 
+    aelf.Address seizer_token = 2;
+    aelf.Address liquidator=3;
+    aelf.Address borrower=4;
+    int64 seizeTokens=5;
 }
 //output
 message GetAccountSnapshotOutput{
