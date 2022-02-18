@@ -110,6 +110,30 @@ namespace Gandalf.Contracts.GToken
             
             return base.AddReserves(input);
         }
-         
+
+        //Set Fuction
+        public override Empty SetAdmin(Address input)
+        {
+            State.Admin.Value = input;
+            return new Empty();
+        }
+
+        public override Empty SetComptroller(Address input)
+        {
+            State.ControllerContract.Value = input;
+            return new Empty();
+        }
+
+        public override Empty SetReserveFactor(SetReserveFactorInput input)
+        {
+            State.ReserveFactor[input.GToken] = input.ReserveFactor;
+            return new Empty();
+        }
+
+        public override Empty SetInterestRateModel(SetInterestRateModelInput input)
+        {
+            State.InterestRateModelContracts[input.GToken].Value = input.Model;
+            return new Empty();
+        }
     }
 }

@@ -58,10 +58,10 @@ service GTokenContract {
     rpc SetComptroller(aelf.Address) returns (google.protobuf.Empty) {
     }
  
-    rpc SetReserveFactor(google.protobuf.Int64Value) returns (google.protobuf.Empty) {
+    rpc SetReserveFactor(SetReserveFactorInput) returns (google.protobuf.Empty) {
     }
     
-    rpc SetInterestRateModel (aelf.Address) returns (google.protobuf.Empty) {
+    rpc SetInterestRateModel (SetInterestRateModelInput) returns (google.protobuf.Empty) {
     }
 
 
@@ -116,19 +116,15 @@ service GTokenContract {
     rpc GetAdmin (google.protobuf.Empty) returns (aelf.Address){
         option (aelf.is_view) = true;
     }
-    rpc GetInterestRate (aelf.Address) returns (GetInterestRateOutput){
-        option (aelf.is_view) = true;
-    
-    }
     rpc GetComptroller(google.protobuf.Empty)returns(aelf.Address){
       option (aelf.is_view) = true;
     }
   
-    rpc GetInterestRateModel(google.protobuf.Empty)returns(aelf.Address){
+    rpc GetInterestRateModel(aelf.Address)returns(aelf.Address){
       option (aelf.is_view) = true;
     }
      
-    rpc GetInitialExchangeRate(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+    rpc GetInitialExchangeRate(aelf.Address)returns(google.protobuf.Int64Value){
       option (aelf.is_view) = true;
     }
      
@@ -204,6 +200,15 @@ message SeizeInput{
     aelf.Address borrower=4;
     int64 seizeTokens=5;
 }
+message SetInterestRateModelInput{
+    aelf.Address g_token = 1;
+    aelf.Address model = 2;
+}
+
+message SetReserveFactorInput{
+    aelf.Address g_token = 1;
+    int64 reserve_factor = 2;
+}
 //output
 message GetAccountSnapshotOutput{
     int64 g_token_balance = 1;
@@ -211,10 +216,7 @@ message GetAccountSnapshotOutput{
     int64 exchange_rate = 3;
 }
 
-message GetInterestRateOutput{
-    int64 base_rate_per_block = 2;
-    int64 multiplier_per_block = 3;
-}
+ 
 // Events
 message AccrueInterest {
     option (aelf.is_event) = true;
@@ -331,11 +333,5 @@ message PauseGuardianChanged{
     option (aelf.is_event) = true;
     aelf.Address old_pause_guardian = 1;
     aelf.Address new_pause_guardian = 2;
-}
-message InterestRateChanged{
-    option (aelf.is_event) = true;
-    aelf.Address symbol = 1;
-    int64 base_rate_per_block = 2;
-    int64 multiplier_per_block = 3;
 }
 
