@@ -3,7 +3,7 @@ using AElf.Boilerplate.TestBase;
 using AElf.Kernel.SmartContract.Application;
 using AElf.Types;
 
-namespace Gandalf.Contracts.Controller
+namespace Awaken.Contracts.Controller
 {
     public class ControllerContractInitializationProvider : IContractInitializationProvider
     {

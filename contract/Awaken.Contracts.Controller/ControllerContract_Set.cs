@@ -11,11 +11,11 @@ namespace Awaken.Contracts.Controller
     {
         public override BoolValue SetBorrowPaused(SetPausedInput input)
         {
-            MarketVerify(input.GToken);
+            MarketVerify(input.AToken);
             Assert(Context.Sender == State.PauseGuardian.Value || Context.Sender == State.Admin.Value,
                 "Only pause guardian and admin can pause");
             Assert(Context.Sender == State.Admin.Value || input.State, "Only admin can unpause");
-            State.BorrowGuardianPaused[input.GToken] = input.State;
+            State.BorrowGuardianPaused[input.AToken] = input.State;
             return new BoolValue()
             {
                 Value = input.State
@@ -41,13 +41,13 @@ namespace Awaken.Contracts.Controller
         public override Empty SetCollateralFactor(SetCollateralFactorInput input)
         {
             Assert(Context.Sender == State.Admin.Value, "Unauthorized");
-            MarketVerify(input.GToken);
-            var market = State.Markets[input.GToken];
+            MarketVerify(input.AToken);
+            var market = State.Markets[input.AToken];
             var oldCollateralFactor = market.CollateralFactor;
             var newCollateralFactor = input.NewCollateralFactor;
             Assert(newCollateralFactor <= MaxCollateralFactor && newCollateralFactor >= 0,
                 "Invalid CloseFactor");
-            if (newCollateralFactor > 0 && GetUnderlyingPrice(input.GToken) == 0)
+            if (newCollateralFactor > 0 && GetUnderlyingPrice(input.AToken) == 0)
             {
                 throw new AssertionException("Error Price");
             }
@@ -55,7 +55,7 @@ namespace Awaken.Contracts.Controller
             market.CollateralFactor = input.NewCollateralFactor;
             Context.Fire(new CollateralFactorChanged()
             {
-                GToken = input.GToken,
+                AToken = input.AToken,
                 OldCollateralFactor = oldCollateralFactor,
                 NewCollateralFactor = newCollateralFactor
                
@@ -98,14 +98,14 @@ namespace Awaken.Contracts.Controller
 
         public override BoolValue SetMintPaused(SetPausedInput input)
         {
-            MarketVerify(input.GToken);
+            MarketVerify(input.AToken);
             Assert(Context.Sender == State.PauseGuardian.Value || Context.Sender == State.Admin.Value,
                 "Only pause guardian and admin can pause");
             Assert(Context.Sender == State.Admin.Value || input.State, "Only admin can unpause");
-            State.MintGuardianPaused[input.GToken] = input.State;
+            State.MintGuardianPaused[input.AToken] = input.State;
             Context.Fire(new ActionPaused()
             {
-                GToken = input.GToken,
+                AToken = input.AToken,
                 Action = "Mint",
                 PauseState = input.State
             });
@@ -137,7 +137,7 @@ namespace Awaken.Contracts.Controller
             State.SeizeGuardianPaused.Value = input.Value;
             Context.Fire(new ActionPaused()
             {
-                GToken = new Address(){},
+                AToken = new Address(){},
                 Action = "Seize",
                 PauseState = input.Value
             });
@@ -155,7 +155,7 @@ namespace Awaken.Contracts.Controller
             State.TransferGuardianPaused.Value = input.Value;
             Context.Fire(new ActionPaused()
             {
-                GToken = new Address(){},
+                AToken = new Address(){},
                 Action = "Transfer",
                 PauseState = input.Value
             });
@@ -185,10 +185,10 @@ namespace Awaken.Contracts.Controller
             var numMarkets = input.MarketBorrowCap.Count;
             for (var i = 0; i < numMarkets; i++)
             {
-                State.BorrowCaps[input.MarketBorrowCap[i].GToken].Value = input.MarketBorrowCap[i].NewBorrowCap;
+                State.BorrowCaps[input.MarketBorrowCap[i].AToken].Value = input.MarketBorrowCap[i].NewBorrowCap;
                 Context.Fire(new BorrowCapChanged()
                 {
-                    GToken = input.MarketBorrowCap[i].GToken,
+                    AToken = input.MarketBorrowCap[i].AToken,
                     NewBorrowCap = input.MarketBorrowCap[i].NewBorrowCap
                 });
             }

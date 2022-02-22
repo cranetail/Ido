@@ -6,7 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\contract\Gandalf.Contracts.Controller\Gandalf.Contracts.Controller.csproj">
+        <ProjectReference Include="..\..\contract\Awaken.Contracts.Controller\Awaken.Contracts.Controller.csproj">
           <ReferenceOutputAssembly>False</ReferenceOutputAssembly>
         </ProjectReference>
         <ProjectReference Include="..\AElf.Boilerplate.MainChain\AElf.Boilerplate.MainChain.csproj" />

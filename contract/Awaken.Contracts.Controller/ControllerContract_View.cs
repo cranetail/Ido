@@ -11,7 +11,7 @@ namespace Awaken.Contracts.Controller
     {
         public override GetHypotheticalAccountLiquidityOutput GetHypotheticalAccountLiquidity(GetHypotheticalAccountLiquidityInput input)
         {
-            var shortfall= GetHypotheticalAccountLiquidityInternal(input.Account, input.GTokenModify, input.RedeemTokens,
+            var shortfall= GetHypotheticalAccountLiquidityInternal(input.Account, input.ATokenModify, input.RedeemTokens,
                 input.BorrowAmount);
             
             return new GetHypotheticalAccountLiquidityOutput()
@@ -29,7 +29,7 @@ namespace Awaken.Contracts.Controller
         public override BoolValue CheckMembership(Account input)
         {
             var isMembership =
-                (State.Markets[input.GToken].AccountMembership
+                (State.Markets[input.AToken].AccountMembership
                     .TryGetValue(input.Address.ToString(), out var isExist) && isExist);
             return new BoolValue()
             {
@@ -37,7 +37,7 @@ namespace Awaken.Contracts.Controller
             };
         }
 
-        public override GTokens GetAllMarkets(Empty input)
+        public override ATokens GetAllMarkets(Empty input)
         {
             return State.AllMarkets.Value;
         }
@@ -97,6 +97,10 @@ namespace Awaken.Contracts.Controller
                 Value = State.BorrowCaps[input].Value
             };
         }
-        
+
+        public override Address GetATokenAddress(StringValue input)
+        {
+            return State.UnderlingMap[input.Value];
+        }
     }
 }

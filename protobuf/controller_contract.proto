@@ -4,13 +4,14 @@ import "aelf/core.proto";
 import "aelf/options.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/wrappers.proto";
-option csharp_namespace = "Gandalf.Contracts.Controller";
+option csharp_namespace = "Awaken.Contracts.Controller";
 
 service ControllerContract {
 option (aelf.csharp_state) = "ControllerContractState";
  
- 
-rpc EnterMarkets(GTokens)returns(google.protobuf.Empty){
+rpc Initialize(google.protobuf.Empty)returns(google.protobuf.Empty){
+}
+rpc EnterMarkets(ATokens)returns(google.protobuf.Empty){
 } 
 rpc ExitMarket(aelf.Address)returns(google.protobuf.Empty){
 }
@@ -52,7 +53,7 @@ rpc SetMaxAssets(google.protobuf.Int32Value)returns(google.protobuf.Empty){
 }
 rpc SetLiquidationIncentive(google.protobuf.Int64Value)returns(google.protobuf.Empty){  
 }
-rpc SupportMarket(aelf.Address)returns(google.protobuf.Empty){
+rpc SupportMarket(google.protobuf.StringValue)returns(google.protobuf.Empty){
 }
 rpc SetMarketBorrowCaps(SetMarketBorrowCapsInput)returns(google.protobuf.Empty){
 }
@@ -74,7 +75,7 @@ rpc ClaimPlatformToken(ClaimPlatformTokenInput)returns(google.protobuf.Empty){
 }
 rpc SetPlatformTokenRate(google.protobuf.Int64Value)returns(google.protobuf.Empty){
 }
-rpc AddPlatformTokenMarkets(GTokens)returns(google.protobuf.Empty){
+rpc AddPlatformTokenMarkets(ATokens)returns(google.protobuf.Empty){
 }
 rpc DropPlatformTokenMarket(aelf.Address)returns(google.protobuf.Empty){
 }
@@ -86,7 +87,7 @@ option (aelf.is_view) = true;
 rpc CheckMembership (Account) returns (google.protobuf.BoolValue) {
 option (aelf.is_view) = true;
 }
-rpc GetAllMarkets(google.protobuf.Empty)  returns (GTokens) {
+rpc GetAllMarkets(google.protobuf.Empty)  returns (ATokens) {
 option (aelf.is_view) = true;
 }
 rpc GetAdmin(google.protobuf.Empty)returns(aelf.Address){
@@ -116,124 +117,127 @@ option (aelf.is_view) = true;
 rpc GetHypotheticalAccountLiquidity(GetHypotheticalAccountLiquidityInput)returns(GetHypotheticalAccountLiquidityOutput){
 option (aelf.is_view) = true;
 }
+rpc GetATokenAddress(google.protobuf.StringValue)returns(aelf.Address){
+option (aelf.is_view) = true;
+}
 }
 
 message SetMarketBorrowCapsInput{
 repeated MarketBorrowCap market_borrow_cap = 1;
 }
 message MarketBorrowCap{
-aelf.Address g_token=1;
+aelf.Address a_token=1;
 int64 new_borrow_cap=2;
 }
 message SetPausedInput{
-aelf.Address g_token=1;
+aelf.Address a_token=1;
 bool state=2;
 }
 message SeizeAllowedInput{
-aelf.Address g_token_collateral=1;
-aelf.Address g_token_borrowed=2;
+aelf.Address a_token_collateral=1;
+aelf.Address a_token_borrowed=2;
 aelf.Address liquidator=3;
 aelf.Address borrower=4;
 int64 seize_tokens=5; 
 }
 message SeizeVerifyInput{
-aelf.Address g_token_collateral=1;
-aelf.Address g_token_borrowed=2;
+aelf.Address a_token_collateral=1;
+aelf.Address a_token_borrowed=2;
 aelf.Address liquidator=3; 
 aelf.Address borrower=4; 
 int64 seize_tokens=5;  
 }
 message TransferAllowedInput{
-aelf.Address g_token=1; 
+aelf.Address a_token=1; 
 aelf.Address src=2; 
 aelf.Address dst=3; 
 int64 transfer_tokens=4; 
 }    
 message TransferVerifyInput{
-aelf.Address g_token=1; 
+aelf.Address a_token=1; 
 aelf.Address src=2; 
 aelf.Address dst=3; 
 int64 transfer_tokens=4;  
 }
 message LiquidateCalculateSeizeTokensInput{
-aelf.Address g_token_borrowed=1; 
-aelf.Address g_token_collateral=2; 
+aelf.Address a_token_borrowed=1; 
+aelf.Address a_token_collateral=2; 
 int64 actual_repay_amount=3; 
 }
 message SetCollateralFactorInput{
-aelf.Address g_token=1;
+aelf.Address a_token=1;
 int64 new_collateral_factor=2;
 }
 message RepayBorrowVerifyInput{
-aelf.Address g_token=1; 
+aelf.Address a_token=1; 
 aelf.Address payer=2; 
 aelf.Address borrower=3; 
 int64 repay_amount=4; 
 int64 borrower_index=5; 
 }
 message LiquidateBorrowAllowedInput{
-aelf.Address g_token_borrowed=1; 
-aelf.Address g_token_collateral=2; 
+aelf.Address a_token_borrowed=1; 
+aelf.Address a_token_collateral=2; 
 aelf.Address liquidator=3; 
 aelf.Address borrower=4; 
 int64 repay_amount=5; 
 }
 message LiquidateBorrowVerifyInput{
-aelf.Address g_token_borrowed=1; 
-aelf.Address g_token_collateral=2; 
+aelf.Address a_token_borrowed=1; 
+aelf.Address a_token_collateral=2; 
 aelf.Address liquidator=3; 
 aelf.Address borrower=4; 
 int64 actual_repay_amount=5; 
 int64 seize_tokens=6;
 }
 message MintAllowedInput{
-aelf.Address g_token=1; 
+aelf.Address a_token=1; 
 aelf.Address minter=2; 
 int64 mint_amount=3; 
 }
 message MintVerifyInput{
-aelf.Address g_token=1; 
+aelf.Address a_token=1; 
 aelf.Address minter=2; 
 int64 actual_mint_amount=3; 
 int64 mint_tokens=4; 
 }
 message RedeemAllowedInput{
-aelf.Address g_token=1; 
+aelf.Address a_token=1; 
 aelf.Address redeemer=2; 
 int64 redeem_tokens=3; 
 }
 message RedeemVerifyInput{
-aelf.Address g_token=1; 
+aelf.Address a_token=1; 
 aelf.Address minter=2; 
 int64 redeem_amount=3; 
 int64 redeem_tokens=4; 
 }
 message BorrowAllowedInput{
-aelf.Address g_token=1; 
+aelf.Address a_token=1; 
 aelf.Address borrower=2; 
 int64 borrow_amount=3; 
 }
 message BorrowVerifyInput{
-aelf.Address g_token=1; 
+aelf.Address a_token=1; 
 aelf.Address borrower=2; 
 int64 borrow_amount=3; 
 }
 message RepayBorrowAllowedInput{
-aelf.Address g_token=1; 
+aelf.Address a_token=1; 
 aelf.Address payer=2; 
 aelf.Address borrower=3; 
 int64 repay_amount=4; 
 }
 message GetHypotheticalAccountLiquidityInput{
 aelf.Address account=1;
-aelf.Address g_token_modify=2;
+aelf.Address a_token_modify=2;
 int64 redeem_tokens=3;
 int64 borrow_amount=4;
 }
 
 message ClaimPlatformTokenInput{
 repeated aelf.Address holders = 1;
-repeated aelf.Address g_tokens = 2;
+repeated aelf.Address a_tokens = 2;
 bool borrowers = 3;
 bool suppliers = 4;
 }
@@ -251,11 +255,11 @@ message AssetList{
     repeated aelf.Address assets = 1;
 }
 message Account{
-    aelf.Address g_token = 1;
+    aelf.Address a_token = 1;
     aelf.Address address = 2;
 }
-message GTokens{
-repeated aelf.Address g_token = 1;
+message ATokens{
+repeated aelf.Address a_token = 1;
 }
 message Market {
     bool is_listed = 1;
@@ -266,18 +270,18 @@ message Market {
 //event
 message MarketListed{
 option (aelf.is_event) = true;
-aelf.Address g_Token=1;
+aelf.Address a_Token=1;
 }
 
 message MarketEntered{
 option (aelf.is_event) = true;
-aelf.Address g_Token=1;
+aelf.Address a_Token=1;
 aelf.Address account=2;
 }
 
 message MarketExited{
 option (aelf.is_event) = true;
-aelf.Address g_Token=1;
+aelf.Address a_Token=1;
 aelf.Address account=2;
 }
 
@@ -289,7 +293,7 @@ int64 new_close_factor=2;
 
 message CollateralFactorChanged{
 option (aelf.is_event) = true;
-aelf.Address g_token=1;
+aelf.Address a_token=1;
 int64 old_collateral_factor=2;
 int64 new_collateral_factor=3;
 }
@@ -320,14 +324,14 @@ aelf.Address new_pause_guardian=2;
 
 message ActionPaused{
 option (aelf.is_event) = true;
-aelf.Address g_token=1;
+aelf.Address a_token=1;
 string action=2;
 bool pauseState=3;
 }
 
 message MarketPlatformTokened{
 option (aelf.is_event) = true;
-aelf.Address g_token=1;
+aelf.Address a_token=1;
 bool isPlatformTokened=2;
 }
 
@@ -339,13 +343,13 @@ int64 new_platform_token_rate=2;
 
 message PlatformTokenSpeedUpdated{
 option (aelf.is_event) = true;
-aelf.Address g_token=1;
+aelf.Address a_token=1;
 int64 new_speed=2;
 }
 
 message DistributedSupplierPlatformToken{
 option (aelf.is_event) = true;
-aelf.Address g_token =1; 
+aelf.Address a_token =1; 
 aelf.Address supplier=2; 
 int64 platform_token_delta=3; 
 int64 platform_token_supply_index=4;
@@ -353,7 +357,7 @@ int64 platform_token_supply_index=4;
 
 message DistributedBorrowerPlatformToken{
 option (aelf.is_event) = true;
-aelf.Address g_token =1; 
+aelf.Address a_token =1; 
 aelf.Address borrower=2; 
 int64 platform_token_delta=3; 
 int64 platform_token_borrow_index=4;
@@ -361,7 +365,7 @@ int64 platform_token_borrow_index=4;
 
 message BorrowCapChanged{
 option (aelf.is_event) = true;
-aelf.Address g_Token=1;
+aelf.Address a_Token=1;
 int64 new_borrow_cap=2;
 }
 

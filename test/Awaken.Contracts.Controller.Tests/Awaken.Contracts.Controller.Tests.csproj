@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>Gandalf.Contracts.Controller</RootNamespace>
+    <RootNamespace>Awaken.Contracts.Controller</RootNamespace>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -27,9 +27,24 @@
     <PackageReference Include="AElf.ContractTestBase" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>
+    <ContractStub Include="..\..\protobuf\acs0.proto">
+      <Link>Protobuf\Proto\acs0.proto</Link>
+    </ContractStub>
     <ContractMessage Include="..\..\protobuf\authority_info.proto">
       <Link>Protobuf\Proto\authority_info.proto</Link>
     </ContractMessage>
+    <ContractStub Include="..\..\protobuf\acs1.proto">
+      <Link>Protobuf\Proto\acs1.proto</Link>
+    </ContractStub>
+    <ContractStub Include="..\..\protobuf\acs2.proto">
+      <Link>Protobuf\Proto\acs2.proto</Link>
+    </ContractStub>
+    <ContractStub Include="..\..\protobuf\transaction_fee.proto">
+      <Link>Protobuf\Proto\transaction_fee.proto</Link>
+    </ContractStub>
+    <ContractStub Include="..\..\protobuf\token_contract.proto">
+      <Link>Protobuf\Proto\token_contract.proto</Link>
+    </ContractStub>
   </ItemGroup>
   <ItemGroup>
     <ContractStub Include="..\..\protobuf\controller_contract.proto">
@@ -38,6 +53,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\contract\Awaken.Contracts.AToken\Awaken.Contracts.AToken.csproj" />
     <ProjectReference Include="..\..\contract\Awaken.Contracts.Controller\Awaken.Contracts.Controller.csproj" />
     <ProjectReference Include="..\..\src\AElf.Boilerplate.TestBase\AElf.Boilerplate.TestBase.csproj" />
   </ItemGroup>

@@ -144,7 +144,7 @@ namespace Awaken.Contracts.AToken
 
         private BigIntValue BorrowBalanceStoredInternal(Account input)
         {
-            BorrowSnapshot borrowSnapshot = State.AccountBorrows[input.A][input.User];
+            BorrowSnapshot borrowSnapshot = State.AccountBorrows[input.AToken][input.User];
             if (borrowSnapshot == null)
             {
                 return 0;

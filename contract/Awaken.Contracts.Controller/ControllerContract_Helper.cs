@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using AElf.Contracts.MultiToken;
 using AElf.Sdk.CSharp;
 using AElf.Types;
 using AElf.CSharp.Core;
@@ -9,9 +10,9 @@ namespace Awaken.Contracts.Controller
 {
     public partial class ControllerContract
     {
-        private void AddToMarketInternal(Address gToken, Address borrower)
+        private void AddToMarketInternal(Address aToken, Address borrower)
         {
-            var market = State.Markets[gToken];
+            var market = State.Markets[aToken];
             Assert(market != null && market.IsListed, "Market is not listed");
             market.AccountMembership.TryGetValue(borrower.ToString(), out var isMembership);
             if (isMembership)
@@ -27,27 +28,27 @@ namespace Awaken.Contracts.Controller
 
             Assert(State.AccountAssets[borrower].Assets.Count < State.MaxAssets.Value, "Too Many Assets");
             market.AccountMembership[borrower.ToString()] = true;
-            State.AccountAssets[borrower].Assets.Add(gToken);
+            State.AccountAssets[borrower].Assets.Add(aToken);
             Context.Fire(new MarketEntered()
             {
-                GToken = gToken,
+                AToken = aToken,
                 Account = borrower
             });
         }
         
-        private void RedeemAllowedInternal(Address gToken, Address redeemer, long redeemTokens)
+        private void RedeemAllowedInternal(Address aToken, Address redeemer, long redeemTokens)
         {
-            MarketVerify(gToken);
-            State.Markets[gToken].AccountMembership.TryGetValue(redeemer.ToString(), out var isExist);
+            MarketVerify(aToken);
+            State.Markets[aToken].AccountMembership.TryGetValue(redeemer.ToString(), out var isExist);
             if(!isExist)
             {
                 return;
             }
 
-            var shortfall = GetHypotheticalAccountLiquidityInternal(redeemer, gToken, redeemTokens, 0);
+            var shortfall = GetHypotheticalAccountLiquidityInternal(redeemer, aToken, redeemTokens, 0);
             Assert(shortfall <= 0, "Insufficient Liquidity");
         }
-        private long GetHypotheticalAccountLiquidityInternal(Address account, Address gTokenModify, long redeemTokens,
+        private long GetHypotheticalAccountLiquidityInternal(Address account, Address aTokenModify, long redeemTokens,
             long borrowAmount)
         {
             var assets = State.AccountAssets[account];
@@ -55,22 +56,22 @@ namespace Awaken.Contracts.Controller
             long sumBorrowPlusEffects = 0;
             for (var i = 0; i < assets.Assets.Count; i++)
             {
-                var gToken = assets.Assets[i];
+                var aToken = assets.Assets[i];
                 // Read the balances and exchange rate from the cToken
-                var accountSnapshot = State.GTokenContract.GetAccountSnapshot.Call(new Gandalf.Contracts.GToken.Account()
+                var accountSnapshot = State.ATokenContract.GetAccountSnapshot.Call(new Awaken.Contracts.AToken.Account()
                 {
-                    GToken = gToken,
+                    AToken = aToken,
                     User = account
                 });
-                var cTokenBalance = accountSnapshot.GTokenBalance;
+                var cTokenBalance = accountSnapshot.ATokenBalance;
                 var exchangeRate = accountSnapshot.ExchangeRate;
-                var price = GetUnderlyingPrice(gToken);
+                var price = GetUnderlyingPrice(aToken);
                  
-                var collateralFactor = State.Markets[gTokenModify].CollateralFactor;
+                var collateralFactor = State.Markets[aTokenModify].CollateralFactor;
                 var tokensToDenom = exchangeRate * price * collateralFactor;
                 sumCollateral += cTokenBalance * tokensToDenom;
                 sumBorrowPlusEffects += accountSnapshot.BorrowBalance * price;
-                if (gTokenModify == gToken)
+                if (aTokenModify == aToken)
                 {
                     // redeem effect
                     // sumBorrowPlusEffects += tokensToDenom * redeemTokens
@@ -83,26 +84,26 @@ namespace Awaken.Contracts.Controller
 
             return sumBorrowPlusEffects - sumCollateral;
         }
-        private void MarketVerify(Address gToken)
+        private void MarketVerify(Address aToken)
         {
-            var market = State.Markets[gToken];
+            var market = State.Markets[aToken];
             Assert(market != null && market.IsListed, "Market is not listed");
         }
 
-        private void UpdatePlatformTokenSupplyIndex(Address gToken)
+        private void UpdatePlatformTokenSupplyIndex(Address aToken)
         {
-         var supplyState = State.PlatformTokenSupplyState[gToken];
-         var supplySpeed = State.PlatformTokenSpeeds[gToken].Value;
+         var supplyState = State.PlatformTokenSupplyState[aToken];
+         var supplySpeed = State.PlatformTokenSpeeds[aToken].Value;
          var blockNumber = Context.CurrentHeight;
          var deltaBlocks = blockNumber.Sub(supplyState.Block);
          if (deltaBlocks > 0 && supplySpeed > 0)
          {
-             //To do:get totalSupply from GTokenContract;
+             //To do:get totalSupply from ATokenContract;
              long supplyTokens = 1;
              var platformTokenAccrued = deltaBlocks.Mul(supplySpeed);
              var ratio = supplyTokens > 0 ? Fraction(platformTokenAccrued, supplyTokens) : 0;
              var index = supplyState.Index.Add(ratio);
-             State.PlatformTokenSupplyState[gToken] = new PlatformTokenMarketState()
+             State.PlatformTokenSupplyState[aToken] = new PlatformTokenMarketState()
              {
                  Index = index,
                  Block = blockNumber
@@ -110,25 +111,25 @@ namespace Awaken.Contracts.Controller
          }
          else if (deltaBlocks > 0)
          {
-             State.PlatformTokenSupplyState[gToken].Block = blockNumber;
+             State.PlatformTokenSupplyState[aToken].Block = blockNumber;
          }
         }
         
-        private void UpdatePlatformTokenBorrowIndex(Address gToken, long marketBorrowIndex)
+        private void UpdatePlatformTokenBorrowIndex(Address aToken, long marketBorrowIndex)
         {
-            var borrowState = State.PlatformTokenBorrowState[gToken];
-            var borrowSpeed = State.PlatformTokenSpeeds[gToken].Value;
+            var borrowState = State.PlatformTokenBorrowState[aToken];
+            var borrowSpeed = State.PlatformTokenSpeeds[aToken].Value;
             var blockNumber = Context.CurrentHeight;
             var deltaBlocks = blockNumber.Sub(borrowState.Block);
             if (deltaBlocks > 0 && borrowSpeed > 0)
             {
-                //To do:get totalBorrows from GTokenContract;
+                //To do:get totalBorrows from ATokenContract;
                 long totalBorrows = 1;
                 var borrowAmount = totalBorrows.Div(marketBorrowIndex);
                 var platformTokenAccrued = deltaBlocks.Mul(borrowSpeed);
                 var ratio = borrowAmount > 0 ? Fraction(platformTokenAccrued, borrowAmount) : 0;
                 var index = borrowState.Index.Add(ratio);
-                State.PlatformTokenBorrowState[gToken] = new PlatformTokenMarketState()
+                State.PlatformTokenBorrowState[aToken] = new PlatformTokenMarketState()
                 {
                     Index = index,
                     Block = blockNumber
@@ -136,15 +137,15 @@ namespace Awaken.Contracts.Controller
             }
             else if (deltaBlocks > 0)
             {
-                State.PlatformTokenBorrowState[gToken].Block = blockNumber;
+                State.PlatformTokenBorrowState[aToken].Block = blockNumber;
             }
         }
 
-        private void DistributeSupplierPlatformToken(Address gToken, Address supplier, bool distributeAll)
+        private void DistributeSupplierPlatformToken(Address aToken, Address supplier, bool distributeAll)
         {
             
         }
-        private void DistributeBorrowerPlatformToken(Address gToken, Address borrower, long marketBorrowIndex, bool distributeAll)
+        private void DistributeBorrowerPlatformToken(Address aToken, Address borrower, long marketBorrowIndex, bool distributeAll)
         {
             
         }
@@ -159,88 +160,103 @@ namespace Awaken.Contracts.Controller
         }
         
         // TO Do:GetUnderlyingPrice from price oracle 
-        private long GetUnderlyingPrice(Address gToken)
+        private long GetUnderlyingPrice(Address aToken)
         {
             return 1000000000000000000;
         }
 
-        private void AddMarketInternal(Address gToken)
+        private void AddMarketInternal(Address aToken)
         {
-            var list = State.AllMarkets.Value ?? new GTokens();
-            foreach (var t in list.GToken)
+            var list = State.AllMarkets.Value ?? new ATokens();
+            foreach (var t in list.AToken)
             {
-                Assert(t == gToken,"Market already added");
+                Assert(t == aToken,"Market already added");
             }
-            list.GToken.Add(gToken);
+            list.AToken.Add(aToken);
             State.AllMarkets.Value = list;
         }
 
         private void RefreshPlatformTokenSpeedsInternal()
         {
-            var list = State.AllMarkets.Value ?? new GTokens();
-            foreach (var g in list.GToken)
+            var list = State.AllMarkets.Value ?? new ATokens();
+            foreach (var g in list.AToken)
             {
-                var borrowIndex = State.GTokenContract.GetBorrowIndex.Call(g).Value;
+                var borrowIndex = State.ATokenContract.GetBorrowIndex.Call(g).Value;
                 UpdatePlatformTokenSupplyIndex(g);
                 UpdatePlatformTokenBorrowIndex(g,borrowIndex);
             }
             long totalUtility = 0;
-            var length = list.GToken.Count;
+            var length = list.AToken.Count;
             var utilities = new List<long>(length);
-            for (var i = 0; i < list.GToken.Count; i++)
+            for (var i = 0; i < list.AToken.Count; i++)
             {
                
-                if (State.IsPlatformTokened[list.GToken[i]].Value)
+                if (State.IsPlatformTokened[list.AToken[i]].Value)
                 {
-                   var price = GetUnderlyingPrice(list.GToken[i]);
-                   var totalBorrows = State.GTokenContract.GetTotalBorrows.Call(list.GToken[i]).Value;
+                   var price = GetUnderlyingPrice(list.AToken[i]);
+                   var totalBorrows = State.ATokenContract.GetTotalBorrows.Call(list.AToken[i]).Value;
                    utilities[i] = price.Mul(totalBorrows);
                    totalUtility = totalUtility.Add(utilities[i]);
                 }
                  
             }
             
-            for (var i = 0; i < list.GToken.Count; i++)
+            for (var i = 0; i < list.AToken.Count; i++)
             {
                 var newSpeed = totalUtility > 0 ? State.PlatformTokenRate.Value.Mul(utilities[i]).Div(totalUtility) : 0;
-                State.PlatformTokenSpeeds[list.GToken[i]].Value = newSpeed;
+                State.PlatformTokenSpeeds[list.AToken[i]].Value = newSpeed;
                 Context.Fire(new PlatformTokenSpeedUpdated()
                 {
-                    GToken = list.GToken[i],
+                    AToken = list.AToken[i],
                     NewSpeed = newSpeed
                 });
             }
         }
 
-        private void AddPlatformTokenMarketInternal(Address gToken)
+        private void AddPlatformTokenMarketInternal(Address aToken)
         {
-            var market = State.Markets[gToken];
+            var market = State.Markets[aToken];
             Assert(market.IsListed, "platformToken market is not listed");
             Assert(market.IsPlatformTokened == false, "platformToken market already added");
             
             market.IsPlatformTokened = true;
             Context.Fire(new MarketPlatformTokened()
             {
-                GToken = gToken,
+                AToken = aToken,
                 IsPlatformTokened = true
             }); 
             
-            if (State.PlatformTokenSupplyState[gToken] == null)
+            if (State.PlatformTokenSupplyState[aToken] == null)
             {
-                State.PlatformTokenSupplyState[gToken] = new PlatformTokenMarketState()
+                State.PlatformTokenSupplyState[aToken] = new PlatformTokenMarketState()
                 {
                     Index = PlatformTokenInitialIndex,
                     Block = Context.CurrentHeight
                 };
             }
             
-            if (State.PlatformTokenBorrowState[gToken] == null) {
-                State.PlatformTokenBorrowState[gToken] = new PlatformTokenMarketState()
+            if (State.PlatformTokenBorrowState[aToken] == null) {
+                State.PlatformTokenBorrowState[aToken] = new PlatformTokenMarketState()
                 {
                     Index = PlatformTokenInitialIndex,
                     Block = Context.CurrentHeight
                 };
             }
+        }
+
+        private string GetATokenSymbol(string symbol)
+        {
+            ValidTokenSymbol(symbol);
+            return $"A-{symbol}";
+        }
+        
+        private void ValidTokenSymbol(string token)
+        {
+            var tokenInfo = State.TokenContract.GetTokenInfo.Call(new GetTokenInfoInput
+            {
+                Symbol = token
+            });
+            Assert(!string.IsNullOrEmpty(tokenInfo.Symbol), $"Token {token} not exists.");
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using AElf;
 using AElf.Contracts.Price;
 using AElf.CSharp.Core;
 using AElf.Types;
@@ -13,43 +14,49 @@ namespace Awaken.Contracts.Controller
     /// </summary>
     public partial class ControllerContract : ControllerContractContainer.ControllerContractBase
     {
-        public override Empty EnterMarkets(GTokens input)
+        public override Empty Initialize(Empty input)
         {
-            var len = input.GToken.Count;
+            Assert(State.Admin.Value != new Address(), "Initialized");
+            State.Admin.Value = Context.Sender;
+            return new Empty();
+        }
+        public override Empty EnterMarkets(ATokens input)
+        {
+            var len = input.AToken.Count;
             for (var i = 0; i < len; i++)
             {
-                var gToken = input.GToken[i];
-                AddToMarketInternal(gToken, Context.Sender);
+                var aToken = input.AToken[i];
+                AddToMarketInternal(aToken, Context.Sender);
             }
 
             return new Empty();
         }
         
-        public override Empty ExitMarket(Address gToken)
+        public override Empty ExitMarket(Address aToken)
         {
             // MarketVerify(input.Value);
-          var   result =State.GTokenContract.GetAccountSnapshot.Call(new Gandalf.Contracts.GToken.Account()
+          var   result = State.ATokenContract.GetAccountSnapshot.Call(new Awaken.Contracts.AToken.Account()
              {
-                 GToken = gToken,
+                 AToken = aToken,
                  User = Context.Sender
              });
             Assert(result.BorrowBalance == 0, "Nonzero borrow balance");
-            if (!State.Markets[gToken].AccountMembership.TryGetValue(Context.Sender.ToString(), out var isExist) ||
+            if (!State.Markets[aToken].AccountMembership.TryGetValue(Context.Sender.ToString(), out var isExist) ||
                 !isExist)
             {
                 return new Empty();
             }
             
             var shortfall =
-                GetHypotheticalAccountLiquidityInternal(Context.Sender, gToken, result.GTokenBalance, 0);
+                GetHypotheticalAccountLiquidityInternal(Context.Sender, aToken, result.ATokenBalance, 0);
             Assert(shortfall <= 0, "Insufficient liquidity"); //INSUFFICIENT_LIQUIDITY
-            State.Markets[gToken].AccountMembership[Context.Sender.ToString()] = false;
+            State.Markets[aToken].AccountMembership[Context.Sender.ToString()] = false;
             //Delete cToken from the account’s list of assets
             var userAssetList = State.AccountAssets[Context.Sender];
-            userAssetList.Assets.Remove(gToken);
+            userAssetList.Assets.Remove(aToken);
             Context.Fire(new MarketExited()
             {
-                GToken = gToken,
+                AToken = aToken,
                 Account = Context.Sender
             });
             return new Empty();
@@ -57,10 +64,10 @@ namespace Awaken.Contracts.Controller
 
         public override Empty MintAllowed(MintAllowedInput input)
         {
-            Assert(!State.MintGuardianPaused[input.GToken], "Mint is paused");
-            MarketVerify(input.GToken);
-            UpdatePlatformTokenSupplyIndex(input.GToken);
-            DistributeSupplierPlatformToken(input.GToken, input.Minter, false);
+            Assert(!State.MintGuardianPaused[input.AToken], "Mint is paused");
+            MarketVerify(input.AToken);
+            UpdatePlatformTokenSupplyIndex(input.AToken);
+            DistributeSupplierPlatformToken(input.AToken, input.Minter, false);
             return new Empty();
         }
 
@@ -71,9 +78,9 @@ namespace Awaken.Contracts.Controller
 
         public override Empty RedeemAllowed(RedeemAllowedInput input)
         {
-            RedeemAllowedInternal(input.GToken, input.Redeemer, input.RedeemTokens);
-            UpdatePlatformTokenSupplyIndex(input.GToken);
-            DistributeSupplierPlatformToken(input.GToken, input.Redeemer, false);
+            RedeemAllowedInternal(input.AToken, input.Redeemer, input.RedeemTokens);
+            UpdatePlatformTokenSupplyIndex(input.AToken);
+            DistributeSupplierPlatformToken(input.AToken, input.Redeemer, false);
             return new Empty();
         }
 
@@ -85,27 +92,27 @@ namespace Awaken.Contracts.Controller
 
         public override Empty BorrowAllowed(BorrowAllowedInput input)
         {
-            Assert(!State.BorrowGuardianPaused[input.GToken], "Borrow is paused");
-            MarketVerify(input.GToken);
-            if (!State.Markets[input.GToken].AccountMembership
+            Assert(!State.BorrowGuardianPaused[input.AToken], "Borrow is paused");
+            MarketVerify(input.AToken);
+            if (!State.Markets[input.AToken].AccountMembership
                 .TryGetValue(Context.Sender.ToString(), out var isExist) || !isExist)
             {
-                AddToMarketInternal(input.GToken, Context.Sender);
+                AddToMarketInternal(input.AToken, Context.Sender);
             }
             //To do:Check Price in Oracle
-            var borrowCap = State.BorrowCaps[input.GToken].Value;
+            var borrowCap = State.BorrowCaps[input.AToken].Value;
             if (borrowCap != 0)
             {
-               var totalBorrows = State.GTokenContract.GetTotalBorrows.Call(input.GToken).Value;
+               var totalBorrows = State.ATokenContract.GetTotalBorrows.Call(input.AToken).Value;
                Assert(totalBorrows.Add(input.BorrowAmount) < borrowCap,"Market borrow cap reached");
             }
             var shortfall =
-                GetHypotheticalAccountLiquidityInternal(Context.Sender, input.GToken, 0, input.BorrowAmount);
+                GetHypotheticalAccountLiquidityInternal(Context.Sender, input.AToken, 0, input.BorrowAmount);
             Assert(shortfall <= 0, "Insufficient liquidity"); //INSUFFICIENT_LIQUIDITY
-             //To do:get borrowIndex from GToken
+             //To do:get borrowIndex from AToken
             long borrowIndex = 1;
-            UpdatePlatformTokenBorrowIndex(input.GToken, borrowIndex);
-            DistributeBorrowerPlatformToken(input.GToken, input.Borrower, borrowIndex, false);
+            UpdatePlatformTokenBorrowIndex(input.AToken, borrowIndex);
+            DistributeBorrowerPlatformToken(input.AToken, input.Borrower, borrowIndex, false);
             
             return new Empty();
         }
@@ -117,11 +124,11 @@ namespace Awaken.Contracts.Controller
 
         public override Empty RepayBorrowAllowed(RepayBorrowAllowedInput input)
         {
-            MarketVerify(input.GToken);
-            //To do:get borrowIndex from GToken
+            MarketVerify(input.AToken);
+            //To do:get borrowIndex from AToken
             long borrowIndex = 1;
-            UpdatePlatformTokenBorrowIndex(input.GToken, borrowIndex);
-            DistributeBorrowerPlatformToken(input.GToken, input.Borrower, borrowIndex, false);
+            UpdatePlatformTokenBorrowIndex(input.AToken, borrowIndex);
+            DistributeBorrowerPlatformToken(input.AToken, input.Borrower, borrowIndex, false);
             return new Empty();
         }
 
@@ -132,13 +139,13 @@ namespace Awaken.Contracts.Controller
 
         public override Empty LiquidateBorrowAllowed(LiquidateBorrowAllowedInput input)
         {
-            MarketVerify(input.GTokenBorrowed);
-            MarketVerify(input.GTokenCollateral);
+            MarketVerify(input.ATokenBorrowed);
+            MarketVerify(input.ATokenCollateral);
             var shortfall = GetAccountLiquidityInternal(input.Borrower);
             Assert(shortfall > 0, "Insufficient shortfall");
-            var borrowBalance = State.GTokenContract.GetBorrowBalanceStored.Call(new Gandalf.Contracts.GToken.Account()
+            var borrowBalance = State.ATokenContract.GetBorrowBalanceStored.Call(new Awaken.Contracts.AToken.Account()
             {
-                GToken = input.GTokenBorrowed,
+                AToken = input.ATokenBorrowed,
                 User = input.Borrower
             }).Value;
             var maxClose = borrowBalance.Mul(State.CloseFactor.Value);
@@ -154,11 +161,11 @@ namespace Awaken.Contracts.Controller
         public override Empty SeizeAllowed(SeizeAllowedInput input)
         {
             Assert(!State.SeizeGuardianPaused.Value, "Seize is paused");
-            MarketVerify(input.GTokenBorrowed);
-            MarketVerify(input.GTokenCollateral);
-            UpdatePlatformTokenSupplyIndex(input.GTokenCollateral);
-            DistributeSupplierPlatformToken(input.GTokenCollateral, input.Borrower, false);
-            DistributeSupplierPlatformToken(input.GTokenCollateral,input.Liquidator,false);
+            MarketVerify(input.ATokenBorrowed);
+            MarketVerify(input.ATokenCollateral);
+            UpdatePlatformTokenSupplyIndex(input.ATokenCollateral);
+            DistributeSupplierPlatformToken(input.ATokenCollateral, input.Borrower, false);
+            DistributeSupplierPlatformToken(input.ATokenCollateral,input.Liquidator,false);
             return new Empty();
         }
 
@@ -169,10 +176,10 @@ namespace Awaken.Contracts.Controller
 
         public override Empty TransferAllowed(TransferAllowedInput input)
         {
-            RedeemAllowedInternal(input.GToken, input.Src, input.TransferTokens);
-            UpdatePlatformTokenSupplyIndex(input.GToken);
-            DistributeSupplierPlatformToken(input.GToken,input.Src,false);
-            DistributeSupplierPlatformToken(input.GToken,input.Dst,false);
+            RedeemAllowedInternal(input.AToken, input.Src, input.TransferTokens);
+            UpdatePlatformTokenSupplyIndex(input.AToken);
+            DistributeSupplierPlatformToken(input.AToken,input.Src,false);
+            DistributeSupplierPlatformToken(input.AToken,input.Dst,false);
             return base.TransferAllowed(input);
         }
 
@@ -183,12 +190,12 @@ namespace Awaken.Contracts.Controller
 
         public override Int64Value LiquidateCalculateSeizeTokens(LiquidateCalculateSeizeTokensInput input)
         {
-            var priceBorrow = GetUnderlyingPrice(input.GTokenBorrowed);
-            var priceCollateral= GetUnderlyingPrice(input.GTokenCollateral);
+            var priceBorrow = GetUnderlyingPrice(input.ATokenBorrowed);
+            var priceCollateral= GetUnderlyingPrice(input.ATokenCollateral);
            
              
             Assert(priceBorrow != 0 && priceCollateral != 0, "Error Price");
-            var exchangeRate = State.GTokenContract.GetExchangeRateStored.Call(input.GTokenCollateral).Value;
+            var exchangeRate = State.ATokenContract.GetExchangeRateStored.Call(input.ATokenCollateral).Value;
             var numerator = new BigIntValue(priceBorrow).Mul(State.LiquidationIncentive.Value);
             var denominator = new BigIntValue(priceCollateral).Mul(exchangeRate);
             var seizeTokens = numerator.Div(denominator).Mul(input.ActualRepayAmount);
@@ -199,22 +206,26 @@ namespace Awaken.Contracts.Controller
             };
         }
 
-        public override Empty SupportMarket(Address input)
+        public override Empty SupportMarket(StringValue input)
         {
             Assert(Context.Sender == State.Admin.Value, "Unauthorized");
-            var market = State.Markets[input];
+            var symbolString = GetATokenSymbol(input.Value);
+            var symbolHash = HashHelper.ComputeFrom(symbolString);
+            var symbolVirtualAddress = Context.ConvertVirtualAddressToContractAddress(symbolHash);
+            State.UnderlingMap[input.Value] = symbolVirtualAddress;
+            var market = State.Markets[symbolVirtualAddress];
             if (market != null)
             {
                 Assert(!market.IsListed, "Support market exists"); //
             }
-            State.Markets[input] = new Market()
+            State.Markets[symbolVirtualAddress] = new Market()
             {
                 IsListed = true
             };
-            AddMarketInternal(input);
+            AddMarketInternal(symbolVirtualAddress);
             Context.Fire(new MarketListed
             {
-                GToken = input
+                AToken = symbolVirtualAddress
             });
 
             return new Empty();
@@ -229,25 +240,25 @@ namespace Awaken.Contracts.Controller
 
         public override Empty ClaimPlatformToken(ClaimPlatformTokenInput input)
         {
-            foreach (var gToken in input.GTokens)
+            foreach (var aToken in input.ATokens)
             {
-                Assert(State.Markets[gToken].IsListed, "market must be listed");
+                Assert(State.Markets[aToken].IsListed, "market must be listed");
                 if (input.Borrowers)
                 {
-                    var borrowIndex = State.GTokenContract.GetBorrowIndex.Call(gToken).Value;
-                    UpdatePlatformTokenBorrowIndex(gToken, borrowIndex);
+                    var borrowIndex = State.ATokenContract.GetBorrowIndex.Call(aToken).Value;
+                    UpdatePlatformTokenBorrowIndex(aToken, borrowIndex);
                     foreach (var t in input.Holders)
                     {
-                        DistributeBorrowerPlatformToken(gToken, t, borrowIndex, true);
+                        DistributeBorrowerPlatformToken(aToken, t, borrowIndex, true);
                     }
                 }
 
                 if (!input.Suppliers) continue;
                 {
-                    UpdatePlatformTokenSupplyIndex(gToken);
+                    UpdatePlatformTokenSupplyIndex(aToken);
                     foreach (var t in input.Holders)
                     {
-                        DistributeSupplierPlatformToken(gToken, t, true);
+                        DistributeSupplierPlatformToken(aToken, t, true);
                     }
                 }
             }
@@ -256,10 +267,10 @@ namespace Awaken.Contracts.Controller
         }
 
         
-        public override Empty AddPlatformTokenMarkets(GTokens input)
+        public override Empty AddPlatformTokenMarkets(ATokens input)
         {
             Assert(Context.Sender == State.Admin.Value, "Only admin can add platformToken market");
-            foreach (var t in input.GToken)
+            foreach (var t in input.AToken)
             {
                 AddPlatformTokenMarketInternal(t);
             }
@@ -276,7 +287,7 @@ namespace Awaken.Contracts.Controller
             market.IsPlatformTokened = false;
             Context.Fire(new MarketPlatformTokened()
             {
-                GToken = input,
+                AToken = input,
                 IsPlatformTokened = false
             });
             RefreshPlatformTokenSpeedsInternal();

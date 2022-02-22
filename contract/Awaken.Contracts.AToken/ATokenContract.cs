@@ -66,25 +66,25 @@ namespace Awaken.Contracts.AToken
 
         public override Empty Mint(MintInput input)
         {
-            MintInternal(input.aToken, input.MintAmount, input.Channel);
+            MintInternal(input.AToken, input.MintAmount, input.Channel);
             return new Empty();
         }
 
         public override Empty Borrow(BorrowInput input)
         {
-            BorrowInternal(input.aToken, input.Amount, input.Channel);
+            BorrowInternal(input.AToken, input.Amount, input.Channel);
             return base.Borrow(input);
         }
 
         public override Empty Redeem(RedeemInput input)
         {
-            RedeemInternal(input.aToken, input.Amount);
+            RedeemInternal(input.AToken, input.Amount);
             return new Empty();
         }
 
         public override Empty RedeemUnderlying(RedeemUnderlyingInput input)
         {
-            RedeemUnderlyingInternal(input.aToken,input.Amount);
+            RedeemUnderlyingInternal(input.AToken,input.Amount);
             return new Empty();
         }
         public override Empty Seize(SeizeInput input)
@@ -101,7 +101,7 @@ namespace Awaken.Contracts.AToken
 
         public override Empty RepayBorrow(RepayBorrowInput input)
         {
-            RepayBorrowInternal(input.Amount,input.aToken);
+            RepayBorrowInternal(input.Amount,input.AToken);
             return new Empty();
         }
 
@@ -126,13 +126,13 @@ namespace Awaken.Contracts.AToken
 
         public override Empty SetReserveFactor(SetReserveFactorInput input)
         {
-            State.ReserveFactor[input.aToken] = input.ReserveFactor;
+            State.ReserveFactor[input.AToken] = input.ReserveFactor;
             return new Empty();
         }
 
         public override Empty SetInterestRateModel(SetInterestRateModelInput input)
         {
-            State.InterestRateModelContracts[input.aToken].Value = input.Model;
+            State.InterestRateModelContracts[input.AToken].Value = input.Model;
             return new Empty();
         }
     }

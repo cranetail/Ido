@@ -30,7 +30,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Awaken.Contracts.InterestRa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Awaken.Contracts.InterestRateModel.Tests", "test\Awaken.Contracts.InterestRateModel.Tests\Awaken.Contracts.InterestRateModel.Tests.csproj", "{3C3DF640-340E-4CD0-B61F-DCFF49B09601}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Awaken.Contracts.GToken", "contract\Awaken.Contracts.GToken\Awaken.Contracts.GToken.csproj", "{0DECA59D-4E41-49D2-BB8A-FB9802D17F69}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Awaken.Contracts.AToken", "contract\Awaken.Contracts.AToken\Awaken.Contracts.AToken.csproj", "{0DECA59D-4E41-49D2-BB8A-FB9802D17F69}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Awaken.Contracts.GToken.Tests", "test\Awaken.Contracts.GToken.Tests\Awaken.Contracts.GToken.Tests.csproj", "{A596E778-9A5E-4AFE-B637-6988FE3EA4B3}"
 EndProject
