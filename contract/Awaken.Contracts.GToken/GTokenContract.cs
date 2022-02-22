@@ -3,7 +3,7 @@ using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 using AElf.Sdk.CSharp;
 
-namespace Gandalf.Contracts.GToken
+namespace Awaken.Contracts.GToken
 {
     public partial class GTokenContract: GTokenContractContainer.GTokenContractBase
     {

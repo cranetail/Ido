@@ -5,7 +5,7 @@ using AElf.CSharp.Core;
 using Google.Protobuf.WellKnownTypes;
 
 
-namespace Gandalf.Contracts.Controller
+namespace Awaken.Contracts.Controller
 {
     public partial class ControllerContract
     {

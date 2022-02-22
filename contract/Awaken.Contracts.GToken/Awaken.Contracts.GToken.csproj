@@ -2,7 +2,6 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <!-- The root namespace -->
-        <RootNamespace>Gandalf.Contracts.Controller</RootNamespace>
         <!-- Mark this project as a contract -->
         <IsContract>true</IsContract>
     </PropertyGroup>
@@ -31,9 +30,12 @@
         <ContractReference Include="..\..\protobuf\price_contract.proto">
             <Link>Protobuf\Proto\reference\price_contract.proto</Link>
         </ContractReference>
-       
-        <ContractReference Include="..\..\protobuf\g_token_contract.proto">
-            <Link>Protobuf\Proto\reference\g_token_contract.proto</Link>
+
+        <ContractReference Include="..\..\protobuf\controller_contract.proto">
+            <Link>Protobuf\Proto\reference\controller_contract.proto</Link>
+        </ContractReference>
+        <ContractReference Include="..\..\protobuf\interest_rate_model_contract.proto">
+            <Link>Protobuf\Proto\reference\interest_rate_model_contract.proto</Link>
         </ContractReference>
         <ContractReference Include="..\..\protobuf\token_contract.proto">
             <Link>Protobuf\Proto\reference\token_contract.proto</Link>
@@ -41,8 +43,8 @@
     </ItemGroup>
     <ItemGroup>
         <!-- Reference the protobuf definition of the contract -->
-        <ContractCode Include="..\..\protobuf\controller_contract.proto">
-            <Link>Protobuf\Proto\controller_contract.proto</Link>
+        <ContractCode Include="..\..\protobuf\g_token_contract.proto">
+            <Link>Protobuf\Proto\g_token_contract.proto</Link>
         </ContractCode>
     </ItemGroup>
 </Project>

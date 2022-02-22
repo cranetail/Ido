@@ -5,7 +5,7 @@ using AElf.Types;
 using AElf.CSharp.Core;
 
 
-namespace Gandalf.Contracts.Controller
+namespace Awaken.Contracts.Controller
 {
     public partial class ControllerContract
     {
@@ -57,7 +57,7 @@ namespace Gandalf.Contracts.Controller
             {
                 var gToken = assets.Assets[i];
                 // Read the balances and exchange rate from the cToken
-                var accountSnapshot = State.GTokenContract.GetAccountSnapshot.Call(new GToken.Account()
+                var accountSnapshot = State.GTokenContract.GetAccountSnapshot.Call(new Gandalf.Contracts.GToken.Account()
                 {
                     GToken = gToken,
                     User = account

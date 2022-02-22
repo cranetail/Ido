@@ -6,7 +6,7 @@ using AElf.Types;
 using Gandalf.Contracts.Controller;
 using Gandalf.Contracts.InterestRateModel;
 
-namespace Gandalf.Contracts.GToken
+namespace Awaken.Contracts.GToken
 {
     public partial class GTokenContract
     {

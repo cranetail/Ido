@@ -1,8 +1,9 @@
 using AElf.Sdk.CSharp.State;
 using AElf.Types;
+using Gandalf.Contracts.GToken;
 using Google.Protobuf.WellKnownTypes;
 
-namespace Gandalf.Contracts.Controller
+namespace Awaken.Contracts.Controller
 {
     /// <summary>
     /// The state class of the contract, it inherits from the AElf.Sdk.CSharp.State.ContractState type. 
@@ -11,7 +12,7 @@ namespace Gandalf.Contracts.Controller
     {
         internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractReferenceState TokenContract { get; set; }
         
-        internal GToken.GTokenContractContainer.GTokenContractReferenceState GTokenContract { get; set; }
+        internal GTokenContractContainer.GTokenContractReferenceState GTokenContract { get; set; }
 
         internal AElf.Contracts.Price.PriceContractContainer.PriceContractReferenceState PriceContract { get; set; }
         /// <summary>

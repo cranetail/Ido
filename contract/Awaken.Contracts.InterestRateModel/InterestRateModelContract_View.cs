@@ -1,9 +1,10 @@
 using System;
 using AElf.CSharp.Core;
+using AElf.Sdk.CSharp;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 
-namespace Gandalf.Contracts.InterestRateModel
+namespace Awaken.Contracts.InterestRateModel
 {
     public partial class InterestRateModelContract
     {
@@ -23,9 +24,14 @@ namespace Gandalf.Contracts.InterestRateModel
             var borrowRate = GetBorrowRateInternal(input.Cash, input.Borrows, input.Reserves).Value;
             var rateToPool = new BigIntValue(borrowRate).Mul(oneMinusReserveFactor).Div(Mantissa);
             var util = GetUtilizationRateInternal(input.Cash, input.Borrows, input.Reserves).Value;
+            var supplyRateStr = new BigIntValue(util).Mul(rateToPool).Div(Mantissa).Value;
+            if (!long.TryParse(supplyRateStr, out var supplyRate))
+            {
+                throw new AssertionException($"Failed to parse {supplyRateStr}");
+            }
             return new Int64Value()
             {
-                Value = Convert.ToInt64(new BigIntValue(util).Mul(rateToPool).Div(Mantissa).Value)
+                Value = supplyRate
             };
 
         }
@@ -60,6 +66,11 @@ namespace Gandalf.Contracts.InterestRateModel
             {
                 Value = State.JumpMultiplierPerBlock.Value
             };
+        }
+
+        public override Address GetOwner(Empty input)
+        {
+            return State.Owner.Value;
         }
     }
 }

@@ -4,7 +4,7 @@ using AElf.CSharp.Core;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 using AElf.Sdk.CSharp;
-namespace Gandalf.Contracts.Controller
+namespace Awaken.Contracts.Controller
 {
     /// <summary>
     /// The C# implementation of the contract defined in controller_contract.proto that is located in the "protobuf"
@@ -28,7 +28,7 @@ namespace Gandalf.Contracts.Controller
         public override Empty ExitMarket(Address gToken)
         {
             // MarketVerify(input.Value);
-          var   result =State.GTokenContract.GetAccountSnapshot.Call(new GToken.Account()
+          var   result =State.GTokenContract.GetAccountSnapshot.Call(new Gandalf.Contracts.GToken.Account()
              {
                  GToken = gToken,
                  User = Context.Sender
@@ -136,7 +136,7 @@ namespace Gandalf.Contracts.Controller
             MarketVerify(input.GTokenCollateral);
             var shortfall = GetAccountLiquidityInternal(input.Borrower);
             Assert(shortfall > 0, "Insufficient shortfall");
-            var borrowBalance = State.GTokenContract.GetBorrowBalanceStored.Call(new GToken.Account()
+            var borrowBalance = State.GTokenContract.GetBorrowBalanceStored.Call(new Gandalf.Contracts.GToken.Account()
             {
                 GToken = input.GTokenBorrowed,
                 User = input.Borrower

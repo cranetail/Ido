@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.1</TargetFramework>
-        <RootNamespace>Gandalf.Contracts.InterestRateModel</RootNamespace>
+        <RootNamespace>Awaken.Contracts.InterestRateModel</RootNamespace>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
@@ -27,6 +27,9 @@
         <PackageReference Include="AElf.ContractTestBase" Version="1.0.0" />
     </ItemGroup>
     <ItemGroup>
+        <ContractStub Include="..\..\protobuf\acs0.proto">
+            <Link>Protobuf\Proto\acs0.proto</Link>
+        </ContractStub>
         <ContractMessage Include="..\..\protobuf\authority_info.proto">
             <Link>Protobuf\Proto\authority_info.proto</Link>
         </ContractMessage>
@@ -38,7 +41,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\contract\Gandalf.Contracts.InterestRateModel\Gandalf.Contracts.InterestRateModel.csproj" />
+        <ProjectReference Include="..\..\contract\Awaken.Contracts.InterestRateModel\Awaken.Contracts.InterestRateModel.csproj" />
         <ProjectReference Include="..\..\src\AElf.Boilerplate.TestBase\AElf.Boilerplate.TestBase.csproj" />
     </ItemGroup>
 

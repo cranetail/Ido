@@ -4,19 +4,23 @@ using AElf.Sdk.CSharp;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 
-namespace Gandalf.Contracts.InterestRateModel
+namespace Awaken.Contracts.InterestRateModel
 {
     public partial class InterestRateModelContract
     {
         private Empty UpdateJumpRateModelInputInternal(long baseRatePerYear, long multiplierPerYear, long jumpMultiplierPerYear, long kink)
         {
             var newBaseRatePerBlock =  baseRatePerYear.Div(BlocksPerYear);
-            var newMultiplierPerBlock = Convert.ToInt64(new BigIntValue(multiplierPerYear).Mul(Mantissa).Div(new BigIntValue(BlocksPerYear).Mul(kink)).Value) ;
+            var newMultiplierPerBlockStr =  new BigIntValue(multiplierPerYear).Mul(Mantissa).Div(new BigIntValue(BlocksPerYear).Mul(kink)).Value ;
             var newJumpMultiplierPerBlock = jumpMultiplierPerYear.Div(BlocksPerYear);
-
+            
+            if (!long.TryParse(newMultiplierPerBlockStr, out var newMultiplierPerBlock))
+            {
+                throw new AssertionException($"Failed to parse {newMultiplierPerBlockStr}");
+            }
             State.BaseRatePerBlock.Value = newBaseRatePerBlock;
-            State.JumpMultiplierPerBlock.Value = newJumpMultiplierPerBlock;
             State.MultiplierPerBlock.Value = newMultiplierPerBlock;
+            State.JumpMultiplierPerBlock.Value = newJumpMultiplierPerBlock;
             State.Kink.Value = kink;
             
             Context.Fire(new NewInterestParams()
@@ -39,11 +43,15 @@ namespace Gandalf.Contracts.InterestRateModel
                 };
             }
 
-            var utilizationRate = new BigIntValue(borrows).Mul(Mantissa)
-                .Div(cash.Add(borrows).Sub(reserves));
+            var utilizationRateStr = new BigIntValue(borrows).Mul(Mantissa)
+                .Div(cash.Add(borrows).Sub(reserves)).Value;
+            if (!long.TryParse(utilizationRateStr, out var utilizationRate))
+            {
+                throw new AssertionException($"Failed to parse {utilizationRateStr}");
+            }
             return new Int64Value()
             {
-                Value = Convert.ToInt64(utilizationRate.Value)
+                Value = utilizationRate
             };
         }
 
@@ -53,11 +61,15 @@ namespace Gandalf.Contracts.InterestRateModel
              
             if (util.Value <= State.Kink.Value)
             {
-            
+                var borrowRateStr = new BigIntValue(State.Kink.Value).Mul(State.MultiplierPerBlock.Value).Div(Mantissa)
+                    .Add(State.BaseRatePerBlock.Value).Value;
+                if (!long.TryParse(borrowRateStr, out var borrowRate))
+                {
+                    throw new AssertionException($"Failed to parse {borrowRateStr}");
+                }
                 return new Int64Value()
                 {
-                    Value = Convert.ToInt64(new BigIntValue(State.Kink.Value).Mul(State.MultiplierPerBlock.Value).Div(Mantissa)
-                        .Add(State.BaseRatePerBlock.Value).Value) 
+                    Value = borrowRate
                 };
             }
             else
@@ -65,11 +77,15 @@ namespace Gandalf.Contracts.InterestRateModel
                 var normalRate = new BigIntValue(State.Kink.Value).Mul(State.MultiplierPerBlock.Value).Div(Mantissa)
                     .Add(State.BaseRatePerBlock.Value);
                 var excessUtil = new BigIntValue(util.Value.Sub(State.Kink.Value));
-               
+                var borrowRateStr = excessUtil.Mul(State.JumpMultiplierPerBlock.Value).Div(Mantissa)
+                    .Add(normalRate).Value;
+                if (!long.TryParse(borrowRateStr, out var borrowRate))
+                {
+                    throw new AssertionException($"Failed to parse {borrowRateStr}");
+                }
                 return new Int64Value()
                 {
-                    Value = Convert.ToInt64(excessUtil.Mul(State.JumpMultiplierPerBlock.Value).Div(Mantissa)
-                        .Add(normalRate).Value)
+                    Value = borrowRate
                 };
             }
         }

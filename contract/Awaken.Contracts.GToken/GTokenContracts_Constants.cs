@@ -1,4 +1,4 @@
-namespace Gandalf.Contracts.GToken
+namespace Awaken.Contracts.GToken
 {
     public  partial class GTokenContract
     {

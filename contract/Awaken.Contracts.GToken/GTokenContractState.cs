@@ -1,18 +1,20 @@
 using AElf.Sdk.CSharp.State;
 using AElf.Types;
+using Gandalf.Contracts.Controller;
+using Gandalf.Contracts.InterestRateModel;
 
-namespace Gandalf.Contracts.GToken
+namespace Awaken.Contracts.GToken
 {
     public class GTokenContractState:ContractState
     {
         internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractReferenceState TokenContract { get; set; }
         
-        internal MappedState<Address,InterestRateModel.InterestRateModelContractContainer.InterestRateModelContractReferenceState> InterestRateModelContracts
+        internal MappedState<Address,InterestRateModelContractContainer.InterestRateModelContractReferenceState> InterestRateModelContracts
         {
             get;
             set;
         } 
-        internal Controller.ControllerContractContainer.ControllerContractReferenceState ControllerContract { get;
+        internal ControllerContractContainer.ControllerContractReferenceState ControllerContract { get;
             set;
         }
         public SingletonState<Address> Admin { get; set; }

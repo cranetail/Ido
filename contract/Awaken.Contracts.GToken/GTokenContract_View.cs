@@ -6,7 +6,7 @@ using AElf.Types;
 using Gandalf.Contracts.InterestRateModel;
 using Google.Protobuf.WellKnownTypes;
 
-namespace Gandalf.Contracts.GToken
+namespace Awaken.Contracts.GToken
 {
     public partial class GTokenContract
     {

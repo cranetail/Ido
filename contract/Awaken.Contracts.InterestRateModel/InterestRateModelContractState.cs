@@ -1,7 +1,7 @@
 using AElf.Sdk.CSharp.State;
 using AElf.Types;
 
-namespace Gandalf.Contracts.InterestRateModel
+namespace Awaken.Contracts.InterestRateModel
 {
     public class InterestRateModelContractState: ContractState
     {

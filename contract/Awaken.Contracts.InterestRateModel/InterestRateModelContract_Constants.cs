@@ -1,10 +1,10 @@
 using Google.Protobuf.WellKnownTypes;
 
-namespace Gandalf.Contracts.InterestRateModel
+namespace Awaken.Contracts.InterestRateModel
 {
     public partial class InterestRateModelContract
     {
-        private const int BlocksPerYear = 2102400;
+        private const int BlocksPerYear = 63072000; //365 * 24 * 60 * 60 * 2
 
         private const long Mantissa = 1000000000000000000;
     }
