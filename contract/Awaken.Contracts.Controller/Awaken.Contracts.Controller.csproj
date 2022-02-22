@@ -31,8 +31,8 @@
             <Link>Protobuf\Proto\reference\price_contract.proto</Link>
         </ContractReference>
        
-        <ContractReference Include="..\..\protobuf\g_token_contract.proto">
-            <Link>Protobuf\Proto\reference\g_token_contract.proto</Link>
+        <ContractReference Include="..\..\protobuf\a_token_contract.proto">
+            <Link>Protobuf\Proto\reference\a_token_contract.proto</Link>
         </ContractReference>
         <ContractReference Include="..\..\protobuf\token_contract.proto">
             <Link>Protobuf\Proto\reference\token_contract.proto</Link>

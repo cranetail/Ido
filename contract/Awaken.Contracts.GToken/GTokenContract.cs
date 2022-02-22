@@ -3,9 +3,9 @@ using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 using AElf.Sdk.CSharp;
 
-namespace Awaken.Contracts.GToken
+namespace Awaken.Contracts.AToken
 {
-    public partial class GTokenContract: GTokenContractContainer.GTokenContractBase
+    public partial class ATokenContract: ATokenContractContainer.ATokenContractBase
     {
         public override Empty Initialize(Empty input)
         {
@@ -14,11 +14,11 @@ namespace Awaken.Contracts.GToken
             return new Empty();
         }
 
-        public override Empty AccrueInterest(Address gToken)
+        public override Empty AccrueInterest(Address aToken)
         {
             /* Remember the initial block number */
             var currentBlockNumber = Context.CurrentHeight;
-            var accrualBlockNumberPrior = State.AccrualBlockNumbers[gToken];
+            var accrualBlockNumberPrior = State.AccrualBlockNumbers[aToken];
             if (accrualBlockNumberPrior == currentBlockNumber)
             {
                 return new Empty();
@@ -32,28 +32,28 @@ namespace Awaken.Contracts.GToken
                *  totalReservesNew = interestAccumulated * reserveFactor + totalReserves
                *  borrowIndexNew = simpleInterestFactor * borrowIndex + borrowIndex
                */
-            var cashPrior = GetCashPrior(gToken);
-            var borrowPrior = State.TotalBorrows[gToken];
-            var reservesPrior = State.TotalReserves[gToken];
-            var borrowIndexPrior = State.BorrowIndex[gToken];
-            var supplyRate = GetSupplyRatePerBlockInternal(gToken);
-            var borrowRate = GetBorrowRatePerBlockInternal(gToken);
+            var cashPrior = GetCashPrior(aToken);
+            var borrowPrior = State.TotalBorrows[aToken];
+            var reservesPrior = State.TotalReserves[aToken];
+            var borrowIndexPrior = State.BorrowIndex[aToken];
+            var supplyRate = GetSupplyRatePerBlockInternal(aToken);
+            var borrowRate = GetBorrowRatePerBlockInternal(aToken);
             Assert(borrowRate <= MaxBorrowRate, "BorrowRate is higher than MaxBorrowRate");
             //Calculate the number of blocks elapsed since the last accrual 
-            var blockDelta = Context.CurrentHeight.Sub(State.AccrualBlockNumbers[gToken]);
+            var blockDelta = Context.CurrentHeight.Sub(State.AccrualBlockNumbers[aToken]);
             var simpleInterestFactor = borrowRate * blockDelta;
             var interestAccumulated = simpleInterestFactor * borrowPrior;
             var totalBorrowsNew = interestAccumulated + borrowPrior;
-            var totalReservesNew = State.ReserveFactor[gToken] * interestAccumulated +
+            var totalReservesNew = State.ReserveFactor[aToken] * interestAccumulated +
                                    reservesPrior;
             var borrowIndexNew = simpleInterestFactor * borrowIndexPrior + borrowIndexPrior;
-            State.AccrualBlockNumbers[gToken] = currentBlockNumber;
-            State.BorrowIndex[gToken] = borrowIndexNew;
-            State.TotalBorrows[gToken] = totalBorrowsNew;
-            State.TotalReserves[gToken] = totalReservesNew;
+            State.AccrualBlockNumbers[aToken] = currentBlockNumber;
+            State.BorrowIndex[aToken] = borrowIndexNew;
+            State.TotalBorrows[aToken] = totalBorrowsNew;
+            State.TotalReserves[aToken] = totalReservesNew;
             Context.Fire(new AccrueInterest()
             {
-                Symbol = gToken,
+                Symbol = aToken,
                 Cash = cashPrior,
                 InterestAccumulated = decimal.ToInt64(interestAccumulated),
                 BorrowIndex = borrowIndexNew,
@@ -66,25 +66,25 @@ namespace Awaken.Contracts.GToken
 
         public override Empty Mint(MintInput input)
         {
-            MintInternal(input.GToken, input.MintAmount, input.Channel);
+            MintInternal(input.aToken, input.MintAmount, input.Channel);
             return new Empty();
         }
 
         public override Empty Borrow(BorrowInput input)
         {
-            BorrowInternal(input.GToken, input.Amount, input.Channel);
+            BorrowInternal(input.aToken, input.Amount, input.Channel);
             return base.Borrow(input);
         }
 
         public override Empty Redeem(RedeemInput input)
         {
-            RedeemInternal(input.GToken, input.Amount);
+            RedeemInternal(input.aToken, input.Amount);
             return new Empty();
         }
 
         public override Empty RedeemUnderlying(RedeemUnderlyingInput input)
         {
-            RedeemUnderlyingInternal(input.GToken,input.Amount);
+            RedeemUnderlyingInternal(input.aToken,input.Amount);
             return new Empty();
         }
         public override Empty Seize(SeizeInput input)
@@ -101,7 +101,7 @@ namespace Awaken.Contracts.GToken
 
         public override Empty RepayBorrow(RepayBorrowInput input)
         {
-            RepayBorrowInternal(input.Amount,input.GToken);
+            RepayBorrowInternal(input.Amount,input.aToken);
             return new Empty();
         }
 
@@ -126,13 +126,13 @@ namespace Awaken.Contracts.GToken
 
         public override Empty SetReserveFactor(SetReserveFactorInput input)
         {
-            State.ReserveFactor[input.GToken] = input.ReserveFactor;
+            State.ReserveFactor[input.aToken] = input.ReserveFactor;
             return new Empty();
         }
 
         public override Empty SetInterestRateModel(SetInterestRateModelInput input)
         {
-            State.InterestRateModelContracts[input.GToken].Value = input.Model;
+            State.InterestRateModelContracts[input.aToken].Value = input.Model;
             return new Empty();
         }
     }

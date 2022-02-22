@@ -43,8 +43,8 @@
     </ItemGroup>
     <ItemGroup>
         <!-- Reference the protobuf definition of the contract -->
-        <ContractCode Include="..\..\protobuf\g_token_contract.proto">
-            <Link>Protobuf\Proto\g_token_contract.proto</Link>
+        <ContractCode Include="..\..\protobuf\a_token_contract.proto">
+            <Link>Protobuf\Proto\a_token_contract.proto</Link>
         </ContractCode>
     </ItemGroup>
 </Project>

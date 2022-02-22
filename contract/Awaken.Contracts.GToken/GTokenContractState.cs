@@ -1,11 +1,11 @@
 using AElf.Sdk.CSharp.State;
 using AElf.Types;
-using Gandalf.Contracts.Controller;
-using Gandalf.Contracts.InterestRateModel;
+using Awaken.Contracts.Controller;
+using Awaken.Contracts.InterestRateModel;
 
-namespace Awaken.Contracts.GToken
+namespace Awaken.Contracts.AToken
 {
-    public class GTokenContractState:ContractState
+    public class ATokenContractState:ContractState
     {
         internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractReferenceState TokenContract { get; set; }
         
@@ -23,7 +23,7 @@ namespace Awaken.Contracts.GToken
         /// </summary>
         public SingletonState<Address> PendingAdmin { get; set; }
         
-        public MappedState<string, Address> GTokenAddress { get; set; }
+        public MappedState<string, Address> ATokenAddress { get; set; }
         
         public MappedState<Address, long> AccrualBlockNumbers { get; set; }
         /// <summary>

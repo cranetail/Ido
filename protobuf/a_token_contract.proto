@@ -11,10 +11,10 @@ import "acs2.proto";
 import "transaction_fee.proto";
 import "authority_info.proto";
 
-option csharp_namespace = "Gandalf.Contracts.GToken";
+option csharp_namespace = "Awaken.Contracts.AToken";
 
-service GTokenContract {
-    option (aelf.csharp_state) = "Gandalf.Contracts.GToken.GTokenContractState";
+service ATokenContract {
+    option (aelf.csharp_state) = "Awaken.Contracts.AToken.ATokenContractState";
     
     // Actions
     rpc Initialize(google.protobuf.Empty)returns(google.protobuf.Empty){
@@ -145,7 +145,7 @@ service GTokenContract {
 
 // Structs
 message Account{
-    aelf.Address g_token = 1;
+    aelf.Address a_token = 1;
     aelf.Address user = 2;
 }
 
@@ -156,30 +156,30 @@ message BorrowSnapshot {
 
 // Inputs
 message MintInput{
-    aelf.Address g_token = 1;
+    aelf.Address a_token = 1;
     int64 mint_amount=2; 
     string channel=3; 
 }
 
 message RedeemInput{
-    aelf.Address g_token = 1;
+    aelf.Address a_token = 1;
     int64 amount = 2; 
 }
 message RedeemUnderlyingInput{
-    aelf.Address g_token = 1;
+    aelf.Address a_token = 1;
     int64 amount = 2; 
 }
 message BorrowInput{
-    aelf.Address g_token = 1;
+    aelf.Address a_token = 1;
     int64 amount = 2; 
     string channel=3; 
 }
 message RepayBorrowInput{
-    aelf.Address g_token = 1;
+    aelf.Address a_token = 1;
     int64 amount = 2; 
 }
 message RepayBorrowBehalfInput{
-    aelf.Address g_token = 1; 
+    aelf.Address a_token = 1; 
     int64 amount = 2; 
     aelf.Address borrower = 3; 
 }
@@ -190,7 +190,7 @@ message LiquidateBorrowInput{
     aelf.Address borrower = 4; 
 }
 message AddReservesInput{
-      aelf.Address g_token = 1; 
+      aelf.Address a_token = 1; 
     int64 amount = 2; 
 }
 message SeizeInput{
@@ -201,17 +201,17 @@ message SeizeInput{
     int64 seizeTokens=5;
 }
 message SetInterestRateModelInput{
-    aelf.Address g_token = 1;
+    aelf.Address a_token = 1;
     aelf.Address model = 2;
 }
 
 message SetReserveFactorInput{
-    aelf.Address g_token = 1;
+    aelf.Address a_token = 1;
     int64 reserve_factor = 2;
 }
 //output
 message GetAccountSnapshotOutput{
-    int64 g_token_balance = 1;
+    int64 a_token_balance = 1;
     int64 borrow_balance = 2;
     int64 exchange_rate = 3;
 }

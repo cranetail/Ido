@@ -3,79 +3,79 @@ using AElf.Contracts.MultiToken;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
 using AElf.Types;
-using Gandalf.Contracts.Controller;
-using Gandalf.Contracts.InterestRateModel;
+using Awaken.Contracts.Controller;
+using Awaken.Contracts.InterestRateModel;
 
-namespace Awaken.Contracts.GToken
+namespace Awaken.Contracts.AToken
 {
-    public partial class GTokenContract
+    public partial class ATokenContract
     {
-        private void MintInternal(Address gToken, long amount, string channel)
+        private void MintInternal(Address aToken, long amount, string channel)
         {
-            AccrueInterest(gToken);
-            MintFresh(gToken, amount, channel);
+            AccrueInterest(aToken);
+            MintFresh(aToken, amount, channel);
         }
 
-        private void MintFresh(Address gToken, long amount, string channel)
+        private void MintFresh(Address aToken, long amount, string channel)
         {
             State.ControllerContract.MintAllowed.Send(new MintAllowedInput()
             {
-                GToken = gToken,
+                AToken = aToken,
                 MintAmount = amount,
                 Minter = Context.Self
             });
-            Assert(State.AccrualBlockNumbers[gToken] == Context.CurrentHeight,"Market's block number should equals current block number");
-            var exchangeRate = ExchangeRateStoredInternal(gToken);
-            DoTransferIn(Context.Sender, amount, State.Underlying[gToken]);
+            Assert(State.AccrualBlockNumbers[aToken] == Context.CurrentHeight,"Market's block number should equals current block number");
+            var exchangeRate = ExchangeRateStoredInternal(aToken);
+            DoTransferIn(Context.Sender, amount, State.Underlying[aToken]);
             //  mintTokens = actualMintAmount / exchangeRate
             var mintTokens =amount.Div(exchangeRate) ;
             // totalSupplyNew = totalSupply + mintTokens
-            var totalSupplyNew = State.TotalSupply[gToken].Add(mintTokens);
+            var totalSupplyNew = State.TotalSupply[aToken].Add(mintTokens);
             //accountTokensNew = accountTokens[minter] + mintTokens
-            var accountTokensNew = State.AccountTokens[gToken][Context.Sender].Add(mintTokens);
-            State.TotalSupply[gToken] = totalSupplyNew;
-            State.AccountTokens[gToken][Context.Sender] = accountTokensNew;
+            var accountTokensNew = State.AccountTokens[aToken][Context.Sender].Add(mintTokens);
+            State.TotalSupply[aToken] = totalSupplyNew;
+            State.AccountTokens[aToken][Context.Sender] = accountTokensNew;
             Context.Fire(new Mint()
             {
                 Address = Context.Sender,
                 Amount = amount,
                 CTokenAmount = mintTokens,
-                Symbol = gToken
+                Symbol = aToken
             });
         }
 
       
-        private long GetCashPrior(Address gToken)
+        private long GetCashPrior(Address aToken)
         {
              
             var result = State.TokenContract.GetBalance.Call(new GetBalanceInput()
             {
                 Owner = Context.Self,
-                Symbol = State.Underlying[gToken]
+                Symbol = State.Underlying[aToken]
             });
             return result.Balance;
         }
 
-        private long GetSupplyRatePerBlockInternal(Address gToken)
+        private long GetSupplyRatePerBlockInternal(Address aToken)
         {
-            var totalCash = GetCashPrior(gToken);
-            var totalBorrow = State.TotalBorrows[gToken];
-            var totalReserves = State.TotalReserves[gToken];
-            return State.InterestRateModelContracts[gToken].GetSupplyRate.Call(new GetSupplyRateInput()
+            var totalCash = GetCashPrior(aToken);
+            var totalBorrow = State.TotalBorrows[aToken];
+            var totalReserves = State.TotalReserves[aToken];
+            return State.InterestRateModelContracts[aToken].GetSupplyRate.Call(new GetSupplyRateInput()
             {
                 Cash = totalCash,
                 Borrows = totalBorrow,
                 Reserves = totalReserves,
-                ReserveFactor = State.ReserveFactor[gToken]
+                ReserveFactor = State.ReserveFactor[aToken]
             }).Value;
         }
 
-        private long GetBorrowRatePerBlockInternal(Address gToken)
+        private long GetBorrowRatePerBlockInternal(Address aToken)
         {
-            var totalCash = GetCashPrior(gToken);
-            var totalBorrow = State.TotalBorrows[gToken];
-            var totalReserves = State.TotalReserves[gToken];
-            return State.InterestRateModelContracts[gToken].GetBorrowRate.Call(new GetBorrowRateInput()
+            var totalCash = GetCashPrior(aToken);
+            var totalBorrow = State.TotalBorrows[aToken];
+            var totalReserves = State.TotalReserves[aToken];
+            return State.InterestRateModelContracts[aToken].GetBorrowRate.Call(new GetBorrowRateInput()
             {
                 Cash = totalCash,
                 Borrows = totalBorrow,
@@ -83,15 +83,15 @@ namespace Awaken.Contracts.GToken
             }).Value;
         }
 
-        private long ExchangeRateStoredInternal(Address gToken)
+        private long ExchangeRateStoredInternal(Address aToken)
         {
-            var totalSupply = State.TotalSupply[gToken];
-            var totalCash = GetCashPrior(gToken);
-            var totalBorrow = State.TotalBorrows[gToken];
-            var totalReserves = State.TotalReserves[gToken];
+            var totalSupply = State.TotalSupply[aToken];
+            var totalCash = GetCashPrior(aToken);
+            var totalBorrow = State.TotalBorrows[aToken];
+            var totalReserves = State.TotalReserves[aToken];
             if (totalSupply == 0)
             {
-                return State.InitialExchangeRate[gToken];
+                return State.InitialExchangeRate[aToken];
             }
 
             // exchangeRate = (totalCash + totalBorrows - totalReserves) / totalSupply
@@ -124,27 +124,27 @@ namespace Awaken.Contracts.GToken
             State.TokenContract.Transfer.Send(input);
         }
         
-        private void BorrowInternal(Address gToken, long amount, string channel)
+        private void BorrowInternal(Address aToken, long amount, string channel)
         {
-            AccrueInterest(gToken);
-            BorrowFresh(Context.Sender, amount, gToken, channel);
+            AccrueInterest(aToken);
+            BorrowFresh(Context.Sender, amount, aToken, channel);
         }
 
-        private void BorrowFresh(Address borrower, long borrowAmount, Address gToken,  string channel)
+        private void BorrowFresh(Address borrower, long borrowAmount, Address aToken,  string channel)
         {
             State.ControllerContract.BorrowAllowed.Send(new BorrowAllowedInput()
             {
                 BorrowAmount = borrowAmount,
                 Borrower = borrower,
-                GToken = gToken
+                AToken = aToken
             });
-            Assert(State.AccrualBlockNumbers[gToken] == Context.CurrentHeight,"Market's block number should equals current block number");
-            Assert(GetCashPrior(gToken) >= borrowAmount, "Borrow cash not available");
+            Assert(State.AccrualBlockNumbers[aToken] == Context.CurrentHeight,"Market's block number should equals current block number");
+            Assert(GetCashPrior(aToken) >= borrowAmount, "Borrow cash not available");
         }
 
         private BigIntValue BorrowBalanceStoredInternal(Account input)
         {
-            BorrowSnapshot borrowSnapshot = State.AccountBorrows[input.GToken][input.User];
+            BorrowSnapshot borrowSnapshot = State.AccountBorrows[input.A][input.User];
             if (borrowSnapshot == null)
             {
                 return 0;
@@ -157,7 +157,7 @@ namespace Awaken.Contracts.GToken
 
             //Calculate new borrow balance using the interest index:
             //recentBorrowBalance = borrower.borrowBalance * market.borrowIndex / borrower.borrowIndex
-            var borrowIndex = State.BorrowIndex[input.GToken];
+            var borrowIndex = State.BorrowIndex[input.AToken];
             if (borrowSnapshot.InterestIndex == 0)
             {
                 return 0;
@@ -167,21 +167,21 @@ namespace Awaken.Contracts.GToken
             return result;
         }
 
-        private void RedeemInternal(Address gToken, long redeemTokens)
+        private void RedeemInternal(Address aToken, long redeemTokens)
         {
-            AccrueInterest(gToken);
-            RedeemFresh(gToken, Context.Sender, redeemTokens, 0);
+            AccrueInterest(aToken);
+            RedeemFresh(aToken, Context.Sender, redeemTokens, 0);
         }
 
-        private void RedeemUnderlyingInternal(Address gToken, long redeemAmount)
+        private void RedeemUnderlyingInternal(Address aToken, long redeemAmount)
         {
-            AccrueInterest(gToken);
-            RedeemFresh(gToken, Context.Sender, 0, redeemAmount);
+            AccrueInterest(aToken);
+            RedeemFresh(aToken, Context.Sender, 0, redeemAmount);
         }
-        private void RedeemFresh(Address gToken, Address redeemer, long redeemTokensIn, long redeemAmountIn)
+        private void RedeemFresh(Address aToken, Address redeemer, long redeemTokensIn, long redeemAmountIn)
         {
             Assert(redeemTokensIn == 0 || redeemAmountIn == 0, "one of redeemTokensIn or redeemAmountIn must be zero");
-            var exchangeRate = ExchangeRateStoredInternal(gToken);
+            var exchangeRate = ExchangeRateStoredInternal(aToken);
             long redeemTokens;
             long redeemAmount;
             if (redeemTokensIn > 0)
@@ -196,31 +196,31 @@ namespace Awaken.Contracts.GToken
             }
             State.ControllerContract.RedeemAllowed.Send(new RedeemAllowedInput()
             {
-                GToken = gToken,
+                AToken = aToken,
                 Redeemer = redeemer,
                 RedeemTokens = redeemTokens
             });
-            var accrualBlockNumberPrior = State.AccrualBlockNumbers[gToken];
+            var accrualBlockNumberPrior = State.AccrualBlockNumbers[aToken];
             Assert(accrualBlockNumberPrior == Context.CurrentHeight,
                 "market's block number should equals current block number");
             //totalSupplyNew = totalSupply - redeemTokens
             //accountTokensNew = accountTokensRedeemFresh[redeemer] - redeemTokens
             //to do:send burn to token contract to burn Atoken
-            var totalSupplyNew = State.TotalSupply[gToken].Sub(redeemTokens);
-            var accountTokensNew = State.AccountTokens[gToken][Context.Sender].Sub(redeemTokens);
+            var totalSupplyNew = State.TotalSupply[aToken].Sub(redeemTokens);
+            var accountTokensNew = State.AccountTokens[aToken][Context.Sender].Sub(redeemTokens);
             
-            Assert(GetCashPrior(gToken) >= redeemAmount, "Insufficient Token Cash");
+            Assert(GetCashPrior(aToken) >= redeemAmount, "Insufficient Token Cash");
             Assert(accountTokensNew >= 0, "Insufficient Token Balance");
-            var underlying = State.Underlying[gToken];
-            DoTransferOut(gToken, redeemAmount, underlying );
+            var underlying = State.Underlying[aToken];
+            DoTransferOut(aToken, redeemAmount, underlying );
             
             //We write previously calculated values into storage
-            State.TotalSupply[gToken] = totalSupplyNew;
-            State.AccountTokens[gToken][redeemer] = accountTokensNew;
+            State.TotalSupply[aToken] = totalSupplyNew;
+            State.AccountTokens[aToken][redeemer] = accountTokensNew;
             
             State.ControllerContract.RedeemVerify.Send(new RedeemVerifyInput()
             {
-                GToken = gToken,
+                AToken = aToken,
                 Minter = redeemer,
                 RedeemAmount = redeemAmount,
                 RedeemTokens = redeemTokens
@@ -231,7 +231,7 @@ namespace Awaken.Contracts.GToken
                 Address = redeemer,
                 Amount = redeemAmount,
                 CTokenAmount = redeemTokens,
-                Symbol = gToken
+                Symbol = aToken
             });
         }
 
@@ -239,8 +239,8 @@ namespace Awaken.Contracts.GToken
         {
             State.ControllerContract.SeizeAllowed.Send(new SeizeAllowedInput()
             {
-                GTokenBorrowed = collateralToken,
-                GTokenCollateral = seizerToken,
+                ATokenBorrowed = collateralToken,
+                ATokenCollateral = seizerToken,
                 Borrower = borrower,
                 Liquidator = liquidator,
                 SeizeTokens = seizeTokens
@@ -254,8 +254,8 @@ namespace Awaken.Contracts.GToken
             State.ControllerContract.SeizeVerify.Send(new SeizeVerifyInput()
             {
                 Borrower = borrower,
-                GTokenBorrowed = collateralToken,
-                GTokenCollateral = seizerToken,
+                ATokenBorrowed = collateralToken,
+                ATokenCollateral = seizerToken,
                 Liquidator = liquidator,
                 SeizeTokens = seizeTokens
             });
@@ -274,8 +274,8 @@ namespace Awaken.Contracts.GToken
         {
             State.ControllerContract.LiquidateBorrowAllowed.Send(new LiquidateBorrowAllowedInput()
             {
-                GTokenBorrowed = borrowToken,
-                GTokenCollateral = collateralToken,
+                ATokenBorrowed = borrowToken,
+                ATokenCollateral = collateralToken,
                 Borrower = borrower,
                 Liquidator = liquidator,
                 RepayAmount = repayAmount
@@ -292,8 +292,8 @@ namespace Awaken.Contracts.GToken
             var seizeTokens = State.ControllerContract.LiquidateCalculateSeizeTokens.Call(new LiquidateCalculateSeizeTokensInput()
             {
                 ActualRepayAmount = actualRepayAmount,
-                GTokenBorrowed = borrowToken,
-                GTokenCollateral = collateralToken
+                ATokenBorrowed = borrowToken,
+                ATokenCollateral = collateralToken
             }).Value;
             SeizeInternal(collateralToken, borrowToken, liquidator, borrower, seizeTokens);
             
@@ -310,8 +310,8 @@ namespace Awaken.Contracts.GToken
             {
                 ActualRepayAmount = actualRepayAmount,
                 Borrower = borrower,
-                GTokenBorrowed = borrowToken,
-                GTokenCollateral = collateralToken,
+                ATokenBorrowed = borrowToken,
+                ATokenCollateral = collateralToken,
                 Liquidator = liquidator,
                 SeizeTokens = seizeTokens
             });
@@ -327,7 +327,7 @@ namespace Awaken.Contracts.GToken
         {
             State.ControllerContract.RepayBorrowAllowed.Send(new RepayBorrowAllowedInput()
             {
-                GToken = aToken,
+                AToken = aToken,
                 Payer = payer,
                 Borrower = borrower,
                 RepayAmount = repayAmount
@@ -339,7 +339,7 @@ namespace Awaken.Contracts.GToken
             var account = new Account()
             {
                 User = borrower,
-                GToken = aToken
+                AToken = aToken
             };
             var accountBorrows = Convert.ToInt64(BorrowBalanceStoredInternal(account).Value);
             if (repayAmount == long.MaxValue)
@@ -370,7 +370,7 @@ namespace Awaken.Contracts.GToken
             });
             State.ControllerContract.RepayBorrowVerify.Send(new RepayBorrowVerifyInput()
             {
-                GToken = aToken,
+                AToken = aToken,
                 Borrower = borrower,
                 Payer = payer,
                 BorrowerIndex = State.BorrowIndex[aToken],

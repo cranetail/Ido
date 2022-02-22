@@ -1,6 +1,6 @@
-namespace Awaken.Contracts.GToken
+namespace Awaken.Contracts.AToken
 {
-    public  partial class GTokenContract
+    public  partial class ATokenContract
     {
         /// <summary>
         /// Maximum borrow rate that can ever be applied (0.000016% / block)

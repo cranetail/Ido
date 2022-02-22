@@ -3,12 +3,12 @@ using AElf.Contracts.MultiToken;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
 using AElf.Types;
-using Gandalf.Contracts.InterestRateModel;
+using Awaken.Contracts.InterestRateModel;
 using Google.Protobuf.WellKnownTypes;
 
-namespace Awaken.Contracts.GToken
+namespace Awaken.Contracts.AToken
 {
-    public partial class GTokenContract
+    public partial class ATokenContract
     {
         public override Int64Value GetSupplyRatePerBlock(Address input)
         {
@@ -49,7 +49,7 @@ namespace Awaken.Contracts.GToken
         {
             var balance = new Int64Value()
             {
-                Value = State.AccountTokens[input.GToken][input.User]
+                Value = State.AccountTokens[input.AToken][input.User]
             };
             return balance;
         }
@@ -80,13 +80,13 @@ namespace Awaken.Contracts.GToken
 
         public override GetAccountSnapshotOutput GetAccountSnapshot(Account input)
         {
-            var cTokenBalance = State.AccountTokens[input.User][input.GToken];
+            var cTokenBalance = State.AccountTokens[input.User][input.AToken];
             var borrowBalance = Convert.ToInt64(BorrowBalanceStoredInternal(input).Value);
-            var exchangeRate = ExchangeRateStoredInternal(input.GToken);
+            var exchangeRate = ExchangeRateStoredInternal(input.AToken);
             return new GetAccountSnapshotOutput()
             {
                 BorrowBalance = borrowBalance,
-                GTokenBalance = cTokenBalance,
+                ATokenBalance = cTokenBalance,
                 ExchangeRate = exchangeRate
             };
         }
@@ -147,8 +147,8 @@ namespace Awaken.Contracts.GToken
 
         public override Int64Value GetUnderlyingBalance(Account input)
         {
-            var exchangeRate = GetCurrentExchangeRate(input.GToken);
-            var underlyingBalance = new BigIntValue(State.AccountTokens[input.GToken][input.User]).Mul(Mantissa)
+            var exchangeRate = GetCurrentExchangeRate(input.AToken);
+            var underlyingBalance = new BigIntValue(State.AccountTokens[input.AToken][input.User]).Mul(Mantissa)
                 .Div(exchangeRate.Value);
             if (!long.TryParse(underlyingBalance.Value, out var balance))
             {
@@ -162,7 +162,7 @@ namespace Awaken.Contracts.GToken
 
         public override Int64Value GetCurrentBorrowBalance(Account input)
         {
-            AccrueInterest(input.GToken);
+            AccrueInterest(input.AToken);
             var result =  BorrowBalanceStoredInternal(input);
             if (!long.TryParse(result.Value, out var balance))
             {
