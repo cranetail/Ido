@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AElf.Contracts.MultiToken;
+using AElf.Contracts.Price;
 using AElf.Sdk.CSharp;
 using AElf.Types;
 using AElf.CSharp.Core;
@@ -159,10 +160,20 @@ namespace Awaken.Contracts.Controller
             return Convert.ToInt64(new BigIntValue(a).Mul(Decimals).Div(b));
         }
         
-        // TO Do:GetUnderlyingPrice from price oracle 
         private long GetUnderlyingPrice(Address aToken)
         {
-            return 1000000000000000000;
+            var symbol = State.UnderlingMap[aToken];
+            var priceStr = State.PriceContract.GetExchangeTokenPriceInfo.Call(new GetExchangeTokenPriceInfoInput()
+            {
+                TokenSymbol = symbol,
+                TargetTokenSymbol = "",
+            });
+            if (!long.TryParse(priceStr.Value, out var price))
+            {
+                throw new AssertionException($"Failed to parse {priceStr.Value}");
+            }
+
+            return price;
         }
 
         private void AddMarketInternal(Address aToken)
@@ -257,6 +268,17 @@ namespace Awaken.Contracts.Controller
                 Symbol = token
             });
             Assert(!string.IsNullOrEmpty(tokenInfo.Symbol), $"Token {token} not exists.");
+        }
+        
+        private void AssertContractInitialized()
+        {
+            Assert(State.Admin.Value != null, "Contract not initialized.");
+        }
+
+        private void AssertSenderIsAdmin()
+        {
+            AssertContractInitialized();
+            Assert(Context.Sender == State.Admin.Value, "No permission.");
         }
     }
 }

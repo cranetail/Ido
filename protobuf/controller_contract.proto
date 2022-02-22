@@ -9,7 +9,7 @@ option csharp_namespace = "Awaken.Contracts.Controller";
 service ControllerContract {
 option (aelf.csharp_state) = "ControllerContractState";
  
-rpc Initialize(google.protobuf.Empty)returns(google.protobuf.Empty){
+rpc Initialize(InitializeInput)returns(google.protobuf.Empty){
 }
 rpc EnterMarkets(ATokens)returns(google.protobuf.Empty){
 } 
@@ -69,6 +69,8 @@ rpc SetTransferPaused(google.protobuf.BoolValue)returns(google.protobuf.BoolValu
 }  
 rpc SetSeizePaused(google.protobuf.BoolValue)returns(google.protobuf.BoolValue){
 }  
+rpc SetPriceOracle(aelf.Address)returns(google.protobuf.Empty){
+}
 rpc RefreshPlatformTokenSpeeds(google.protobuf.Empty)returns(google.protobuf.Empty){
 }
 rpc ClaimPlatformToken(ClaimPlatformTokenInput)returns(google.protobuf.Empty){
@@ -120,6 +122,15 @@ option (aelf.is_view) = true;
 rpc GetATokenAddress(google.protobuf.StringValue)returns(aelf.Address){
 option (aelf.is_view) = true;
 }
+rpc GetUnderling(aelf.Address)returns(google.protobuf.StringValue){
+option (aelf.is_view) = true;
+}
+rpc GetPriceOracle(google.protobuf.Empty)returns(aelf.Address){
+option (aelf.is_view) = true;
+}
+}
+message InitializeInput{
+aelf.Address a_token_contract = 1;
 }
 
 message SetMarketBorrowCapsInput{

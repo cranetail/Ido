@@ -24,9 +24,9 @@ namespace Awaken.Contracts.Controller
 
         public override Empty SetCloseFactor(Int64Value input)
         {
+            AssertSenderIsAdmin();
             var oldCloseFactor = State.CloseFactor.Value;
             var newCloseFactor = input.Value;
-            Assert(Context.Sender == State.Admin.Value, "Unauthorized");
             Assert(newCloseFactor > MinCloseFactor && newCloseFactor < MaxCloseFactor,
                 "Invalid CloseFactor"); //INVALID_CLOSE_FACTOR
             State.CloseFactor.Value = input.Value;
@@ -40,7 +40,7 @@ namespace Awaken.Contracts.Controller
 
         public override Empty SetCollateralFactor(SetCollateralFactorInput input)
         {
-            Assert(Context.Sender == State.Admin.Value, "Unauthorized");
+            AssertSenderIsAdmin();
             MarketVerify(input.AToken);
             var market = State.Markets[input.AToken];
             var oldCollateralFactor = market.CollateralFactor;
@@ -65,7 +65,7 @@ namespace Awaken.Contracts.Controller
 
         public override Empty SetLiquidationIncentive(Int64Value input)
         {
-            Assert(Context.Sender == State.Admin.Value, "Unauthorized");
+            AssertSenderIsAdmin();
             var oldLiquidationIncentive = State.LiquidationIncentive.Value;
             var newLiquidationIncentive = input.Value;
             Assert(
@@ -83,7 +83,7 @@ namespace Awaken.Contracts.Controller
 
         public override Empty SetMaxAssets(Int32Value input)
         {
-            Assert(Context.Sender == State.Admin.Value, "Unauthorized");
+            AssertSenderIsAdmin();
             var oldMaxAssets = State.MaxAssets.Value;
             Assert(input.Value > 0, "Invalid MaxAssets");
             State.MaxAssets.Value = input.Value;
@@ -117,7 +117,7 @@ namespace Awaken.Contracts.Controller
 
         public override Empty SetPauseGuardian(Address input)
         {
-            Assert(Context.Sender == State.Admin.Value, "Unauthorized");
+            AssertSenderIsAdmin();
             var oldPauseGuardian = State.PauseGuardian.Value;
             var newPauseGuardian = input;
             State.PauseGuardian.Value = newPauseGuardian;
@@ -167,7 +167,7 @@ namespace Awaken.Contracts.Controller
 
         public override Empty SetBorrowCapGuardian(Address input)
         {
-            Assert(Context.Sender == State.Admin.Value, "Only admin can set borrow cap guardian");
+            AssertSenderIsAdmin();
             var oldBorrowCapGuardian = State.BorrowCapGuardian.Value;
             State.BorrowCapGuardian.Value = input;
             Context.Fire(new BorrowCapGuardianChanged()
@@ -197,13 +197,26 @@ namespace Awaken.Contracts.Controller
 
         public override Empty SetPlatformTokenRate(Int64Value input)
         {
-            Assert(Context.Sender == State.Admin.Value, "Only admin can change platformToken rate");
+            AssertSenderIsAdmin();
             var oldRate = State.PlatformTokenRate.Value;
             State.PlatformTokenRate.Value = input.Value;
             Context.Fire(new  PlatformTokenRateChanged()
             {
                 OldPlatformTokenRate = oldRate,
                 NewPlatformTokenRate = input.Value
+            });
+            return new Empty();
+        }
+
+        public override Empty SetPriceOracle(Address input)
+        {
+            AssertSenderIsAdmin();
+            var oldOracle = State.PriceContract.Value;
+            State.PriceContract.Value = input;
+            Context.Fire(new PriceOracleChanged()
+            {
+                OldPriceOracle = oldOracle,
+                NewPriceOracle = input
             });
             return new Empty();
         }

@@ -1,3 +1,4 @@
+using System;
 using AElf.Sdk.CSharp.State;
 using AElf.Types;
 using Awaken.Contracts.AToken;
@@ -91,6 +92,8 @@ namespace Awaken.Contracts.Controller
         
         public MappedState<Address,BoolValue> IsPlatformTokened { get; set; }
         
-        public MappedState<string,Address> UnderlingMap { get; set; }
+        public MappedState<string,Address> ATokenVirtualAddressMap { get; set; }
+        
+        public MappedState<Address, string> UnderlingMap { get; set; }
     }
 }

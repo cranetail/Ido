@@ -14,6 +14,14 @@ namespace Awaken.Contracts.AToken
             return new Empty();
         }
 
+        public override Empty InitializeAToken(InitializeATokenInput input)
+        {
+            AssertSenderIsAdmin();
+            State.InterestRateModelContracts[input.AToken].Value = input.InterestRateModel;
+            State.InitialExchangeRate[input.AToken] = input.InitialExchangeRate;
+            return new Empty();
+        }
+
         public override Empty AccrueInterest(Address aToken)
         {
             /* Remember the initial block number */

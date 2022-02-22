@@ -45,6 +45,12 @@
     <ContractStub Include="..\..\protobuf\token_contract.proto">
       <Link>Protobuf\Proto\token_contract.proto</Link>
     </ContractStub>
+    <ContractStub Include="..\..\protobuf\a_token_contract.proto">
+      <Link>Protobuf\Proto\a_token_contract.proto</Link>
+    </ContractStub>
+    <ContractStub Include="..\..\protobuf\price_contract.proto">
+      <Link>Protobuf\Proto\price_contract.proto</Link>
+    </ContractStub>
   </ItemGroup>
   <ItemGroup>
     <ContractStub Include="..\..\protobuf\controller_contract.proto">
@@ -54,6 +60,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\contract\Awaken.Contracts.AToken\Awaken.Contracts.AToken.csproj" />
+    <ProjectReference Include="..\..\contract\AElf.Contracts.Price\AElf.Contracts.Price.csproj" />
     <ProjectReference Include="..\..\contract\Awaken.Contracts.Controller\Awaken.Contracts.Controller.csproj" />
     <ProjectReference Include="..\..\src\AElf.Boilerplate.TestBase\AElf.Boilerplate.TestBase.csproj" />
   </ItemGroup>

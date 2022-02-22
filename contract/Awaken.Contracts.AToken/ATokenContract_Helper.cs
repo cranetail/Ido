@@ -1,5 +1,6 @@
 using System;
 using AElf.Contracts.MultiToken;
+using AElf.Contracts.Price;
 using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
 using AElf.Types;
@@ -47,15 +48,19 @@ namespace Awaken.Contracts.AToken
       
         private long GetCashPrior(Address aToken)
         {
-             
+            var symbol = GetUnderling(aToken);
             var result = State.TokenContract.GetBalance.Call(new GetBalanceInput()
             {
                 Owner = Context.Self,
-                Symbol = State.Underlying[aToken]
+                Symbol = symbol
             });
             return result.Balance;
         }
 
+        private string GetUnderling(Address aToken)
+        {
+            return State.ControllerContract.GetUnderling.Call(aToken).Value;
+        }
         private long GetSupplyRatePerBlockInternal(Address aToken)
         {
             var totalCash = GetCashPrior(aToken);
@@ -95,7 +100,11 @@ namespace Awaken.Contracts.AToken
             }
 
             // exchangeRate = (totalCash + totalBorrows - totalReserves) / totalSupply
-            var exchangeRate = totalCash.Add(totalBorrow).Sub(totalReserves).Div(totalSupply);
+            var exchangeRateStr = new BigIntValue(totalCash).Add(totalBorrow).Sub(totalReserves).Mul(Mantissa).Div(totalSupply).Value;
+            if (!long.TryParse(exchangeRateStr, out var exchangeRate))
+            {
+                throw new AssertionException($"Failed to parse {exchangeRate}");
+            }
             return exchangeRate;
         }
         
@@ -346,7 +355,8 @@ namespace Awaken.Contracts.AToken
             {
                 repayAmount =accountBorrows;
             }
-            var underling = State.Underlying[aToken];
+
+            var underling = GetUnderling(aToken);
             DoTransferIn(payer, repayAmount, underling);
             
             var actualRepayAmount = repayAmount;
@@ -377,6 +387,17 @@ namespace Awaken.Contracts.AToken
                 RepayAmount = actualRepayAmount
             });
             return actualRepayAmount;
+        }
+        
+        private void AssertContractInitialized()
+        {
+            Assert(State.Admin.Value != null, "Contract not initialized.");
+        }
+
+        private void AssertSenderIsAdmin()
+        {
+            AssertContractInitialized();
+            Assert(Context.Sender == State.Admin.Value, "No permission.");
         }
     }
 }

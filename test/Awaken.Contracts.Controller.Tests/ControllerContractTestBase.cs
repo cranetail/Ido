@@ -10,9 +10,10 @@ using System.Linq;
 using AElf.ContractTestBase.ContractTestKit;
 using AElf.Kernel.Token;
 using AElf.Standards.ACS0;
-using Awaken.Contracts.GToken;
+using Awaken.Contracts.AToken;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Threading;
+using AElf.Contracts.Price;
 
 
 namespace Awaken.Contracts.Controller.Tests
@@ -22,8 +23,11 @@ namespace Awaken.Contracts.Controller.Tests
         // You can get address of any contract via GetAddress method, for example:
         internal readonly Address ControllerContractAddress;
 
-        internal readonly Address GTokenContractAddress;
+        internal readonly Address ATokenContractAddress;
+        
+        internal readonly Address PriceContractAddress;
 
+       
         private Address tokenContractAddress => GetAddress(TokenSmartContractAddressNameProvider.StringName);
         internal ControllerContractContainer.ControllerContractStub GetControllerContractStub(
             ECKeyPair senderKeyPair)
@@ -31,6 +35,14 @@ namespace Awaken.Contracts.Controller.Tests
             return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
                 .Create<Awaken.Contracts.Controller.ControllerContractContainer.
                     ControllerContractStub>(ControllerContractAddress, senderKeyPair);
+        }
+        
+        internal ATokenContractContainer.ATokenContractStub GetATokenContractStub(
+            ECKeyPair senderKeyPair)
+        {
+            return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
+                .Create<Awaken.Contracts.AToken.ATokenContractContainer.
+                    ATokenContractStub>(ATokenContractAddress, senderKeyPair);
         }
 
         internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub GetTokenContractStub(ECKeyPair senderKeyPair)
@@ -45,10 +57,15 @@ namespace Awaken.Contracts.Controller.Tests
                 KernelConstants.DefaultRunnerCategory,
                 File.ReadAllBytes(typeof(ControllerContract).Assembly.Location),
                 SampleAccount.Accounts[0].KeyPair));
-            GTokenContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
+            ATokenContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
                 KernelConstants.DefaultRunnerCategory,
-                File.ReadAllBytes(typeof(GTokenContract).Assembly.Location),
+                File.ReadAllBytes(typeof(ATokenContract).Assembly.Location),
                 SampleAccount.Accounts[0].KeyPair));
+            PriceContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
+                KernelConstants.DefaultRunnerCategory,
+                File.ReadAllBytes(typeof(PriceContract).Assembly.Location),
+                SampleAccount.Accounts[0].KeyPair));
+       
 
         }
 
@@ -76,6 +93,12 @@ namespace Awaken.Contracts.Controller.Tests
 
         internal ControllerContractContainer.ControllerContractStub AdminStub =>
             GetControllerContractStub(AdminKeyPair);
+        
+        internal ControllerContractContainer.ControllerContractStub TomStub =>
+            GetControllerContractStub(UserTomKeyPair);
+        
+        internal ATokenContractContainer.ATokenContractStub AdminATokenContractStub =>
+            GetATokenContractStub(AdminKeyPair);
         internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub AdminTokenContractStub =>
             GetTokenContractStub(AdminKeyPair);
         internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub UserTomTokenContractStub =>

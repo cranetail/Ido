@@ -20,6 +20,9 @@ service ATokenContract {
     rpc Initialize(google.protobuf.Empty)returns(google.protobuf.Empty){
     }
   
+    rpc InitializeAToken(InitializeATokenInput)returns(google.protobuf.Empty){
+    }
+    
     rpc Mint (MintInput) returns (google.protobuf.Empty) {
     }
  
@@ -155,6 +158,11 @@ message BorrowSnapshot {
 }
 
 // Inputs
+message InitializeATokenInput{
+    aelf.Address a_token = 1;
+    aelf.Address interest_rate_model = 2;
+    int64 initial_exchange_rate=3; 
+}
 message MintInput{
     aelf.Address a_token = 1;
     int64 mint_amount=2; 

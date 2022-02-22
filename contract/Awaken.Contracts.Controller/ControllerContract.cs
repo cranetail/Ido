@@ -14,9 +14,12 @@ namespace Awaken.Contracts.Controller
     /// </summary>
     public partial class ControllerContract : ControllerContractContainer.ControllerContractBase
     {
-        public override Empty Initialize(Empty input)
+        public override Empty Initialize(InitializeInput input)
         {
-            Assert(State.Admin.Value != new Address(), "Initialized");
+            Assert(State.TokenContract.Value == null, "Already initialized.");
+            State.TokenContract.Value =
+                Context.GetContractAddressByName(SmartContractConstants.TokenContractSystemName);
+            State.ATokenContract.Value = input.ATokenContract;
             State.Admin.Value = Context.Sender;
             return new Empty();
         }
@@ -35,11 +38,11 @@ namespace Awaken.Contracts.Controller
         public override Empty ExitMarket(Address aToken)
         {
             // MarketVerify(input.Value);
-          var   result = State.ATokenContract.GetAccountSnapshot.Call(new Awaken.Contracts.AToken.Account()
-             {
-                 AToken = aToken,
-                 User = Context.Sender
-             });
+            var result = State.ATokenContract.GetAccountSnapshot.Call(new Awaken.Contracts.AToken.Account()
+            {
+                AToken = aToken,
+                User = Context.Sender
+            });
             Assert(result.BorrowBalance == 0, "Nonzero borrow balance");
             if (!State.Markets[aToken].AccountMembership.TryGetValue(Context.Sender.ToString(), out var isExist) ||
                 !isExist)
@@ -212,7 +215,8 @@ namespace Awaken.Contracts.Controller
             var symbolString = GetATokenSymbol(input.Value);
             var symbolHash = HashHelper.ComputeFrom(symbolString);
             var symbolVirtualAddress = Context.ConvertVirtualAddressToContractAddress(symbolHash);
-            State.UnderlingMap[input.Value] = symbolVirtualAddress;
+            State.ATokenVirtualAddressMap[input.Value] = symbolVirtualAddress;
+            State.UnderlingMap[symbolVirtualAddress] = input.Value;
             var market = State.Markets[symbolVirtualAddress];
             if (market != null)
             {
