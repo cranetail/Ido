@@ -70,7 +70,7 @@ namespace Awaken.Contracts.AToken
             var result = State.TokenContract.GetBalance.Call(new GetBalanceInput()
             {
                 Owner = Context.Self,
-                Symbol =  State.Underlying[input]
+                Symbol =  State.UnderlyingMap[input]
             });
             return new Int64Value()
             {
@@ -134,7 +134,7 @@ namespace Awaken.Contracts.AToken
 
         public override Address GetInterestRateModel(Address input)
         {
-            return State.InterestRateModelContracts[input].Value;
+            return State.InterestRateModelContractsAddress[input];
         }
 
         public override Int64Value GetInitialExchangeRate(Address input)
@@ -182,6 +182,19 @@ namespace Awaken.Contracts.AToken
             return new Int64Value()
             {
                 Value = exchangeRate
+            };
+        }
+        
+        public override Address GetATokenAddress(StringValue input)
+        {
+            return State.ATokenVirtualAddressMap[input.Value];
+        }
+
+        public override StringValue GetUnderlying(Address input)
+        {
+            return new StringValue
+            {
+                Value = State.UnderlyingMap[input]
             };
         }
         

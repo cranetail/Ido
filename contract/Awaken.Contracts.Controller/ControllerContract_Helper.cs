@@ -53,8 +53,8 @@ namespace Awaken.Contracts.Controller
             long borrowAmount)
         {
             var assets = State.AccountAssets[account];
-            long sumCollateral = 0;
-            long sumBorrowPlusEffects = 0;
+            var sumCollateral = new BigIntValue(){Value = "0"};
+            var sumBorrowPlusEffects = new BigIntValue(){Value = "0"};
             for (var i = 0; i < assets.Assets.Count; i++)
             {
                 var aToken = assets.Assets[i];
@@ -69,21 +69,26 @@ namespace Awaken.Contracts.Controller
                 var price = GetUnderlyingPrice(aToken);
                  
                 var collateralFactor = State.Markets[aTokenModify].CollateralFactor;
-                var tokensToDenom = exchangeRate * price * collateralFactor;
-                sumCollateral += cTokenBalance * tokensToDenom;
-                sumBorrowPlusEffects += accountSnapshot.BorrowBalance * price;
+                var tokensToDenom = new BigIntValue(exchangeRate).Mul(price).Mul(collateralFactor).Div(Mantissa).Div(Mantissa);
+                sumCollateral = sumCollateral.Add(new BigIntValue(cTokenBalance).Mul(tokensToDenom).Div(Mantissa));
+                sumBorrowPlusEffects = sumBorrowPlusEffects.Add(new BigIntValue(accountSnapshot.BorrowBalance).Mul(price).Div(Mantissa));
                 if (aTokenModify == aToken)
                 {
                     // redeem effect
                     // sumBorrowPlusEffects += tokensToDenom * redeemTokens
-                    sumBorrowPlusEffects += tokensToDenom * redeemTokens;
+                    sumBorrowPlusEffects  = sumCollateral.Add(new BigIntValue(tokensToDenom).Mul(redeemTokens).Div(Mantissa));
                     // borrow effect
                     // sumBorrowPlusEffects += oraclePrice * borrowAmount
-                    sumBorrowPlusEffects += price * borrowAmount;
+                    sumBorrowPlusEffects = sumBorrowPlusEffects.Add(new BigIntValue(price).Mul(borrowAmount).Div(Mantissa));
                 }
             }
 
-            return sumBorrowPlusEffects - sumCollateral;
+            var liquidityStr = sumBorrowPlusEffects.Sub(sumCollateral).Value;
+            if (!long.TryParse(liquidityStr, out var liquidity))
+            {
+                throw new AssertionException($"Failed to parse {liquidityStr}");
+            }
+            return liquidity;
         }
         private void MarketVerify(Address aToken)
         {
@@ -162,10 +167,10 @@ namespace Awaken.Contracts.Controller
         
         private long GetUnderlyingPrice(Address aToken)
         {
-            var symbol = State.UnderlingMap[aToken];
+            var underlyingSymbol = State.ATokenContract.GetUnderlying.Call(aToken).Value;
             var priceStr = State.PriceContract.GetExchangeTokenPriceInfo.Call(new GetExchangeTokenPriceInfoInput()
             {
-                TokenSymbol = symbol,
+                TokenSymbol = underlyingSymbol,
                 TargetTokenSymbol = "",
             });
             if (!long.TryParse(priceStr.Value, out var price))
@@ -255,20 +260,7 @@ namespace Awaken.Contracts.Controller
             }
         }
 
-        private string GetATokenSymbol(string symbol)
-        {
-            ValidTokenSymbol(symbol);
-            return $"A-{symbol}";
-        }
-        
-        private void ValidTokenSymbol(string token)
-        {
-            var tokenInfo = State.TokenContract.GetTokenInfo.Call(new GetTokenInfoInput
-            {
-                Symbol = token
-            });
-            Assert(!string.IsNullOrEmpty(tokenInfo.Symbol), $"Token {token} not exists.");
-        }
+      
         
         private void AssertContractInitialized()
         {

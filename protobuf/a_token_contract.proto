@@ -15,12 +15,13 @@ option csharp_namespace = "Awaken.Contracts.AToken";
 
 service ATokenContract {
     option (aelf.csharp_state) = "Awaken.Contracts.AToken.ATokenContractState";
-    
+    option (aelf.base) = "acs1.proto";
+    option (aelf.base) = "acs2.proto";
     // Actions
-    rpc Initialize(google.protobuf.Empty)returns(google.protobuf.Empty){
+    rpc Initialize(InitializeInput)returns(google.protobuf.Empty){
     }
   
-    rpc InitializeAToken(InitializeATokenInput)returns(google.protobuf.Empty){
+    rpc Create(CreateInput)returns(google.protobuf.Empty){
     }
     
     rpc Mint (MintInput) returns (google.protobuf.Empty) {
@@ -143,6 +144,12 @@ service ATokenContract {
     option (aelf.is_view) = true;
     }
 
+    rpc GetATokenAddress(google.protobuf.StringValue)returns(aelf.Address){
+    option (aelf.is_view) = true;
+    }
+    rpc GetUnderlying(aelf.Address)returns(google.protobuf.StringValue){
+    option (aelf.is_view) = true;
+    }
 
 }
 
@@ -157,9 +164,26 @@ message BorrowSnapshot {
     int64 interest_index = 2;
 }
 
+message TokenInfo {
+    string symbol = 1;
+    string token_name = 2;
+    int64 supply = 3;
+    int64 total_supply = 4;
+    int32 decimals = 5;
+    aelf.Address issuer = 6;
+    bool is_burnable = 7;
+    int64 issued = 8;
+    ExternalInfo external_info = 9;
+}
+message ExternalInfo {
+    map<string, string> value = 1;
+}
 // Inputs
-message InitializeATokenInput{
-    aelf.Address a_token = 1;
+message InitializeInput{
+    aelf.Address controller = 1;
+}
+message CreateInput{
+    string underlying_symbol = 1;
     aelf.Address interest_rate_model = 2;
     int64 initial_exchange_rate=3; 
 }

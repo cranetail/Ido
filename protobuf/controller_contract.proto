@@ -53,7 +53,7 @@ rpc SetMaxAssets(google.protobuf.Int32Value)returns(google.protobuf.Empty){
 }
 rpc SetLiquidationIncentive(google.protobuf.Int64Value)returns(google.protobuf.Empty){  
 }
-rpc SupportMarket(google.protobuf.StringValue)returns(google.protobuf.Empty){
+rpc SupportMarket(aelf.Address)returns(google.protobuf.Empty){
 }
 rpc SetMarketBorrowCaps(SetMarketBorrowCapsInput)returns(google.protobuf.Empty){
 }
@@ -117,12 +117,6 @@ rpc GetBorrowCapGuardian(google.protobuf.Empty)returns(aelf.Address){
 option (aelf.is_view) = true;
 }
 rpc GetHypotheticalAccountLiquidity(GetHypotheticalAccountLiquidityInput)returns(GetHypotheticalAccountLiquidityOutput){
-option (aelf.is_view) = true;
-}
-rpc GetATokenAddress(google.protobuf.StringValue)returns(aelf.Address){
-option (aelf.is_view) = true;
-}
-rpc GetUnderling(aelf.Address)returns(google.protobuf.StringValue){
 option (aelf.is_view) = true;
 }
 rpc GetPriceOracle(google.protobuf.Empty)returns(aelf.Address){

@@ -6,6 +6,7 @@ using AElf.Sdk.CSharp;
 using AElf.Types;
 using Awaken.Contracts.Controller;
 using Awaken.Contracts.InterestRateModel;
+using Google.Protobuf.WellKnownTypes;
 
 namespace Awaken.Contracts.AToken
 {
@@ -27,7 +28,7 @@ namespace Awaken.Contracts.AToken
             });
             Assert(State.AccrualBlockNumbers[aToken] == Context.CurrentHeight,"Market's block number should equals current block number");
             var exchangeRate = ExchangeRateStoredInternal(aToken);
-            DoTransferIn(Context.Sender, amount, State.Underlying[aToken]);
+            DoTransferIn(Context.Sender, amount, State.UnderlyingMap[aToken]);
             //  mintTokens = actualMintAmount / exchangeRate
             var mintTokens =amount.Div(exchangeRate) ;
             // totalSupplyNew = totalSupply + mintTokens
@@ -48,7 +49,7 @@ namespace Awaken.Contracts.AToken
       
         private long GetCashPrior(Address aToken)
         {
-            var symbol = GetUnderling(aToken);
+            var symbol = State.UnderlyingMap[aToken];
             var result = State.TokenContract.GetBalance.Call(new GetBalanceInput()
             {
                 Owner = Context.Self,
@@ -56,17 +57,14 @@ namespace Awaken.Contracts.AToken
             });
             return result.Balance;
         }
-
-        private string GetUnderling(Address aToken)
-        {
-            return State.ControllerContract.GetUnderling.Call(aToken).Value;
-        }
+        
         private long GetSupplyRatePerBlockInternal(Address aToken)
         {
             var totalCash = GetCashPrior(aToken);
             var totalBorrow = State.TotalBorrows[aToken];
             var totalReserves = State.TotalReserves[aToken];
-            return State.InterestRateModelContracts[aToken].GetSupplyRate.Call(new GetSupplyRateInput()
+            State.InterestRateModelContract.Value = State.InterestRateModelContractsAddress[aToken];
+            return State.InterestRateModelContract.GetSupplyRate.Call(new GetSupplyRateInput()
             {
                 Cash = totalCash,
                 Borrows = totalBorrow,
@@ -80,7 +78,8 @@ namespace Awaken.Contracts.AToken
             var totalCash = GetCashPrior(aToken);
             var totalBorrow = State.TotalBorrows[aToken];
             var totalReserves = State.TotalReserves[aToken];
-            return State.InterestRateModelContracts[aToken].GetBorrowRate.Call(new GetBorrowRateInput()
+            State.InterestRateModelContract.Value = State.InterestRateModelContractsAddress[aToken];
+            return State.InterestRateModelContract.GetBorrowRate.Call(new GetBorrowRateInput()
             {
                 Cash = totalCash,
                 Borrows = totalBorrow,
@@ -220,7 +219,7 @@ namespace Awaken.Contracts.AToken
             
             Assert(GetCashPrior(aToken) >= redeemAmount, "Insufficient Token Cash");
             Assert(accountTokensNew >= 0, "Insufficient Token Balance");
-            var underlying = State.Underlying[aToken];
+            var underlying = State.UnderlyingMap[aToken];
             DoTransferOut(aToken, redeemAmount, underlying );
             
             //We write previously calculated values into storage
@@ -356,7 +355,7 @@ namespace Awaken.Contracts.AToken
                 repayAmount =accountBorrows;
             }
 
-            var underling = GetUnderling(aToken);
+            var underling = State.UnderlyingMap[aToken];
             DoTransferIn(payer, repayAmount, underling);
             
             var actualRepayAmount = repayAmount;
@@ -398,6 +397,36 @@ namespace Awaken.Contracts.AToken
         {
             AssertContractInitialized();
             Assert(Context.Sender == State.Admin.Value, "No permission.");
+        }
+        
+        private void AssertSenderIsOwner()
+        {
+            Assert(Context.Sender == State.Owner.Value, "No permission.");
+        }
+        private string GetATokenSymbol(string symbol)
+        {
+            ValidTokenSymbol(symbol);
+            return $"A-{symbol}";
+        }
+        
+        private void ValidTokenSymbol(string token)
+        {
+            var tokenInfo = State.TokenContract.GetTokenInfo.Call(new GetTokenInfoInput
+            {
+                Symbol = token
+            });
+            Assert(!string.IsNullOrEmpty(tokenInfo.Symbol), $"Token {token} not exists.");
+        }
+        
+        private TokenInfo ValidTokenExisting(string symbol)
+        {
+            var tokenInfo = State.TokenInfoMap[symbol];
+            if (tokenInfo == null)
+            {
+                throw new AssertionException($"Token {symbol} not found.");
+            }
+
+            return tokenInfo;
         }
     }
 }

@@ -14,6 +14,7 @@ using Awaken.Contracts.AToken;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Threading;
 using AElf.Contracts.Price;
+using Awaken.Contracts.InterestRateModel;
 
 
 namespace Awaken.Contracts.Controller.Tests
@@ -27,7 +28,7 @@ namespace Awaken.Contracts.Controller.Tests
         
         internal readonly Address PriceContractAddress;
 
-       
+        internal readonly Address InterestRateModelContractAddress;
         private Address tokenContractAddress => GetAddress(TokenSmartContractAddressNameProvider.StringName);
         internal ControllerContractContainer.ControllerContractStub GetControllerContractStub(
             ECKeyPair senderKeyPair)
@@ -50,7 +51,13 @@ namespace Awaken.Contracts.Controller.Tests
             return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
                 .Create<AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub>(tokenContractAddress, senderKeyPair);
         }
-
+        internal InterestRateModelContractContainer.InterestRateModelContractStub GetInterestRateModelContractStub(
+            ECKeyPair senderKeyPair)
+        {
+            return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
+                .Create<Awaken.Contracts.InterestRateModel.InterestRateModelContractContainer.
+                    InterestRateModelContractStub>(InterestRateModelContractAddress, senderKeyPair);
+        }
         public ControllerContractTestBase()
         {
             ControllerContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
@@ -66,7 +73,10 @@ namespace Awaken.Contracts.Controller.Tests
                 File.ReadAllBytes(typeof(PriceContract).Assembly.Location),
                 SampleAccount.Accounts[0].KeyPair));
        
-
+            InterestRateModelContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
+                KernelConstants.DefaultRunnerCategory,
+                File.ReadAllBytes(typeof(InterestRateModelContract).Assembly.Location),
+                SampleAccount.Accounts[0].KeyPair));
         }
 
         private async Task<Address> DeployContractAsync(int category, byte[] code, ECKeyPair keyPair)
@@ -103,5 +113,8 @@ namespace Awaken.Contracts.Controller.Tests
             GetTokenContractStub(AdminKeyPair);
         internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub UserTomTokenContractStub =>
             GetTokenContractStub(UserTomKeyPair);
+        
+        internal InterestRateModelContractContainer.InterestRateModelContractStub AdminInterestRateModelStub =>
+            GetInterestRateModelContractStub(AdminKeyPair);
     }
 }

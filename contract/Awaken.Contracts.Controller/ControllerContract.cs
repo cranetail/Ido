@@ -209,27 +209,23 @@ namespace Awaken.Contracts.Controller
             };
         }
 
-        public override Empty SupportMarket(StringValue input)
+        public override Empty SupportMarket(Address input)
         {
             Assert(Context.Sender == State.Admin.Value, "Unauthorized");
-            var symbolString = GetATokenSymbol(input.Value);
-            var symbolHash = HashHelper.ComputeFrom(symbolString);
-            var symbolVirtualAddress = Context.ConvertVirtualAddressToContractAddress(symbolHash);
-            State.ATokenVirtualAddressMap[input.Value] = symbolVirtualAddress;
-            State.UnderlingMap[symbolVirtualAddress] = input.Value;
-            var market = State.Markets[symbolVirtualAddress];
+          
+            var market = State.Markets[input];
             if (market != null)
             {
                 Assert(!market.IsListed, "Support market exists"); //
             }
-            State.Markets[symbolVirtualAddress] = new Market()
+            State.Markets[input] = new Market()
             {
                 IsListed = true
             };
-            AddMarketInternal(symbolVirtualAddress);
+            AddMarketInternal(input);
             Context.Fire(new MarketListed
             {
-                AToken = symbolVirtualAddress
+                AToken = input
             });
 
             return new Empty();

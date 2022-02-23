@@ -98,18 +98,7 @@ namespace Awaken.Contracts.Controller
             };
         }
 
-        public override Address GetATokenAddress(StringValue input)
-        {
-            return State.ATokenVirtualAddressMap[input.Value];
-        }
-
-        public override StringValue GetUnderling(Address input)
-        {
-            return new StringValue
-            {
-                Value = State.UnderlingMap[input]
-            };
-        }
+       
 
         public override Address GetPriceOracle(Empty input)
         {

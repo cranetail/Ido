@@ -1,4 +1,5 @@
 using AElf.Sdk.CSharp.State;
+using AElf.Standards.ACS1;
 using AElf.Types;
 using Awaken.Contracts.Controller;
 using Awaken.Contracts.InterestRateModel;
@@ -9,7 +10,10 @@ namespace Awaken.Contracts.AToken
     {
         internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractReferenceState TokenContract { get; set; }
         
-        internal MappedState<Address,InterestRateModelContractContainer.InterestRateModelContractReferenceState> InterestRateModelContracts
+        internal InterestRateModelContractContainer.InterestRateModelContractReferenceState InterestRateModelContract { get; set; }
+        
+        
+        internal MappedState<Address,Address> InterestRateModelContractsAddress
         {
             get;
             set;
@@ -60,7 +64,26 @@ namespace Awaken.Contracts.AToken
         /// </summary>
         public MappedState<Address, Address, long> AccountTokens { get; set; }
         
-        public MappedState<Address, string> Underlying { get; set; }
+        public MappedState<string,Address> ATokenVirtualAddressMap { get; set; }
         
+        public MappedState<Address, string> UnderlyingMap { get; set; }
+        
+        //token function
+        public SingletonState<Address> Owner { get; set; }
+        public MappedState<Address, bool> MinterMap{ get; set; }
+        public MappedState<string, TokenInfo> TokenInfoMap { get; set; }
+
+        /// <summary>
+        /// Owner -> Symbol -> Balance
+        /// </summary>
+        public MappedState<Address, string, long> BalanceMap { get; set; }
+
+        /// <summary>
+        /// Owner -> Spender -> Symbol -> Allowance
+        /// </summary>
+        public MappedState<Address, Address, string, long> AllowanceMap { get; set; }
+
+        public MappedState<string, MethodFees> TransactionFeesMap { get; set; }
+        public SingletonState<AuthorityInfo> MethodFeeController { get; set; }
     }
 }

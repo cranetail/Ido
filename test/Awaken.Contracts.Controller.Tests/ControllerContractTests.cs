@@ -4,6 +4,7 @@ using AElf.ContractTestBase.ContractTestKit;
 using AElf.Types;
 using Awaken.Contracts.AToken;
 using Awaken.Contracts.Controller.Tests;
+using Awaken.Contracts.InterestRateModel;
 using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 using Org.BouncyCastle.Tsp;
@@ -26,11 +27,12 @@ namespace Awaken.Contracts.Controller
         public async Task SupportMarketTest()
         {
            await Initialize();
-           await AdminStub.SupportMarket.SendAsync(new StringValue() {Value = "ELF"});
-           var address = await AdminStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+           await CreateAToken();
+           var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+           await AdminStub.SupportMarket.SendAsync(aElfAddress); ;
            var aTokens =  await AdminStub.GetAllMarkets.CallAsync(new Empty());
-           address.Value.ShouldNotBeEmpty();
-           aTokens.AToken.ShouldContain(address);
+           aElfAddress.Value.ShouldNotBeEmpty();
+           aTokens.AToken.ShouldContain(aElfAddress);
            
         }
 
@@ -47,9 +49,13 @@ namespace Awaken.Contracts.Controller
         public async Task SetCollateralFactorTest()
         {
             const long collateralFactorExpect = 750000000000000000;
+            
             await Initialize();
-            await AdminStub.SupportMarket.SendAsync(new StringValue() {Value = "ELF"});
-            var aElfAddress = await AdminStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+            await CreateAToken();
+            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+            await AdminStub.SupportMarket.SendAsync(aElfAddress); 
+            await AdminStub.SetPriceOracle.SendAsync(PriceContractAddress);
+            
             await AdminStub.SetCollateralFactor.SendAsync(new SetCollateralFactorInput()
                 {AToken = aElfAddress, NewCollateralFactor = collateralFactorExpect});
             var collateralFactor = await AdminStub.GetCollateralFactor.CallAsync(aElfAddress);
@@ -85,11 +91,24 @@ namespace Awaken.Contracts.Controller
         public async Task EnterMarketsTest()
         {
             await Initialize();
+            await CreateAToken();
             await AddMarket();
-            var aElfAddress = await AdminStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
             await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
             var assetList = await TomStub.GetAssetsIn.CallAsync(UserTomAddress);
             assetList.Assets.ShouldContain(aElfAddress);
+        }
+        [Fact]
+        public async Task ExitMarketsTest()
+        {
+            await Initialize();
+            await CreateAToken();
+            
+            await AddMarket();
+            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+           
+            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            await TomStub.ExitMarket.SendAsync(aElfAddress);
         }
         private async Task Initialize()
         {
@@ -113,25 +132,57 @@ namespace Awaken.Contracts.Controller
 
         private async Task AddMarket()
         {
+            
             const long closeFactorExpect = 500000000000000000;
             const long collateralFactorExpect = 750000000000000000;
             const long liquidationIncentiveExpect = 1080000000000000000;
             const int maxAssetsExpect = 20;
-            await AdminStub.SupportMarket.SendAsync(new StringValue() {Value = "ELF"});
+            
+            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+            await AdminStub.SetPriceOracle.SendAsync(PriceContractAddress);
+            await AdminStub.SupportMarket.SendAsync(aElfAddress);
             await AdminStub.SetCloseFactor.SendAsync(new Int64Value() {Value = closeFactorExpect});
-            var aElfAddress = await AdminStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
             await AdminStub.SetCollateralFactor.SendAsync(new SetCollateralFactorInput()
                 {AToken = aElfAddress, NewCollateralFactor = collateralFactorExpect});
             await AdminStub.SetLiquidationIncentive.SendAsync(new Int64Value() {Value = liquidationIncentiveExpect});
             await AdminStub.SetMaxAssets.SendAsync(new Int32Value() {Value = maxAssetsExpect});
-            await AdminStub.SetPriceOracle.SendAsync(PriceContractAddress);
+           
         }
 
-        private async Task InitializeAToken()
+        private async Task CreateAToken()
         {
-            await AdminATokenContractStub.Initialize.SendAsync(new Empty());
-            var aElfAddress = await AdminStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-            //to do InitializeAToken
+            const long initialExchangeRate = 1000000000000000000;
+            await InitializeInterestRateModel();
+            await AdminATokenContractStub.Initialize.SendAsync(new AToken.InitializeInput()
+            {
+                Controller = ControllerContractAddress
+            });
+            await AdminATokenContractStub.Create.SendAsync(new CreateInput()
+            {
+                UnderlyingSymbol = "ELF",
+                InterestRateModel = InterestRateModelContractAddress,
+                InitialExchangeRate = initialExchangeRate
+            });
+           
+            
+            
+            
+
+            
         }
+        private async Task InitializeInterestRateModel()
+        {
+            const long baseRatePerYear = 0;
+            const long  multiplierPerYear = 57500000000000000;
+            const long jumpMultiplierPerYear = 3000000000000000000;
+            const long kink = 800000000000000000;
+            await AdminInterestRateModelStub.Initialize.SendAsync(new UpdateJumpRateModelInput()
+            {
+                BaseRatePerYear = baseRatePerYear,
+                MultiplierPerYear = multiplierPerYear,
+                JumpMultiplierPerYear = jumpMultiplierPerYear,
+                Kink = kink
+            });
+        } 
     }
 }

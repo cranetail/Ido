@@ -9,7 +9,7 @@ namespace AElf.Contracts.Price
         {
             return new Price()
             {
-                Value = "100000000"
+                Value = "1000000000000000000"
             };
         }
     }

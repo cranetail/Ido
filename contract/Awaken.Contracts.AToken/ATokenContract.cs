@@ -1,24 +1,35 @@
-﻿using AElf.CSharp.Core;
+﻿using AElf;
+using AElf.CSharp.Core;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 using AElf.Sdk.CSharp;
+using Awaken.Contracts.InterestRateModel;
 
 namespace Awaken.Contracts.AToken
 {
     public partial class ATokenContract: ATokenContractContainer.ATokenContractBase
     {
-        public override Empty Initialize(Empty input)
+        public override Empty Initialize(InitializeInput input)
         {
-            Assert(State.Admin.Value != null, "Initialized");
+            Assert(State.TokenContract.Value == null, "Already initialized.");
+            State.TokenContract.Value =
+                Context.GetContractAddressByName(SmartContractConstants.TokenContractSystemName);
+            State.ControllerContract.Value = input.Controller;
             State.Admin.Value = Context.Sender;
             return new Empty();
         }
 
-        public override Empty InitializeAToken(InitializeATokenInput input)
+        
+        public override Empty Create(CreateInput input)
         {
             AssertSenderIsAdmin();
-            State.InterestRateModelContracts[input.AToken].Value = input.InterestRateModel;
-            State.InitialExchangeRate[input.AToken] = input.InitialExchangeRate;
+            var symbolString = GetATokenSymbol(input.UnderlyingSymbol);
+            var symbolHash = HashHelper.ComputeFrom(symbolString);
+            var symbolVirtualAddress = Context.ConvertVirtualAddressToContractAddress(symbolHash);
+            State.ATokenVirtualAddressMap[input.UnderlyingSymbol] = symbolVirtualAddress;
+            State.UnderlyingMap[symbolVirtualAddress] = input.UnderlyingSymbol;
+            State.InterestRateModelContractsAddress[symbolVirtualAddress] = input.InterestRateModel;
+            State.InitialExchangeRate[symbolVirtualAddress] = input.InitialExchangeRate;
             return new Empty();
         }
 
@@ -49,21 +60,40 @@ namespace Awaken.Contracts.AToken
             Assert(borrowRate <= MaxBorrowRate, "BorrowRate is higher than MaxBorrowRate");
             //Calculate the number of blocks elapsed since the last accrual 
             var blockDelta = Context.CurrentHeight.Sub(State.AccrualBlockNumbers[aToken]);
-            var simpleInterestFactor = borrowRate * blockDelta;
-            var interestAccumulated = simpleInterestFactor * borrowPrior;
-            var totalBorrowsNew = interestAccumulated + borrowPrior;
-            var totalReservesNew = State.ReserveFactor[aToken] * interestAccumulated +
-                                   reservesPrior;
-            var borrowIndexNew = simpleInterestFactor * borrowIndexPrior + borrowIndexPrior;
+            var simpleInterestFactor = new BigIntValue(borrowRate).Mul(blockDelta);
+            var interestAccumulated = simpleInterestFactor.Mul(borrowPrior).Div(Mantissa);
+            
+            var totalBorrowsNewStr = interestAccumulated.Add(borrowPrior).Value;
+            var totalReservesNewStr =
+                interestAccumulated.Mul(State.ReserveFactor[aToken]).Div(Mantissa).Add(reservesPrior).Value;
+            var borrowIndexNewStr = simpleInterestFactor.Mul(borrowIndexPrior).Div(Mantissa).Add(borrowIndexPrior).Value;
+            
+            if (!long.TryParse(totalBorrowsNewStr, out var totalBorrowsNew))
+            {
+                throw new AssertionException($"Failed to parse {totalBorrowsNewStr}");
+            }
+            if (!long.TryParse(totalReservesNewStr, out var totalReservesNew))
+            {
+                throw new AssertionException($"Failed to parse {totalReservesNewStr}");
+            }
+            if (!long.TryParse(borrowIndexNewStr, out var borrowIndexNew))
+            {
+                throw new AssertionException($"Failed to parse {borrowIndexNewStr}");
+            }
+            if (!long.TryParse(interestAccumulated.Value, out var interestAccumulatedInt64))
+            {
+                throw new AssertionException($"Failed to parse {interestAccumulated.Value}");
+            }
             State.AccrualBlockNumbers[aToken] = currentBlockNumber;
-            State.BorrowIndex[aToken] = borrowIndexNew;
             State.TotalBorrows[aToken] = totalBorrowsNew;
             State.TotalReserves[aToken] = totalReservesNew;
+            State.BorrowIndex[aToken] = borrowIndexNew;
+            
             Context.Fire(new AccrueInterest()
             {
                 Symbol = aToken,
                 Cash = cashPrior,
-                InterestAccumulated = decimal.ToInt64(interestAccumulated),
+                InterestAccumulated = interestAccumulatedInt64,
                 BorrowIndex = borrowIndexNew,
                 TotalBorrows = totalBorrowsNew,
                 BorrowRatePerBlock = borrowRate,
@@ -140,7 +170,7 @@ namespace Awaken.Contracts.AToken
 
         public override Empty SetInterestRateModel(SetInterestRateModelInput input)
         {
-            State.InterestRateModelContracts[input.AToken].Value = input.Model;
+            State.InterestRateModelContractsAddress[input.AToken] = input.Model;
             return new Empty();
         }
     }

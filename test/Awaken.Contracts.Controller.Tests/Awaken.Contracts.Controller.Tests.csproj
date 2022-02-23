@@ -51,6 +51,9 @@
     <ContractStub Include="..\..\protobuf\price_contract.proto">
       <Link>Protobuf\Proto\price_contract.proto</Link>
     </ContractStub>
+    <ContractStub Include="..\..\protobuf\interest_rate_model_contract.proto">
+      <Link>Protobuf\Proto\interest_rate_model_contract.proto</Link>
+    </ContractStub>
   </ItemGroup>
   <ItemGroup>
     <ContractStub Include="..\..\protobuf\controller_contract.proto">
@@ -62,6 +65,7 @@
     <ProjectReference Include="..\..\contract\Awaken.Contracts.AToken\Awaken.Contracts.AToken.csproj" />
     <ProjectReference Include="..\..\contract\AElf.Contracts.Price\AElf.Contracts.Price.csproj" />
     <ProjectReference Include="..\..\contract\Awaken.Contracts.Controller\Awaken.Contracts.Controller.csproj" />
+    <ProjectReference Include="..\..\contract\Awaken.Contracts.InterestRateModel\Awaken.Contracts.InterestRateModel.csproj" />
     <ProjectReference Include="..\..\src\AElf.Boilerplate.TestBase\AElf.Boilerplate.TestBase.csproj" />
   </ItemGroup>
 

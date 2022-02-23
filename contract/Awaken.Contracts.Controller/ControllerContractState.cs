@@ -92,8 +92,6 @@ namespace Awaken.Contracts.Controller
         
         public MappedState<Address,BoolValue> IsPlatformTokened { get; set; }
         
-        public MappedState<string,Address> ATokenVirtualAddressMap { get; set; }
-        
-        public MappedState<Address, string> UnderlingMap { get; set; }
+      
     }
 }
