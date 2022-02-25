@@ -94,7 +94,7 @@ namespace Awaken.Contracts.Controller
         {
             return new Int64Value()
             {
-                Value = State.BorrowCaps[input].Value
+                Value = State.BorrowCaps[input]
             };
         }
 

@@ -67,7 +67,7 @@ namespace Awaken.Contracts.Controller
         /// @notice The rate at which the flywheel distributes PLATFORMTOKEN, per block
         public Int64State PlatformTokenRate { get; set; }
         /// @notice The portion of platformTokenRate that each market currently receives
-        public MappedState<Address, Int64State> PlatformTokenSpeeds { get; set; }
+        public MappedState<Address, long> PlatformTokenSpeeds { get; set; }
 
         /// @notice The PLATFORMTOKEN market supply state for each market
         public MappedState<Address, PlatformTokenMarketState> PlatformTokenSupplyState
@@ -77,18 +77,18 @@ namespace Awaken.Contracts.Controller
         public MappedState<Address, PlatformTokenMarketState> PlatformTokenBorrowState{ get; set; }
 
         /// @notice The PLATFORMTOKEN borrow index for each market for each supplier as of the last time they accrued PLATFORMTOKEN
-        public MappedState<Address, Address, Int64State> PlatformTokenSupplierIndex { get; set; }
+        public MappedState<Address, Address, long> PlatformTokenSupplierIndex { get; set; }
 
         /// @notice The PLATFORMTOKEN borrow index for each market for each borrower as of the last time they accrued PLATFORMTOKEN
-        public MappedState<Address,Address, Int64State> PlatformTokenBorrowerIndex { get; set; }
+        public MappedState<Address,Address, long> PlatformTokenBorrowerIndex { get; set; }
 
         /// @notice The PLATFORMTOKEN accrued but not yet transferred to each user
-        public MappedState<Address, Int64State> PlatformTokenAccrued;
+        public MappedState<Address, long> PlatformTokenAccrued;
         // @notice The borrowCapGuardian can set borrowCaps to any number for any market. Lowering the borrow cap could disable borrowing on the given market.
 
         public SingletonState<Address> BorrowCapGuardian{ get; set; }
         // @notice Borrow caps enforced by borrowAllowed for each aToken address. Defaults to zero which corresponds to unlimited borrowing.
-        public MappedState<Address, Int64State> BorrowCaps { get; set; }
+        public MappedState<Address, long> BorrowCaps { get; set; }
         
         public MappedState<Address,BoolValue> IsPlatformTokened { get; set; }
         

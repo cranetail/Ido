@@ -15,12 +15,12 @@ namespace Awaken.Contracts.AToken
                     {
                         WritePaths =
                         {
-                            GetPath(nameof(ATokenContractState.BalanceMap), txn.From.ToString(), args.Symbol),
-                            GetPath(nameof(ATokenContractState.BalanceMap), args.To.ToString(), args.Symbol),
+                            GetPath(nameof(ATokenContractState.AccountTokens), txn.From.ToString(), args.Symbol),
+                            GetPath(nameof(ATokenContractState.AccountTokens), args.To.ToString(), args.Symbol),
                         },
                         ReadPaths =
                         {
-                            GetPath(nameof(ATokenContractState.TokenInfoMap), args.Symbol),
+                            GetPath(nameof(ATokenContractState.TokenSymbolMap), args.Symbol),
                         }
                     };
 
@@ -37,12 +37,12 @@ namespace Awaken.Contracts.AToken
                         {
                             GetPath(nameof(ATokenContractState.AllowanceMap), args.From.ToString(), txn.From.ToString(),
                                 args.Symbol),
-                            GetPath(nameof(ATokenContractState.BalanceMap), args.From.ToString(), args.Symbol),
-                            GetPath(nameof(ATokenContractState.BalanceMap), args.To.ToString(), args.Symbol),
+                            GetPath(nameof(ATokenContractState.AccountTokens), args.From.ToString(), args.Symbol),
+                            GetPath(nameof(ATokenContractState.AccountTokens), args.To.ToString(), args.Symbol),
                         },
                         ReadPaths =
                         {
-                            GetPath(nameof(ATokenContractState.TokenInfoMap), args.Symbol),
+                            GetPath(nameof(ATokenContractState.TokenSymbolMap), args.Symbol),
                         }
                     };
                     AddPathForTransactionFee(resourceInfo, txn.From);
@@ -56,7 +56,7 @@ namespace Awaken.Contracts.AToken
 
         private void AddPathForTransactionFee(ResourceInfo resourceInfo, Address from)
         {
-            var path = GetPath(nameof(ATokenContractState.BalanceMap), from.ToString(), Context.Variables.NativeSymbol);
+            var path = GetPath(nameof(ATokenContractState.AccountTokens), from.ToString(), Context.Variables.NativeSymbol);
             if (!resourceInfo.WritePaths.Contains(path))
             {
                 resourceInfo.WritePaths.Add(path);

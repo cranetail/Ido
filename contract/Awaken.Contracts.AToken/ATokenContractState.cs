@@ -66,17 +66,19 @@ namespace Awaken.Contracts.AToken
         
         public MappedState<string,Address> ATokenVirtualAddressMap { get; set; }
         
+        public MappedState<string, string> UnderlyingToTokenSymbolMap{get; set;}
+        
         public MappedState<Address, string> UnderlyingMap { get; set; }
         
         //token function
         public SingletonState<Address> Owner { get; set; }
-        public MappedState<Address, bool> MinterMap{ get; set; }
-        public MappedState<string, TokenInfo> TokenInfoMap { get; set; }
+        
+        public MappedState<Address, string> TokenSymbolMap { get; set; }
 
         /// <summary>
         /// Owner -> Symbol -> Balance
         /// </summary>
-        public MappedState<Address, string, long> BalanceMap { get; set; }
+ 
 
         /// <summary>
         /// Owner -> Spender -> Symbol -> Allowance
@@ -85,5 +87,7 @@ namespace Awaken.Contracts.AToken
 
         public MappedState<string, MethodFees> TransactionFeesMap { get; set; }
         public SingletonState<AuthorityInfo> MethodFeeController { get; set; }
+        
+        
     }
 }

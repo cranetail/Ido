@@ -26,8 +26,11 @@ namespace Awaken.Contracts.AToken
             var symbolString = GetATokenSymbol(input.UnderlyingSymbol);
             var symbolHash = HashHelper.ComputeFrom(symbolString);
             var symbolVirtualAddress = Context.ConvertVirtualAddressToContractAddress(symbolHash);
-            State.ATokenVirtualAddressMap[input.UnderlyingSymbol] = symbolVirtualAddress;
+            
+            State.ATokenVirtualAddressMap[symbolString] = symbolVirtualAddress;
             State.UnderlyingMap[symbolVirtualAddress] = input.UnderlyingSymbol;
+            State.UnderlyingToTokenSymbolMap[input.UnderlyingSymbol] = symbolString;
+            State.TokenSymbolMap[symbolVirtualAddress] = symbolString;
             State.InterestRateModelContractsAddress[symbolVirtualAddress] = input.InterestRateModel;
             State.InitialExchangeRate[symbolVirtualAddress] = input.InitialExchangeRate;
             return new Empty();
@@ -111,7 +114,7 @@ namespace Awaken.Contracts.AToken
         public override Empty Borrow(BorrowInput input)
         {
             BorrowInternal(input.AToken, input.Amount, input.Channel);
-            return base.Borrow(input);
+            return new Empty();
         }
 
         public override Empty Redeem(RedeemInput input)

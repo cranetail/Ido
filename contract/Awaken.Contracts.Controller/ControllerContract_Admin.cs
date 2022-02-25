@@ -185,7 +185,7 @@ namespace Awaken.Contracts.Controller
             var numMarkets = input.MarketBorrowCap.Count;
             for (var i = 0; i < numMarkets; i++)
             {
-                State.BorrowCaps[input.MarketBorrowCap[i].AToken].Value = input.MarketBorrowCap[i].NewBorrowCap;
+                State.BorrowCaps[input.MarketBorrowCap[i].AToken] = input.MarketBorrowCap[i].NewBorrowCap;
                 Context.Fire(new BorrowCapChanged()
                 {
                     AToken = input.MarketBorrowCap[i].AToken,

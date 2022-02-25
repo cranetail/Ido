@@ -109,6 +109,8 @@ namespace Awaken.Contracts.Controller.Tests
         
         internal ATokenContractContainer.ATokenContractStub AdminATokenContractStub =>
             GetATokenContractStub(AdminKeyPair);
+        internal ATokenContractContainer.ATokenContractStub UserTomATokenContractStub =>
+            GetATokenContractStub(UserTomKeyPair);
         internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub AdminTokenContractStub =>
             GetTokenContractStub(AdminKeyPair);
         internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub UserTomTokenContractStub =>

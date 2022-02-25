@@ -56,10 +56,10 @@ namespace Awaken.Contracts.AToken
 
         public override Int64Value GetBorrowBalanceStored(Account input)
         {
-            var result = BorrowBalanceStoredInternal(input);
+            var borrowBalance = BorrowBalanceStoredInternal(input);
             return new Int64Value()
             {
-                Value = Convert.ToInt64(result.Value)
+                Value = borrowBalance
             };
         }
 
@@ -80,8 +80,8 @@ namespace Awaken.Contracts.AToken
 
         public override GetAccountSnapshotOutput GetAccountSnapshot(Account input)
         {
-            var cTokenBalance = State.AccountTokens[input.User][input.AToken];
-            var borrowBalance = Convert.ToInt64(BorrowBalanceStoredInternal(input).Value);
+            var cTokenBalance = State.AccountTokens[input.AToken][input.User];
+            var borrowBalance = BorrowBalanceStoredInternal(input);
             var exchangeRate = ExchangeRateStoredInternal(input.AToken);
             return new GetAccountSnapshotOutput()
             {
@@ -163,12 +163,7 @@ namespace Awaken.Contracts.AToken
         public override Int64Value GetCurrentBorrowBalance(Account input)
         {
             AccrueInterest(input.AToken);
-            var result =  BorrowBalanceStoredInternal(input);
-            if (!long.TryParse(result.Value, out var balance))
-            {
-                throw new AssertionException($"Failed to parse {balance}");
-            }
-
+            var balance =  BorrowBalanceStoredInternal(input);
             return new Int64Value()
             {
                 Value = balance
@@ -187,7 +182,7 @@ namespace Awaken.Contracts.AToken
         
         public override Address GetATokenAddress(StringValue input)
         {
-            return State.ATokenVirtualAddressMap[input.Value];
+            return State.ATokenVirtualAddressMap[State.UnderlyingToTokenSymbolMap[input.Value]];
         }
 
         public override StringValue GetUnderlying(Address input)
@@ -197,6 +192,13 @@ namespace Awaken.Contracts.AToken
                 Value = State.UnderlyingMap[input]
             };
         }
-        
+
+        public override Int64Value GetTotalSupply(Address input)
+        {
+            return new Int64Value()
+            {
+                Value = State.TotalSupply[input]
+            };
+        }
     }
 }

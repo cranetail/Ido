@@ -30,7 +30,11 @@ namespace Awaken.Contracts.AToken
             var exchangeRate = ExchangeRateStoredInternal(aToken);
             DoTransferIn(Context.Sender, amount, State.UnderlyingMap[aToken]);
             //  mintTokens = actualMintAmount / exchangeRate
-            var mintTokens =amount.Div(exchangeRate) ;
+            var mintTokensStr =  new BigIntValue(Mantissa).Mul(amount).Div(exchangeRate).Value;
+            if (!long.TryParse(mintTokensStr, out var mintTokens))
+            {
+                throw new AssertionException($"Failed to parse {mintTokensStr}");
+            }
             // totalSupplyNew = totalSupply + mintTokens
             var totalSupplyNew = State.TotalSupply[aToken].Add(mintTokens);
             //accountTokensNew = accountTokens[minter] + mintTokens
@@ -109,7 +113,7 @@ namespace Awaken.Contracts.AToken
         
         private void DoTransferIn(Address from, long amount, string symbol)
         {
-            var input = new TransferFromInput()
+            var input = new AElf.Contracts.MultiToken.TransferFromInput()
             {
                 Amount = amount,
                 From = from,
@@ -122,7 +126,7 @@ namespace Awaken.Contracts.AToken
 
         private void DoTransferOut(Address to, long amount, string symbol)
         {
-            var input = new TransferInput()
+            var input = new AElf.Contracts.MultiToken.TransferInput()
             {
                 Amount = amount,
                 Memo = "TransferOut",
@@ -148,11 +152,34 @@ namespace Awaken.Contracts.AToken
             });
             Assert(State.AccrualBlockNumbers[aToken] == Context.CurrentHeight,"Market's block number should equals current block number");
             Assert(GetCashPrior(aToken) >= borrowAmount, "Borrow cash not available");
+            var borrowBalance = BorrowBalanceStoredInternal(new Account() {AToken = aToken, User = borrower});
+            State.AccountBorrows[aToken][borrower] = State.AccountBorrows[aToken][borrower] ?? new BorrowSnapshot();
+            DoTransferOut(borrower, borrowAmount, State.UnderlyingMap[aToken]);
+            State.AccountBorrows[aToken][borrower].Principal =
+                borrowBalance.Add(borrowAmount);
+            State.TotalBorrows[aToken] = State.TotalBorrows[aToken].Add(borrowAmount);
+            State.AccountBorrows[aToken][borrower].InterestIndex = State.BorrowIndex[aToken];
+            Context.Fire(new Borrow()
+            {
+                Borrower = borrower,
+                Amount = borrowAmount,
+                BorrowBalance =  State.AccountBorrows[aToken][borrower].Principal,
+                AToken = aToken,
+                TotalBorrows = State.TotalBorrows[aToken]
+            });
+            
+            State.ControllerContract.BorrowVerify.Send(new BorrowVerifyInput()
+            {
+                AToken = aToken,
+                BorrowAmount = borrowAmount,
+                Borrower = borrower
+            });
+            
         }
 
-        private BigIntValue BorrowBalanceStoredInternal(Account input)
+        private long BorrowBalanceStoredInternal(Account input)
         {
-            BorrowSnapshot borrowSnapshot = State.AccountBorrows[input.AToken][input.User];
+            var borrowSnapshot = State.AccountBorrows[input.AToken][input.User];
             if (borrowSnapshot == null)
             {
                 return 0;
@@ -171,8 +198,13 @@ namespace Awaken.Contracts.AToken
                 return 0;
             }
 
-            var result = new BigIntValue(borrowIndex).Mul(borrowSnapshot.Principal).Div(borrowSnapshot.InterestIndex);
-            return result;
+            var borrowBalanceStr = new BigIntValue(borrowIndex).Mul(borrowSnapshot.Principal).Div(borrowSnapshot.InterestIndex).Value;
+            if (!long.TryParse(borrowBalanceStr, out var borrowBalance))
+            {
+                throw new AssertionException($"Failed to parse {borrowBalanceStr}");
+            }
+            
+            return borrowBalance;
         }
 
         private void RedeemInternal(Address aToken, long redeemTokens)
@@ -195,12 +227,20 @@ namespace Awaken.Contracts.AToken
             if (redeemTokensIn > 0)
             {
                 redeemTokens = redeemTokensIn;
-                redeemAmount = Convert.ToInt64(new BigIntValue(exchangeRate).Mul(redeemTokensIn).Div(Mantissa).ToString()) ;
+                var redeemAmountStr = new BigIntValue(exchangeRate).Mul(redeemTokensIn).Div(Mantissa).Value ;
+                if (!long.TryParse(redeemAmountStr, out redeemAmount))
+                {
+                    throw new AssertionException($"Failed to parse {redeemAmountStr}");
+                }
             }
             else
             {
-                redeemTokens = Convert.ToInt64(new BigIntValue(redeemAmountIn).Mul(Mantissa).Div(exchangeRate).ToString()) ;
+                var redeemTokensStr = new BigIntValue(redeemAmountIn).Mul(Mantissa).Div(exchangeRate).Value ;
                 redeemAmount = redeemAmountIn;
+                if (!long.TryParse(redeemTokensStr, out redeemTokens))
+                {
+                    throw new AssertionException($"Failed to parse {redeemTokensStr}");
+                }
             }
             State.ControllerContract.RedeemAllowed.Send(new RedeemAllowedInput()
             {
@@ -213,7 +253,7 @@ namespace Awaken.Contracts.AToken
                 "market's block number should equals current block number");
             //totalSupplyNew = totalSupply - redeemTokens
             //accountTokensNew = accountTokensRedeemFresh[redeemer] - redeemTokens
-            //to do:send burn to token contract to burn Atoken
+            
             var totalSupplyNew = State.TotalSupply[aToken].Sub(redeemTokens);
             var accountTokensNew = State.AccountTokens[aToken][Context.Sender].Sub(redeemTokens);
             
@@ -240,6 +280,13 @@ namespace Awaken.Contracts.AToken
                 Amount = redeemAmount,
                 CTokenAmount = redeemTokens,
                 Symbol = aToken
+            });
+            Context.Fire(new Transferred()
+            {
+                From = Context.Sender,
+                To = Context.Self,
+                Amount = redeemTokens,
+                Symbol = State.TokenSymbolMap[aToken]
             });
         }
 
@@ -349,10 +396,10 @@ namespace Awaken.Contracts.AToken
                 User = borrower,
                 AToken = aToken
             };
-            var accountBorrows = Convert.ToInt64(BorrowBalanceStoredInternal(account).Value);
+            var accountBorrows = BorrowBalanceStoredInternal(account);
             if (repayAmount == long.MaxValue)
             {
-                repayAmount =accountBorrows;
+                repayAmount = accountBorrows;
             }
 
             var underling = State.UnderlyingMap[aToken];
@@ -411,22 +458,20 @@ namespace Awaken.Contracts.AToken
         
         private void ValidTokenSymbol(string token)
         {
-            var tokenInfo = State.TokenContract.GetTokenInfo.Call(new GetTokenInfoInput
+            var tokenInfo = State.TokenContract.GetTokenInfo.Call(new AElf.Contracts.MultiToken.GetTokenInfoInput
             {
                 Symbol = token
             });
             Assert(!string.IsNullOrEmpty(tokenInfo.Symbol), $"Token {token} not exists.");
         }
         
-        private TokenInfo ValidTokenExisting(string symbol)
+        private void ValidTokenExisting(string symbol)
         {
-            var tokenInfo = State.TokenInfoMap[symbol];
-            if (tokenInfo == null)
+            var tokenInfo = State.ATokenVirtualAddressMap[symbol];
+            if (tokenInfo == new Address())
             {
                 throw new AssertionException($"Token {symbol} not found.");
             }
-
-            return tokenInfo;
         }
     }
 }

@@ -89,7 +89,10 @@ namespace Awaken.Contracts.Controller
 
         public override Empty RedeemVerify(RedeemVerifyInput input)
         {
-            Assert(input.RedeemTokens == 0 && input.RedeemAmount > 0, "RedeemTokens zero");
+            if (input.RedeemTokens == 0 && input.RedeemAmount > 0)
+            {
+                throw new AssertionException("RedeemTokens zero");
+            }
             return new Empty();
         }
 
@@ -103,14 +106,14 @@ namespace Awaken.Contracts.Controller
                 AddToMarketInternal(input.AToken, Context.Sender);
             }
             //To do:Check Price in Oracle
-            var borrowCap = State.BorrowCaps[input.AToken].Value;
+            var borrowCap = State.BorrowCaps[input.AToken];
             if (borrowCap != 0)
             {
                var totalBorrows = State.ATokenContract.GetTotalBorrows.Call(input.AToken).Value;
                Assert(totalBorrows.Add(input.BorrowAmount) < borrowCap,"Market borrow cap reached");
             }
             var shortfall =
-                GetHypotheticalAccountLiquidityInternal(Context.Sender, input.AToken, 0, input.BorrowAmount);
+                GetHypotheticalAccountLiquidityInternal(input.Borrower, input.AToken, 0, input.BorrowAmount);
             Assert(shortfall <= 0, "Insufficient liquidity"); //INSUFFICIENT_LIQUIDITY
              //To do:get borrowIndex from AToken
             long borrowIndex = 1;

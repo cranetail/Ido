@@ -64,19 +64,19 @@ namespace Awaken.Contracts.Controller
                     AToken = aToken,
                     User = account
                 });
-                var cTokenBalance = accountSnapshot.ATokenBalance;
+                var aTokenBalance = accountSnapshot.ATokenBalance;
                 var exchangeRate = accountSnapshot.ExchangeRate;
                 var price = GetUnderlyingPrice(aToken);
                  
                 var collateralFactor = State.Markets[aTokenModify].CollateralFactor;
                 var tokensToDenom = new BigIntValue(exchangeRate).Mul(price).Mul(collateralFactor).Div(Mantissa).Div(Mantissa);
-                sumCollateral = sumCollateral.Add(new BigIntValue(cTokenBalance).Mul(tokensToDenom).Div(Mantissa));
+                sumCollateral = sumCollateral.Add(new BigIntValue(aTokenBalance).Mul(tokensToDenom).Div(Mantissa));
                 sumBorrowPlusEffects = sumBorrowPlusEffects.Add(new BigIntValue(accountSnapshot.BorrowBalance).Mul(price).Div(Mantissa));
                 if (aTokenModify == aToken)
                 {
                     // redeem effect
                     // sumBorrowPlusEffects += tokensToDenom * redeemTokens
-                    sumBorrowPlusEffects  = sumCollateral.Add(new BigIntValue(tokensToDenom).Mul(redeemTokens).Div(Mantissa));
+                    sumBorrowPlusEffects  = sumBorrowPlusEffects.Add(new BigIntValue(tokensToDenom).Mul(redeemTokens).Div(Mantissa));
                     // borrow effect
                     // sumBorrowPlusEffects += oraclePrice * borrowAmount
                     sumBorrowPlusEffects = sumBorrowPlusEffects.Add(new BigIntValue(price).Mul(borrowAmount).Div(Mantissa));
@@ -98,52 +98,62 @@ namespace Awaken.Contracts.Controller
 
         private void UpdatePlatformTokenSupplyIndex(Address aToken)
         {
-         var supplyState = State.PlatformTokenSupplyState[aToken];
-         var supplySpeed = State.PlatformTokenSpeeds[aToken].Value;
-         var blockNumber = Context.CurrentHeight;
-         var deltaBlocks = blockNumber.Sub(supplyState.Block);
-         if (deltaBlocks > 0 && supplySpeed > 0)
-         {
-             //To do:get totalSupply from ATokenContract;
-             long supplyTokens = 1;
-             var platformTokenAccrued = deltaBlocks.Mul(supplySpeed);
-             var ratio = supplyTokens > 0 ? Fraction(platformTokenAccrued, supplyTokens) : 0;
-             var index = supplyState.Index.Add(ratio);
-             State.PlatformTokenSupplyState[aToken] = new PlatformTokenMarketState()
-             {
-                 Index = index,
-                 Block = blockNumber
-             };
-         }
-         else if (deltaBlocks > 0)
-         {
-             State.PlatformTokenSupplyState[aToken].Block = blockNumber;
-         }
+            State.PlatformTokenSupplyState[aToken] =
+                State.PlatformTokenSupplyState[aToken] ?? new PlatformTokenMarketState();
+            var supplyState = State.PlatformTokenSupplyState[aToken];
+            var supplySpeed = State.PlatformTokenSpeeds[aToken];
+            var blockNumber = Context.CurrentHeight;
+            var deltaBlocks = blockNumber.Sub(supplyState.Block);
+            switch (deltaBlocks > 0)
+            {
+                case true when supplySpeed > 0:
+                {
+                    //To do:get totalSupply from ATokenContract;
+                    var supplyTokens = State.ATokenContract.GetTotalSupply.Call(aToken).Value;
+                    var platformTokenAccrued = deltaBlocks.Mul(supplySpeed);
+                    var ratio = supplyTokens > 0 ? Fraction(platformTokenAccrued, supplyTokens) : 0;
+                    var index = supplyState.Index.Add(ratio);
+                    State.PlatformTokenSupplyState[aToken] = new PlatformTokenMarketState()
+                    {
+                        Index = index,
+                        Block = blockNumber
+                    };
+                    break;
+                }
+                case true:
+                    State.PlatformTokenSupplyState[aToken].Block = blockNumber;
+                    break;
+            }
         }
         
         private void UpdatePlatformTokenBorrowIndex(Address aToken, long marketBorrowIndex)
         {
+            State.PlatformTokenBorrowState[aToken] =
+                State.PlatformTokenBorrowState[aToken] ?? new PlatformTokenMarketState();
             var borrowState = State.PlatformTokenBorrowState[aToken];
-            var borrowSpeed = State.PlatformTokenSpeeds[aToken].Value;
+            var borrowSpeed = State.PlatformTokenSpeeds[aToken];
             var blockNumber = Context.CurrentHeight;
             var deltaBlocks = blockNumber.Sub(borrowState.Block);
-            if (deltaBlocks > 0 && borrowSpeed > 0)
+            switch (deltaBlocks > 0)
             {
-                //To do:get totalBorrows from ATokenContract;
-                long totalBorrows = 1;
-                var borrowAmount = totalBorrows.Div(marketBorrowIndex);
-                var platformTokenAccrued = deltaBlocks.Mul(borrowSpeed);
-                var ratio = borrowAmount > 0 ? Fraction(platformTokenAccrued, borrowAmount) : 0;
-                var index = borrowState.Index.Add(ratio);
-                State.PlatformTokenBorrowState[aToken] = new PlatformTokenMarketState()
+                case true when borrowSpeed > 0:
                 {
-                    Index = index,
-                    Block = blockNumber
-                };
-            }
-            else if (deltaBlocks > 0)
-            {
-                State.PlatformTokenBorrowState[aToken].Block = blockNumber;
+                    //To do:get totalBorrows from ATokenContract;
+                    var totalBorrows = State.ATokenContract.GetTotalBorrows.Call(aToken).Value;;
+                    var borrowAmount = totalBorrows.Div(marketBorrowIndex);
+                    var platformTokenAccrued = deltaBlocks.Mul(borrowSpeed);
+                    var ratio = borrowAmount > 0 ? Fraction(platformTokenAccrued, borrowAmount) : 0;
+                    var index = borrowState.Index.Add(ratio);
+                    State.PlatformTokenBorrowState[aToken] = new PlatformTokenMarketState()
+                    {
+                        Index = index,
+                        Block = blockNumber
+                    };
+                    break;
+                }
+                case true:
+                    State.PlatformTokenBorrowState[aToken].Block = blockNumber;
+                    break;
             }
         }
 
@@ -220,7 +230,7 @@ namespace Awaken.Contracts.Controller
             for (var i = 0; i < list.AToken.Count; i++)
             {
                 var newSpeed = totalUtility > 0 ? State.PlatformTokenRate.Value.Mul(utilities[i]).Div(totalUtility) : 0;
-                State.PlatformTokenSpeeds[list.AToken[i]].Value = newSpeed;
+                State.PlatformTokenSpeeds[list.AToken[i]] = newSpeed;
                 Context.Fire(new PlatformTokenSpeedUpdated()
                 {
                     AToken = list.AToken[i],
