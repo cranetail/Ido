@@ -200,5 +200,32 @@ namespace Awaken.Contracts.AToken
                 Value = State.TotalSupply[input]
             };
         }
+
+        public override Int64Value GetAllowance(GetAllowanceInput input)
+        {
+            var aToken = State.ATokenVirtualAddressMap[input.Symbol];
+            return new Int64Value()
+            {
+                Value = State.AllowanceMap[aToken][input.Owner][input.Spender]
+            };
+
+        }
+
+        public override Balances GetBalances(GetBalancesInput input)
+        {
+            var balances = new Balances();
+            foreach (var tokenSymbol in input.Symbols)
+            {
+                var aToken = State.ATokenVirtualAddressMap[tokenSymbol];
+              
+                balances.Value.Add(  new Balance()
+                {
+                    Amount = State.AccountTokens[aToken][Context.Sender],
+                    Symbol = tokenSymbol
+                });
+            }
+
+            return balances;
+        }
     }
 }

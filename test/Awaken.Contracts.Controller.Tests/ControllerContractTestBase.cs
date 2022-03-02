@@ -58,6 +58,11 @@ namespace Awaken.Contracts.Controller.Tests
                 .Create<Awaken.Contracts.InterestRateModel.InterestRateModelContractContainer.
                     InterestRateModelContractStub>(InterestRateModelContractAddress, senderKeyPair);
         }
+        internal PriceContractContainer.PriceContractStub GetPriceContractStub(ECKeyPair senderKeyPair)
+        {
+            return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
+                .Create<PriceContractContainer.PriceContractStub>(PriceContractAddress, senderKeyPair);
+        }
         public ControllerContractTestBase()
         {
             ControllerContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
@@ -118,5 +123,8 @@ namespace Awaken.Contracts.Controller.Tests
         
         internal InterestRateModelContractContainer.InterestRateModelContractStub AdminInterestRateModelStub =>
             GetInterestRateModelContractStub(AdminKeyPair);
+        internal PriceContractContainer.PriceContractStub AdminPriceContractStub =>
+            GetPriceContractStub(AdminKeyPair);
+        
     }
 }

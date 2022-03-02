@@ -6,5 +6,6 @@ namespace AElf.Contracts.Price
 {
     public class PriceContractState: ContractState
     {
+        public MappedState<string,long> Price { get; set; }
     }
 }

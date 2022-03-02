@@ -57,19 +57,12 @@ service ATokenContract {
     }
    
    //basic token action function
-   rpc Issue (IssueInput) returns (google.protobuf.Empty) {
-   }
+  
    rpc Transfer (TransferInput) returns (google.protobuf.Empty) {
    }
    rpc TransferFrom (TransferFromInput) returns (google.protobuf.Empty) {
    }
    rpc Approve (ApproveInput) returns (google.protobuf.Empty) {
-   }
-   rpc UnApprove (UnApproveInput) returns (google.protobuf.Empty) {
-   }
-   rpc Burn (BurnInput) returns (google.protobuf.Empty) {
-   }
-   rpc ResetExternalInfo (ResetExternalInfoInput) returns (google.protobuf.Empty){
    }
    
     //set function
@@ -167,16 +160,14 @@ service ATokenContract {
 
 
    // basic token view function
-    rpc GetTokenInfo (GetTokenInfoInput) returns (TokenInfo) {
-    option (aelf.is_view) = true;
-    }
+ 
     rpc GetBalance (Account) returns (google.protobuf.Int64Value) {
     option (aelf.is_view) = true;
     }
     rpc GetBalances (GetBalancesInput) returns (Balances) {
     option (aelf.is_view) = true;
     }
-    rpc GetAllowance (GetAllowanceInput) returns (Allowance) {
+    rpc GetAllowance (GetAllowanceInput) returns (google.protobuf.Int64Value) {
     option (aelf.is_view) = true;
     }
     rpc GetTotalSupply(aelf.Address) returns (google.protobuf.Int64Value){
@@ -234,7 +225,7 @@ message RepayBorrowBehalfInput{
 }
 message LiquidateBorrowInput{
     aelf.Address borrow_token = 1; 
-    aelf.Address collateral_symbol = 2; 
+    aelf.Address collateral_token = 2; 
     int64 repay_amount = 3; 
     aelf.Address borrower = 4; 
 }
@@ -336,10 +327,11 @@ message ReserveFactorChanged{
 }
 message ReservesAdded{
     option (aelf.is_event) = true;
-    aelf.Address symbol = 1;
-    aelf.Address address = 2;
-    int64 amount = 3;
+    string underlying = 1;
+    aelf.Address a_token = 2;
+    int64 add_amount = 3;
     int64 total_reserves = 4;
+    aelf.Address sender = 5;
 }
 message ReservesReduced{
     option (aelf.is_event) = true;
@@ -386,12 +378,7 @@ message PauseGuardianChanged{
 
 //basic token 
 // Structs
-message TokenInfo {
-    string symbol = 1;
-    string token_name = 2;
-    int64 supply = 3;
-    ExternalInfo external_info = 4;
-}
+ 
 
 message ExternalInfo {
     map<string, string> value = 1;
@@ -412,21 +399,9 @@ message Balances {
     repeated Balance value = 1;
 }
 
-message Allowance {
-    string symbol = 1;
-    aelf.Address owner = 2;
-    aelf.Address spender = 3;
-    int64 amount = 4;
-}
-
 // Inputs
 
-message IssueInput {
-    string symbol = 1;
-    int64 amount = 2;
-    string memo = 3;
-    aelf.Address to = 4;
-}
+ 
 
 message TransferInput {
     aelf.Address to = 1;
@@ -448,21 +423,9 @@ message ApproveInput {
     string symbol = 2;
     int64 amount = 3;
 }
+ 
 
-message UnApproveInput {
-    aelf.Address spender = 1;
-    string symbol = 2;
-    int64 amount = 3;
-}
-
-message BurnInput {
-    string symbol = 1;
-    int64 amount = 2;
-}
-
-message GetTokenInfoInput {
-    string symbol = 1;
-}
+ 
 
 message GetBalancesInput {
     repeated string symbols = 1;
@@ -475,10 +438,7 @@ message GetAllowanceInput {
     aelf.Address spender = 3;
 }
 
-message ResetExternalInfoInput {
-    string symbol = 1;
-    ExternalInfo external_info = 2;
-}
+ 
 
 // Events
 

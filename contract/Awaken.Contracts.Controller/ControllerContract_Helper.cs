@@ -66,12 +66,21 @@ namespace Awaken.Contracts.Controller
                 });
                 var aTokenBalance = accountSnapshot.ATokenBalance;
                 var exchangeRate = accountSnapshot.ExchangeRate;
+              
+                var borrowBalance = accountSnapshot.BorrowBalance;
+                //borrowBalance is the result of aTokenContract executed, so we should sub the borrowAmount
+                if (aTokenModify == aToken)
+                {
+                    borrowBalance = borrowBalance.Sub(borrowAmount);
+                }
+
+            
                 var price = GetUnderlyingPrice(aToken);
                  
-                var collateralFactor = State.Markets[aTokenModify].CollateralFactor;
+                var collateralFactor = State.Markets[aToken].CollateralFactor;
                 var tokensToDenom = new BigIntValue(exchangeRate).Mul(price).Mul(collateralFactor).Div(Mantissa).Div(Mantissa);
                 sumCollateral = sumCollateral.Add(new BigIntValue(aTokenBalance).Mul(tokensToDenom).Div(Mantissa));
-                sumBorrowPlusEffects = sumBorrowPlusEffects.Add(new BigIntValue(accountSnapshot.BorrowBalance).Mul(price).Div(Mantissa));
+                sumBorrowPlusEffects = sumBorrowPlusEffects.Add(new BigIntValue(borrowBalance).Mul(price).Div(Mantissa));
                 if (aTokenModify == aToken)
                 {
                     // redeem effect
@@ -166,7 +175,7 @@ namespace Awaken.Contracts.Controller
             
         }
 
-        private decimal GetAccountLiquidityInternal(Address account)
+        private long GetAccountLiquidityInternal(Address account)
         {
             return GetHypotheticalAccountLiquidityInternal(account,Context.GetZeroSmartContractAddress(),0,0);
         }
@@ -196,7 +205,7 @@ namespace Awaken.Contracts.Controller
             var list = State.AllMarkets.Value ?? new ATokens();
             foreach (var t in list.AToken)
             {
-                Assert(t == aToken,"Market already added");
+                Assert(t != aToken,"Market already added");
             }
             list.AToken.Add(aToken);
             State.AllMarkets.Value = list;

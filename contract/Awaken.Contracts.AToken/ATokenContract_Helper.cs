@@ -198,7 +198,8 @@ namespace Awaken.Contracts.AToken
                 return 0;
             }
 
-            var borrowBalanceStr = new BigIntValue(borrowIndex).Mul(borrowSnapshot.Principal).Div(borrowSnapshot.InterestIndex).Value;
+            var principal = borrowSnapshot.Principal;
+            var borrowBalanceStr = new BigIntValue(borrowIndex).Mul(principal).Div(borrowSnapshot.InterestIndex).Value;
             if (!long.TryParse(borrowBalanceStr, out var borrowBalance))
             {
                 throw new AssertionException($"Failed to parse {borrowBalanceStr}");
@@ -305,7 +306,6 @@ namespace Awaken.Contracts.AToken
             var liquidatorTokensNew = State.AccountTokens[collateralToken][liquidator].Add(seizeTokens);
             State.AccountTokens[collateralToken][borrower] = borrowerTokensNew;
             State.AccountTokens[collateralToken][liquidator] = liquidatorTokensNew;
-            // to do : transfer atoken
             State.ControllerContract.SeizeVerify.Send(new SeizeVerifyInput()
             {
                 Borrower = borrower,
@@ -378,6 +378,11 @@ namespace Awaken.Contracts.AToken
             RepayBorrowFresh(Context.Sender, Context.Sender, repayAmount, aToken);
         }
 
+        private void RepayBorrowBehalfInternal(Address borrower,long repayAmount, Address aToken)
+        {
+            AccrueInterest(aToken);
+            RepayBorrowFresh(Context.Sender, borrower, repayAmount, aToken);
+        }
         private long RepayBorrowFresh(Address payer, Address borrower, long repayAmount, Address aToken)
         {
             State.ControllerContract.RepayBorrowAllowed.Send(new RepayBorrowAllowedInput()
@@ -472,6 +477,66 @@ namespace Awaken.Contracts.AToken
             {
                 throw new AssertionException($"Token {symbol} not found.");
             }
+        }
+
+        private void AddReservesInternal(Address aToken, long underlyingAmount)
+        {
+            var symbol = State.UnderlyingMap[aToken];
+            AccrueInterest(aToken);
+            var accrualBlockNumberPrior = State.AccrualBlockNumbers[aToken];
+            Assert(accrualBlockNumberPrior == Context.CurrentHeight,
+                "market's block number should equals current block number");
+            DoTransferIn(Context.Sender,underlyingAmount,symbol);
+            var totalReservesNew = State.TotalReserves[aToken].Add(underlyingAmount);
+            State.TotalReserves[aToken] = totalReservesNew;
+             Context.Fire(new ReservesAdded()
+             {
+                 Underlying = symbol,
+                 AToken= aToken,
+                 AddAmount = underlyingAmount,
+                 Sender = Context.Sender,
+                 TotalReserves = totalReservesNew
+                 
+             });
+        }
+
+        private void TransferTokens(Address spender, Address src, Address dst, string aTokenSymbol, long amount)
+        {
+            var aToken = State.ATokenVirtualAddressMap[aTokenSymbol];
+            State.ControllerContract.TransferAllowed.Send(new TransferAllowedInput(){AToken = aToken,Src = src,Dst = dst,TransferTokens = amount});
+            Assert(src != dst,"transfer not allowed");
+            long startingAllowance = 0;
+            if (spender == src)
+            {
+                startingAllowance = Int64.MaxValue;
+            }
+            else
+            {
+                startingAllowance = State.AllowanceMap[aToken][src][spender];
+            }
+
+            var allowanceNew = startingAllowance.Sub(amount);
+            var srcTokensNew = State.AccountTokens[aToken][src].Sub(amount);
+            var dstTokensNew = State.AccountTokens[aToken][dst].Add(amount);
+
+            State.AccountTokens[aToken][src] = srcTokensNew;
+            State.AccountTokens[aToken][dst] = dstTokensNew;
+
+            if (startingAllowance != Int64.MaxValue)
+            {
+                State.AllowanceMap[aToken][src][spender] = allowanceNew;
+            }
+            
+            Context.Fire(new Transferred()
+            {
+                Symbol = aTokenSymbol,
+                From = src,
+                To = dst,
+                Amount = amount
+            });
+            State.ControllerContract.TransferVerify.Send(new TransferVerifyInput{AToken = aToken,Src = src,Dst = dst,TransferTokens = amount});
+
+            
         }
     }
 }

@@ -9,8 +9,14 @@ namespace AElf.Contracts.Price
         {
             return new Price()
             {
-                Value = "1000000000000000000"
+                Value = State.Price[input.TokenSymbol].ToString()
             };
+        }
+
+        public override Empty SetPrice(SetPriceInput input)
+        {
+            State.Price[input.TokenSymbol] = input.Price;
+            return new Empty();
         }
     }
 }

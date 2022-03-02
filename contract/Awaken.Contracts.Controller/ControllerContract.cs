@@ -103,7 +103,7 @@ namespace Awaken.Contracts.Controller
             if (!State.Markets[input.AToken].AccountMembership
                 .TryGetValue(Context.Sender.ToString(), out var isExist) || !isExist)
             {
-                AddToMarketInternal(input.AToken, Context.Sender);
+                AddToMarketInternal(input.AToken, input.Borrower);
             }
             //To do:Check Price in Oracle
             var borrowCap = State.BorrowCaps[input.AToken];
@@ -154,7 +154,13 @@ namespace Awaken.Contracts.Controller
                 AToken = input.ATokenBorrowed,
                 User = input.Borrower
             }).Value;
-            var maxClose = borrowBalance.Mul(State.CloseFactor.Value);
+            //borrowBalance is the result of aTokenContract executed, so we should add the RepayAmount
+            borrowBalance = borrowBalance.Add(input.RepayAmount);
+            var maxCloseStr = new BigIntValue(borrowBalance).Mul(State.CloseFactor.Value).Div(Mantissa).Value;
+            if (!long.TryParse(maxCloseStr, out var maxClose))
+            {
+                throw new AssertionException($"Failed to parse {maxCloseStr}");
+            }
             Assert(input.RepayAmount <= maxClose,"Too much repay");
             return new Empty();
         }
@@ -204,11 +210,15 @@ namespace Awaken.Contracts.Controller
             var exchangeRate = State.ATokenContract.GetExchangeRateStored.Call(input.ATokenCollateral).Value;
             var numerator = new BigIntValue(priceBorrow).Mul(State.LiquidationIncentive.Value);
             var denominator = new BigIntValue(priceCollateral).Mul(exchangeRate);
-            var seizeTokens = numerator.Div(denominator).Mul(input.ActualRepayAmount);
+            var seizeTokensStr = numerator.Div(denominator).Mul(input.ActualRepayAmount).Value;
             
+            if (!long.TryParse(seizeTokensStr, out var seizeTokens))
+            {
+                throw new AssertionException($"Failed to parse {seizeTokensStr}");
+            }
             return new Int64Value()
             {
-                Value = Convert.ToInt64(seizeTokens.ToString())
+                Value = seizeTokens
             };
         }
 

@@ -33,6 +33,7 @@ namespace Awaken.Contracts.AToken
             State.TokenSymbolMap[symbolVirtualAddress] = symbolString;
             State.InterestRateModelContractsAddress[symbolVirtualAddress] = input.InterestRateModel;
             State.InitialExchangeRate[symbolVirtualAddress] = input.InitialExchangeRate;
+            State.BorrowIndex[symbolVirtualAddress] = Mantissa;
             return new Empty();
         }
 
@@ -136,7 +137,7 @@ namespace Awaken.Contracts.AToken
 
         public override Empty LiquidateBorrow(LiquidateBorrowInput input)
         {
-            LiquidateBorrowInternal(input.CollateralSymbol, input.BorrowToken, input.Borrower, input.RepayAmount);
+            LiquidateBorrowInternal(input.CollateralToken, input.BorrowToken, input.Borrower, input.RepayAmount);
             return new Empty();
         }
 
@@ -145,12 +146,45 @@ namespace Awaken.Contracts.AToken
             RepayBorrowInternal(input.Amount,input.AToken);
             return new Empty();
         }
-
+        public override Empty RepayBorrowBehalf(RepayBorrowBehalfInput input)
+        {
+            RepayBorrowBehalfInternal(input.Borrower,input.Amount,input.AToken);
+            return new Empty();
+        }
         public override Empty AddReserves(AddReservesInput input)
         {
-            
-            return base.AddReserves(input);
+            AddReservesInternal(input.AToken, input.Amount);
+            return new Empty();
         }
+        
+        public override Empty Transfer(TransferInput input)
+        {
+            TransferTokens(Context.Sender, Context.Sender, input.To, input.Symbol, input.Amount);
+            return new Empty();
+        }
+
+        public override Empty TransferFrom(TransferFromInput input)
+        {
+            TransferTokens(Context.Sender, input.From, input.To, input.Symbol, input.Amount);
+            return new Empty();
+        }
+
+        public override Empty Approve(ApproveInput input)
+        {
+            var aToken = State.ATokenVirtualAddressMap[input.Symbol];
+            var src = Context.Sender;
+            State.AllowanceMap[aToken][src][input.Spender] = input.Amount;
+            Context.Fire(new Approved()
+            {
+                Symbol = input.Symbol,
+                Owner = Context.Sender,
+                Spender = input.Spender,
+                Amount = input.Amount
+            });
+            return new Empty();
+        }
+
+       
 
         //Set Fuction
         public override Empty SetAdmin(Address input)

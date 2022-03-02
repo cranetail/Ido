@@ -26,9 +26,7 @@ namespace Awaken.Contracts.AToken
         /// Contract pending administrator
         /// </summary>
         public SingletonState<Address> PendingAdmin { get; set; }
-        
-        public MappedState<string, Address> ATokenAddress { get; set; }
-        
+
         public MappedState<Address, long> AccrualBlockNumbers { get; set; }
         /// <summary>
         /// Total amount of outstanding borrows of the underlying in this market
@@ -83,7 +81,7 @@ namespace Awaken.Contracts.AToken
         /// <summary>
         /// Owner -> Spender -> Symbol -> Allowance
         /// </summary>
-        public MappedState<Address, Address, string, long> AllowanceMap { get; set; }
+        public MappedState<Address,Address, Address, long> AllowanceMap { get; set; }
 
         public MappedState<string, MethodFees> TransactionFeesMap { get; set; }
         public SingletonState<AuthorityInfo> MethodFeeController { get; set; }
