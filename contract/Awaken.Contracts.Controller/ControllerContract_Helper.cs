@@ -168,7 +168,7 @@ namespace Awaken.Contracts.Controller
 
         private void DistributeSupplierPlatformToken(Address aToken, Address supplier, bool distributeAll)
         {
-            
+            var platformTokenSupplyState = State.PlatformTokenSupplyState[aToken];
         }
         private void DistributeBorrowerPlatformToken(Address aToken, Address borrower, long marketBorrowIndex, bool distributeAll)
         {
