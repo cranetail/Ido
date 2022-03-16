@@ -261,7 +261,7 @@ namespace Awaken.Contracts.AToken
             Assert(GetCashPrior(aToken) >= redeemAmount, "Insufficient Token Cash");
             Assert(accountTokensNew >= 0, "Insufficient Token Balance");
             var underlying = State.UnderlyingMap[aToken];
-            DoTransferOut(aToken, redeemAmount, underlying );
+            DoTransferOut(redeemer, redeemAmount, underlying );
             
             //We write previously calculated values into storage
             State.TotalSupply[aToken] = totalSupplyNew;
