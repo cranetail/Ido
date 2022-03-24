@@ -71,7 +71,7 @@ namespace Awaken.Contracts.AToken
             var totalReservesNewStr =
                 interestAccumulated.Mul(State.ReserveFactor[aToken]).Div(Mantissa).Add(reservesPrior).Value;
             var borrowIndexNewStr = simpleInterestFactor.Mul(borrowIndexPrior).Div(Mantissa).Add(borrowIndexPrior).Value;
-            
+  
             if (!long.TryParse(totalBorrowsNewStr, out var totalBorrowsNew))
             {
                 throw new AssertionException($"Failed to parse {totalBorrowsNewStr}");

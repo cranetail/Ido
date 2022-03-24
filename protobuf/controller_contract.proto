@@ -122,9 +122,38 @@ option (aelf.is_view) = true;
 rpc GetPriceOracle(google.protobuf.Empty)returns(aelf.Address){
 option (aelf.is_view) = true;
 }
+rpc GetMarket(aelf.Address)returns(Market){
+option (aelf.is_view) = true;
+}
+rpc GetAccountLiquidity(aelf.Address)returns(GetAccountLiquidityOutput){
+option (aelf.is_view) = true;
+}
+
+rpc GetPlatformTokenRate(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+option (aelf.is_view) = true;
+}
+rpc GetPlatformTokenSpeeds(aelf.Address)returns(google.protobuf.Int64Value){
+option (aelf.is_view) = true;
+}
+rpc GetPlatformTokenSupplyState(aelf.Address)returns(PlatformTokenMarketState){
+option (aelf.is_view) = true;
+}
+rpc GetPlatformTokenBorrowState(aelf.Address)returns(PlatformTokenMarketState){
+option (aelf.is_view) = true;
+}
+rpc GetPlatformTokenSupplierIndex(Account)returns(aelf.BigIntValue){
+option (aelf.is_view) = true;
+}
+rpc GetPlatformTokenBorrowerIndex(Account)returns(aelf.BigIntValue){
+option (aelf.is_view) = true;
+}
+rpc GetPlatformTokenAccrued(aelf.Address)returns(google.protobuf.Int64Value){
+option (aelf.is_view) = true;
+}
 }
 message InitializeInput{
 aelf.Address a_token_contract = 1;
+string platform_token_symbol = 2;
 }
 
 message SetMarketBorrowCapsInput{
@@ -251,9 +280,13 @@ message GetHypotheticalAccountLiquidityOutput{
 int64 liquidity=1;
 int64 shortfall=2;
 }
+message GetAccountLiquidityOutput{
+int64 liquidity=1;
+int64 shortfall=2;
+}
 //struct
 message PlatformTokenMarketState{
-int64 index=1;
+aelf.BigIntValue index=1;
 int64 block=2;
 }
 message AssetList{
@@ -356,16 +389,16 @@ message DistributedSupplierPlatformToken{
 option (aelf.is_event) = true;
 aelf.Address a_token =1; 
 aelf.Address supplier=2; 
-int64 platform_token_delta=3; 
-int64 platform_token_supply_index=4;
+aelf.BigIntValue platform_token_delta=3; 
+aelf.BigIntValue platform_token_supply_index=4;
 }
 
 message DistributedBorrowerPlatformToken{
 option (aelf.is_event) = true;
 aelf.Address a_token =1; 
 aelf.Address borrower=2; 
-int64 platform_token_delta=3; 
-int64 platform_token_borrow_index=4;
+aelf.BigIntValue platform_token_delta=3; 
+aelf.BigIntValue platform_token_borrow_index=4;
 }
 
 message BorrowCapChanged{

@@ -227,5 +227,13 @@ namespace Awaken.Contracts.AToken
 
             return balances;
         }
+
+        public override Int32Value GetDecimals(Empty input)
+        {
+            return new Int32Value()
+            {
+                Value = Decimals
+            };
+        }
     }
 }

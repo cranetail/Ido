@@ -205,6 +205,7 @@ namespace Awaken.Contracts.Controller
                 OldPlatformTokenRate = oldRate,
                 NewPlatformTokenRate = input.Value
             });
+            RefreshPlatformTokenSpeedsInternal();
             return new Empty();
         }
 
@@ -218,6 +219,33 @@ namespace Awaken.Contracts.Controller
                 OldPriceOracle = oldOracle,
                 NewPriceOracle = input
             });
+            return new Empty();
+        }
+        
+        public override Empty AddPlatformTokenMarkets(ATokens input)
+        {
+            Assert(Context.Sender == State.Admin.Value, "Only admin can add platformToken market");
+            foreach (var t in input.AToken)
+            {
+                AddPlatformTokenMarketInternal(t);
+            }
+            RefreshPlatformTokenSpeedsInternal();
+            return new Empty();
+        }
+
+        public override Empty DropPlatformTokenMarket(Address input)
+        {
+            Assert(Context.Sender == State.Admin.Value, "Only admin can drop platformToken market");
+            var market = State.Markets[input];
+            Assert(market.IsListed, "platformToken market is not listed");
+            Assert(market.IsPlatformTokened, "platformToken market already added");
+            market.IsPlatformTokened = false;
+            Context.Fire(new MarketPlatformTokened()
+            {
+                AToken = input,
+                IsPlatformTokened = false
+            });
+            RefreshPlatformTokenSpeedsInternal();
             return new Empty();
         }
     }

@@ -17,26 +17,36 @@ rpc Initialize (InitializeInput) returns (google.protobuf.Empty) {
 }
 rpc GetATokenMetadata(aelf.Address) returns(ATokenMetadata) {
 }
+rpc GetATokenMetadataInline(aelf.Address) returns(ATokenMetadata) {
+}
 rpc GetATokenMetadataAll(ATokens) returns(ATokenMetadataAll) {
 }
 rpc GetATokenBalances(Account)returns(ATokenBalances) {
 }
-rpc GetATokenBalancesAll(Account)returns(ATokenBalancesAll) {
+rpc GetATokenBalancesAll(GetATokenBalancesAllInput)returns(ATokenBalancesAll) {
 }
-rpc ATokenUnderlyingPric(aelf.Address) returns(ATokenUnderlyingPrice) {
+rpc GetATokenUnderlyingPrice(aelf.Address) returns(ATokenUnderlyingPrice) {
 }
-rpc ATokenUnderlyingPricAll(ATokens) returns(ATokenUnderlyingPriceAll) {
+rpc GetATokenUnderlyingPriceAll(ATokens) returns(ATokenUnderlyingPriceAll) {
 }
 rpc GetAccountLimits(GetAccountLimitsInput)returns(AccountLimits){
 }
 rpc GetPlatformTokenBalanceMetadata(GetPlatformTokenBalanceMetadataInput)returns(PlatformTokenBalanceMetadata){
+option (aelf.is_view) = true;
 }
 
 rpc getPlatformTokenBalanceMetadataExt(getPlatformTokenBalanceMetadataExtInput)returns(PlatformTokenBalanceMetadataExt){
 }
+rpc getPlatformTokenBalanceInline(getPlatformTokenBalanceMetadataExtInput)returns(google.protobuf.Int64Value){
+}
 }
 message InitializeInput {
-aelf.Address owner = 1;
+aelf.Address a_token_contract = 1;
+aelf.Address comtroller_contract = 2;
+}
+message GetATokenBalancesAllInput{
+ATokens a_tokens = 1;
+aelf.Address user = 2;
 }
 message GetAccountLimitsInput{
 aelf.Address comptroller = 1;

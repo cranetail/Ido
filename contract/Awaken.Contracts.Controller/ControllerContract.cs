@@ -21,6 +21,7 @@ namespace Awaken.Contracts.Controller
                 Context.GetContractAddressByName(SmartContractConstants.TokenContractSystemName);
             State.ATokenContract.Value = input.ATokenContract;
             State.Admin.Value = Context.Sender;
+            State.PlatformTokenSymbol.Value = input.PlatformTokenSymbol;
             return new Empty();
         }
         public override Empty EnterMarkets(ATokens input)
@@ -280,32 +281,7 @@ namespace Awaken.Contracts.Controller
         }
 
         
-        public override Empty AddPlatformTokenMarkets(ATokens input)
-        {
-            Assert(Context.Sender == State.Admin.Value, "Only admin can add platformToken market");
-            foreach (var t in input.AToken)
-            {
-                AddPlatformTokenMarketInternal(t);
-            }
-
-            return new Empty();
-        }
-
-        public override Empty DropPlatformTokenMarket(Address input)
-        {
-            Assert(Context.Sender == State.Admin.Value, "Only admin can drop platformToken market");
-            var market = State.Markets[input];
-            Assert(market.IsListed, "platformToken market is not listed");
-            Assert(market.IsPlatformTokened, "platformToken market already added");
-            market.IsPlatformTokened = false;
-            Context.Fire(new MarketPlatformTokened()
-            {
-                AToken = input,
-                IsPlatformTokened = false
-            });
-            RefreshPlatformTokenSpeedsInternal();
-            return new Empty();
-        }
+       
 
        
     }

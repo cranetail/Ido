@@ -21,6 +21,18 @@ namespace Awaken.Contracts.Controller
             };
         }
 
+        public override GetAccountLiquidityOutput GetAccountLiquidity(Address input)
+        {
+            var shortfall= GetHypotheticalAccountLiquidityInternal(input, new Address(), 0,
+               0);
+            
+            return new GetAccountLiquidityOutput()
+            {
+                Liquidity = shortfall < 0 ? 0 : shortfall,
+                Shortfall = shortfall < 0 ? -shortfall : 0
+            };
+        }
+
         public override Address GetAdmin(Empty input)
         {
             return State.Admin.Value;
@@ -104,6 +116,57 @@ namespace Awaken.Contracts.Controller
         {
             return State.PriceContract.Value;
         }
-        
+
+        public override Market GetMarket(Address input)
+        {
+
+            return State.Markets[input];
+        }
+
+        public override Int64Value GetPlatformTokenRate(Empty input)
+        {
+            return new Int64Value()
+            {
+                Value = State.PlatformTokenRate.Value
+            };
+
+        }
+
+        public override Int64Value GetPlatformTokenSpeeds(Address input)
+        {
+            return new Int64Value()
+            {
+                Value = State.PlatformTokenSpeeds[input]
+            };
+        }
+
+        public override PlatformTokenMarketState GetPlatformTokenSupplyState(Address input)
+        {
+            return State.PlatformTokenSupplyState[input];
+        }
+
+        public override PlatformTokenMarketState GetPlatformTokenBorrowState(Address input)
+        {
+            return State.PlatformTokenBorrowState[input];
+        }
+
+        public override BigIntValue GetPlatformTokenSupplierIndex(Account input)
+        {
+            return State.PlatformTokenSupplierIndex[input.AToken][input.Address];
+        }
+
+        public override BigIntValue GetPlatformTokenBorrowerIndex(Account input)
+        {
+            return State.PlatformTokenBorrowerIndex[input.AToken][input.Address];
+        }
+
+        public override Int64Value GetPlatformTokenAccrued(Address input)
+        {
+            return new Int64Value()
+            {
+                Value = State.PlatformTokenAccrued[input]
+            }; 
+                
+        }
     }
 }

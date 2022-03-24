@@ -1,3 +1,5 @@
+using System;
+
 namespace Awaken.Contracts.AToken
 {
     public  partial class ATokenContract
@@ -35,5 +37,7 @@ namespace Awaken.Contracts.AToken
         public const long InitialBorrowIndex = 1000000000000000000;
 
         private const long Mantissa = 1000000000000000000;
+
+        private const int Decimals = 8;
     }
 }

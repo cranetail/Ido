@@ -1,3 +1,4 @@
+using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 
 namespace Awaken.Contracts.Controller
@@ -24,5 +25,9 @@ namespace Awaken.Contracts.Controller
         private const long MaxLiquidationIncentive = 1500000000000000000; // 1.5 scaled by 1e18
 
         private const long PlatformTokenInitialIndex = 1000000000000000000;
+        
+        private const long PlatformTokenClaimThreshold = 1000000000000000;
+        
+    
     }
 }

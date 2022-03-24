@@ -102,7 +102,6 @@ service ATokenContract {
     }
   
     rpc GetCurrentBorrowBalance (Account) returns (google.protobuf.Int64Value) {
-        option (aelf.is_view) = true;
     }
   
     rpc GetBorrowBalanceStored (Account) returns (google.protobuf.Int64Value) {
@@ -110,7 +109,6 @@ service ATokenContract {
     }
    
     rpc GetCurrentExchangeRate (aelf.Address) returns (google.protobuf.Int64Value) {
-        option (aelf.is_view) = true;
     }
  
     rpc GetExchangeRateStored (aelf.Address) returns (google.protobuf.Int64Value) {
@@ -171,6 +169,9 @@ service ATokenContract {
     option (aelf.is_view) = true;
     }
     rpc GetTotalSupply(aelf.Address) returns (google.protobuf.Int64Value){
+    option (aelf.is_view) = true;
+    }
+    rpc GetDecimals(google.protobuf.Empty)returns(google.protobuf.Int32Value){
     option (aelf.is_view) = true;
     }
 }
