@@ -238,15 +238,82 @@ namespace Awaken.Contracts.Controller
             //set the borrow Token Price arise to trigger LiquidateBorrow
             await AdminPriceContractStub.SetPrice.SendAsync(new SetPriceInput() {TokenSymbol = "DAI",Price = 1100000000000000000}); 
             await AdminATokenContractStub.LiquidateBorrow.SendAsync(new LiquidateBorrowInput(){CollateralToken = aElfAddress,BorrowToken = aDaiAddress,Borrower = UserTomAddress,RepayAmount = repayAmount});
+        }
+
+        [Fact]
+        public async Task AddPlatformTokenMarketsTest()
+        {
+            await Initialize();
+            await CreateAToken();
             
-         
-        } 
+            await AddMarket();
+            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            
+            await AdminTokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+            {
+                Amount = 100000000000,
+                Symbol = "PLATFORM",
+                Memo = "Recharge",
+                To = ControllerContractAddress
+            });
+            await AdminStub.SetPlatformTokenRate.SendAsync(new Int64Value() {Value = 10000000});
+            var marketBefore =  await AdminStub.GetMarket.CallAsync(aElfAddress);
+            await AdminStub.AddPlatformTokenMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            var marketAfter =  await AdminStub.GetMarket.CallAsync(aElfAddress);
+            marketBefore.IsPlatformTokened.ShouldBeFalse();
+            marketAfter.IsPlatformTokened.ShouldBeTrue();
+            var speed = await AdminStub.GetPlatformTokenSpeeds.CallAsync(aElfAddress);
+            speed.Value.ShouldBe(0);
+        }
+        [Fact]
+        public async Task ClaimPlatformTokenTest()
+        {
+            await Initialize();
+            await CreateAToken();
+            const long mintAmount =  100000000;
+            const long borrowAmount = 5000000;
+            await AddMarket();
+            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+            var aDaiAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "DAI"});
+            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            
+            await AdminTokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+            {
+                Amount = 100000000000,
+                Symbol = "PLATFORM",
+                Memo = "Recharge",
+                To = ControllerContractAddress
+            });
+            await AdminStub.SetPlatformTokenRate.SendAsync(new Int64Value() {Value = 10000000});
+            await AdminStub.AddPlatformTokenMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            await AdminStub.AddPlatformTokenMarkets.SendAsync(new ATokens() {AToken = {aDaiAddress}});
+            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            await AdminStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = mintAmount, Channel = ""});
+            await AdminATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aDaiAddress, MintAmount = mintAmount, Channel = ""});
+            await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
+                {AToken = aDaiAddress, Amount = borrowAmount});
+            await AdminStub.RefreshPlatformTokenSpeeds.SendAsync(new Empty());
+            var speed = await AdminStub.GetPlatformTokenSpeeds.CallAsync(aDaiAddress);
+            speed.Value.ShouldNotBe(0);
+            await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
+                {AToken = aDaiAddress, Amount = borrowAmount});
+            await TomStub.ClaimPlatformToken.SendAsync(new ClaimPlatformTokenInput()
+                {Holders = {UserTomAddress},ATokens = { aDaiAddress},Borrowers = true, Suppliers = true});
+            var balance =  await AdminTokenContractStub.GetBalance.CallAsync(new GetBalanceInput()
+                {Owner = UserTomAddress, Symbol = "PLATFORM"});
+            balance.Balance.ShouldNotBe(0);
+          
+        }
+        
         private async Task Initialize()
         {
             await CreateAndGetToken();
             await AdminStub.Initialize.SendAsync(new InitializeInput()
             {
-                ATokenContract =  ATokenContractAddress
+                ATokenContract =  ATokenContractAddress,
+                PlatformTokenSymbol = "PLATFORM"
             });
         }
 
@@ -313,6 +380,26 @@ namespace Awaken.Contracts.Controller
                 Symbol = "DAI"
             });
 
+            //
+            var result3 = await AdminTokenContractStub.Create.SendAsync(new AElf.Contracts.MultiToken.CreateInput
+            {
+                Issuer = AdminAddress,
+                Symbol = "PLATFORM",
+                Decimals = 10,
+                IsBurnable = true,
+                TokenName = "PLATFORM token symbol",
+                TotalSupply = 100000000_00000000
+            });
+
+            result2.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
+
+            var issueResult3 = await AdminTokenContractStub.Issue.SendAsync(new AElf.Contracts.MultiToken.IssueInput
+            {
+                Amount = 100000000000000,
+                Symbol ="PLATFORM",
+                To = AdminAddress
+            });
+            issueResult2.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
             //set PRICE
             await AdminPriceContractStub.SetPrice.SendAsync(new SetPriceInput() {TokenSymbol = "ELF",Price = 1000000000000000000});
             await AdminPriceContractStub.SetPrice.SendAsync(new SetPriceInput() {TokenSymbol = "DAI",Price = 1000000000000000000});

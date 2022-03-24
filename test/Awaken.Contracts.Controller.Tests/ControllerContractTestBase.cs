@@ -14,6 +14,7 @@ using Awaken.Contracts.AToken;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Threading;
 using AElf.Contracts.Price;
+using Awaken.Contracts.AwakenLendingLens;
 using Awaken.Contracts.InterestRateModel;
 
 
@@ -25,6 +26,8 @@ namespace Awaken.Contracts.Controller.Tests
         internal readonly Address ControllerContractAddress;
 
         internal readonly Address ATokenContractAddress;
+
+        internal readonly Address AwakenLendingLensContractAddress;
         
         internal readonly Address PriceContractAddress;
 
@@ -63,6 +66,12 @@ namespace Awaken.Contracts.Controller.Tests
             return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
                 .Create<PriceContractContainer.PriceContractStub>(PriceContractAddress, senderKeyPair);
         }
+        
+        internal AwakenLendingLensContractContainer.AwakenLendingLensContractStub GetAwakenLendingLensContractStub(ECKeyPair senderKeyPair)
+        {
+            return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
+                .Create<AwakenLendingLensContractContainer.AwakenLendingLensContractStub>(AwakenLendingLensContractAddress, senderKeyPair);
+        }
         public ControllerContractTestBase()
         {
             ControllerContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
@@ -82,6 +91,12 @@ namespace Awaken.Contracts.Controller.Tests
                 KernelConstants.DefaultRunnerCategory,
                 File.ReadAllBytes(typeof(InterestRateModelContract).Assembly.Location),
                 SampleAccount.Accounts[0].KeyPair));
+            
+            AwakenLendingLensContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
+                KernelConstants.DefaultRunnerCategory,
+                File.ReadAllBytes(typeof(AwakenLendingLensContract).Assembly.Location),
+                SampleAccount.Accounts[0].KeyPair));
+            
         }
 
         private async Task<Address> DeployContractAsync(int category, byte[] code, ECKeyPair keyPair)
@@ -125,6 +140,8 @@ namespace Awaken.Contracts.Controller.Tests
             GetInterestRateModelContractStub(AdminKeyPair);
         internal PriceContractContainer.PriceContractStub AdminPriceContractStub =>
             GetPriceContractStub(AdminKeyPair);
+        internal AwakenLendingLensContractContainer.AwakenLendingLensContractStub AdminAwakenLendingLensContract =>
+            GetAwakenLendingLensContractStub(AdminKeyPair);
         
     }
 }
