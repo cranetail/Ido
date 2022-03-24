@@ -117,7 +117,7 @@ namespace Awaken.Contracts.Controller
                 GetHypotheticalAccountLiquidityInternal(input.Borrower, input.AToken, 0, input.BorrowAmount);
             Assert(shortfall <= 0, "Insufficient liquidity"); //INSUFFICIENT_LIQUIDITY
              //To do:get borrowIndex from AToken
-            long borrowIndex = 1;
+            var borrowIndex =  State.ATokenContract.GetBorrowIndex.Call(input.AToken).Value;
             UpdatePlatformTokenBorrowIndex(input.AToken, borrowIndex);
             DistributeBorrowerPlatformToken(input.AToken, input.Borrower, borrowIndex, false);
             

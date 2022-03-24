@@ -198,7 +198,7 @@ namespace Awaken.Contracts.Controller
                 var deltaIndex = borrowIndex.Sub(borrowerIndex);
                 var borrowBalance = State.ATokenContract.GetBorrowBalanceStored
                     .Call(new AToken.Account() {AToken = aToken, User = borrower}).Value;
-                var borrowerAmount = borrowBalance.Mul(Mantissa).Div(marketBorrowIndex);
+                var borrowerAmount = Parse(new BigIntValue(borrowBalance).Mul(Mantissa).Div(marketBorrowIndex).Value);
                 var borrowerDelta = deltaIndex.Mul(borrowerAmount).Div(Mantissa).Div(Mantissa);;
                 var borrowerAccrued = State.PlatformTokenAccrued[borrower].Add(Parse(borrowerDelta.Value));
                 State.PlatformTokenAccrued[borrower] = TransferPlatformToken(borrower, borrowerAccrued,distributeAll ? 0 : PlatformTokenClaimThreshold);
