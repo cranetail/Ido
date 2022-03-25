@@ -16,28 +16,36 @@ option (aelf.csharp_state) = "Awaken.Contracts.AwakenLendingLens.AwakenLendingLe
 rpc Initialize (InitializeInput) returns (google.protobuf.Empty) {
 }
 rpc GetATokenMetadata(aelf.Address) returns(ATokenMetadata) {
+option (aelf.is_view) = true;
 }
 rpc GetATokenMetadataInline(aelf.Address) returns(ATokenMetadata) {
+option (aelf.is_view) = true;
 }
 rpc GetATokenMetadataAll(ATokens) returns(ATokenMetadataAll) {
+option (aelf.is_view) = true;
 }
 rpc GetATokenBalances(Account)returns(ATokenBalances) {
+option (aelf.is_view) = true;
 }
 rpc GetATokenBalancesAll(GetATokenBalancesAllInput)returns(ATokenBalancesAll) {
+option (aelf.is_view) = true;
 }
 rpc GetATokenUnderlyingPrice(aelf.Address) returns(ATokenUnderlyingPrice) {
+option (aelf.is_view) = true;
 }
 rpc GetATokenUnderlyingPriceAll(ATokens) returns(ATokenUnderlyingPriceAll) {
+option (aelf.is_view) = true;
 }
 rpc GetAccountLimits(GetAccountLimitsInput)returns(AccountLimits){
+option (aelf.is_view) = true;
 }
 rpc GetPlatformTokenBalanceMetadata(GetPlatformTokenBalanceMetadataInput)returns(PlatformTokenBalanceMetadata){
 option (aelf.is_view) = true;
 }
 
-rpc getPlatformTokenBalanceMetadataExt(getPlatformTokenBalanceMetadataExtInput)returns(PlatformTokenBalanceMetadataExt){
+rpc GetPlatformTokenBalanceMetadataExt(GetPlatformTokenBalanceMetadataExtInput)returns(PlatformTokenBalanceMetadataExt){
 }
-rpc getPlatformTokenBalanceInline(getPlatformTokenBalanceMetadataExtInput)returns(google.protobuf.Int64Value){
+rpc GetPlatformTokenBalanceInline(GetPlatformTokenBalanceMetadataExtInput)returns(google.protobuf.Int64Value){
 }
 }
 message InitializeInput {
@@ -56,7 +64,7 @@ message GetPlatformTokenBalanceMetadataInput{
 string platform_token = 1;
 aelf.Address user = 2;
 }
-message getPlatformTokenBalanceMetadataExtInput{
+message GetPlatformTokenBalanceMetadataExtInput{
 string platform_token = 1;
 aelf.Address comptroller = 2;
 aelf.Address user = 3;

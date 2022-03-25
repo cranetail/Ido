@@ -37,7 +37,6 @@ namespace Awaken.Contracts.AwakenLendingLens
 
         public override ATokenMetadata GetATokenMetadata(Address input)
         {
-            State.ATokenContract.AccrueInterest.Send(input);
             return GetATokenMetadataInline(input);
         }
 
@@ -137,13 +136,13 @@ namespace Awaken.Contracts.AwakenLendingLens
             };
         }
 
-        public override PlatformTokenBalanceMetadataExt getPlatformTokenBalanceMetadataExt(getPlatformTokenBalanceMetadataExtInput input)
+        public override PlatformTokenBalanceMetadataExt GetPlatformTokenBalanceMetadataExt(GetPlatformTokenBalanceMetadataExtInput input)
         {
             var balance = State.TokenContract.GetBalance.Call(
                 new GetBalanceInput() {Owner = input.User, Symbol = input.PlatformToken}).Balance;
             var market = State.ControllerContract.GetAllMarkets.Call(new Empty());
-            State.ControllerContract.ClaimPlatformToken.Send(new ClaimPlatformTokenInput(){ ATokens = { market.AToken},Holders = { input.User},Borrowers = true,Suppliers = true});
-            var total = getPlatformTokenBalanceInline(input).Value;
+            State.ControllerContract.ClaimPlatformToken.Call(new ClaimPlatformTokenInput(){ ATokens = { market.AToken},Holders = { input.User},Borrowers = true,Suppliers = true});
+            var total = GetPlatformTokenBalanceInline(input).Value;
             return new PlatformTokenBalanceMetadataExt()
             {
                 Allocated = total.Sub(balance),
@@ -153,7 +152,7 @@ namespace Awaken.Contracts.AwakenLendingLens
             };
         }
 
-        public override Int64Value getPlatformTokenBalanceInline(getPlatformTokenBalanceMetadataExtInput input)
+        public override Int64Value GetPlatformTokenBalanceInline(GetPlatformTokenBalanceMetadataExtInput input)
         {
             var balance = State.TokenContract.GetBalance.Call(
                 new GetBalanceInput() {Owner = input.User, Symbol = input.PlatformToken}).Balance;
@@ -167,7 +166,6 @@ namespace Awaken.Contracts.AwakenLendingLens
 
         public override ATokenMetadata GetATokenMetadataInline(Address input)
         {
-            Assert(Context.Sender == Context.Self);
             var market = State.ControllerContract.GetMarket.Call(input);
             var underlying = State.ATokenContract.GetUnderlying.Call(input).Value;
             var underlyingDecimals=  State.TokenContract.GetTokenInfo.Call(new GetTokenInfoInput() {Symbol = underlying}).Decimals;

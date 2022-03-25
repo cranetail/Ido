@@ -5,6 +5,7 @@ using AElf.Contracts.Price;
 using AElf.ContractTestBase.ContractTestKit;
 using AElf.Types;
 using Awaken.Contracts.AToken;
+using Awaken.Contracts.AwakenLendingLens;
 using Awaken.Contracts.Controller.Tests;
 using Awaken.Contracts.InterestRateModel;
 using Google.Protobuf;
@@ -307,6 +308,50 @@ namespace Awaken.Contracts.Controller
           
         }
         
+        
+        //AwakenLendingLens Test
+        [Fact]
+        public async Task LensTest()
+        {  
+            await Initialize();
+            await CreateAToken();
+            const long mintAmount =  100000000;
+            const long borrowAmount = 5000000;
+            await AddMarket();
+            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+            var aDaiAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "DAI"});
+            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            
+            await AdminTokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+            {
+                Amount = 100000000000,
+                Symbol = "PLATFORM",
+                Memo = "Recharge",
+                To = ControllerContractAddress
+            });
+            await AdminStub.SetPlatformTokenRate.SendAsync(new Int64Value() {Value = 10000000});
+            await AdminStub.AddPlatformTokenMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            await AdminStub.AddPlatformTokenMarkets.SendAsync(new ATokens() {AToken = {aDaiAddress}});
+            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            await AdminStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = mintAmount, Channel = ""});
+            await AdminATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aDaiAddress, MintAmount = mintAmount, Channel = ""});
+            await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
+                {AToken = aDaiAddress, Amount = borrowAmount});
+            await AdminStub.RefreshPlatformTokenSpeeds.SendAsync(new Empty());
+            var speed = await AdminStub.GetPlatformTokenSpeeds.CallAsync(aDaiAddress);
+            speed.Value.ShouldNotBe(0);
+            await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
+                {AToken = aDaiAddress, Amount = borrowAmount});
+           await AdminAwakenLendingLensContract.Initialize.SendAsync(new AwakenLendingLens.InitializeInput()
+                {ATokenContract = ATokenContractAddress, ComtrollerContract = ControllerContractAddress});
+           await AdminATokenContractStub.AccrueInterest.SendAsync(aDaiAddress);
+           var result = await AdminAwakenLendingLensContract.GetATokenMetadata.CallAsync(aDaiAddress);
+           result.ShouldNotBeNull();
+           var result2= await AdminAwakenLendingLensContract.GetATokenUnderlyingPrice.CallAsync(aDaiAddress);
+           result2.ShouldNotBeNull();
+
+        }
         private async Task Initialize()
         {
             await CreateAndGetToken();
