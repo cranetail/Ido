@@ -193,7 +193,7 @@ namespace Awaken.Contracts.Controller
             UpdatePlatformTokenSupplyIndex(input.AToken);
             DistributeSupplierPlatformToken(input.AToken,input.Src,false);
             DistributeSupplierPlatformToken(input.AToken,input.Dst,false);
-            return base.TransferAllowed(input);
+            return new Empty();
         }
 
         public override Empty TransferVerify(TransferVerifyInput input)

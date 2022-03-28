@@ -26,7 +26,7 @@ namespace Awaken.Contracts.Controller
 
         private const long PlatformTokenInitialIndex = 1000000000000000000;
         
-        private const long PlatformTokenClaimThreshold = 1000000000000000;
+        private const long PlatformTokenClaimThreshold = 1000000000000000; //0.001 scaled by 1e8
         
     
     }

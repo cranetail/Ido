@@ -168,5 +168,50 @@ namespace Awaken.Contracts.Controller
             }; 
                 
         }
+
+        public override Address GetPauseGuardian(Empty input)
+        {
+            return State.PauseGuardian.Value;
+        }
+
+        public override BoolValue GetBorrowGuardianPaused(Address input)
+        {
+            return new BoolValue()
+            {
+                Value = State.BorrowGuardianPaused[input]
+            };
+        }
+
+        public override BoolValue GetMintGuardianPaused(Address input)
+        {
+            return new BoolValue()
+            {
+                Value = State.MintGuardianPaused[input]
+            };
+        }
+
+        public override BoolValue GetSeizeGuardianPaused(Empty input)
+        {
+            return new BoolValue()
+            {
+                Value = State.SeizeGuardianPaused.Value
+            };
+        }
+
+        public override BoolValue GetTransferGuardianPaused(Empty input)
+        {
+            return new BoolValue()
+            {
+                Value = State.TransferGuardianPaused.Value
+            };
+        }
+
+        public override Int64Value GetPlatformTokenClaimThreshold(Empty input)
+        {
+            return new Int64Value()
+            {
+                Value = PlatformTokenClaimThreshold
+            };
+        }
     }
 }

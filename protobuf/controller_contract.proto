@@ -150,6 +150,24 @@ option (aelf.is_view) = true;
 rpc GetPlatformTokenAccrued(aelf.Address)returns(google.protobuf.Int64Value){
 option (aelf.is_view) = true;
 }
+rpc GetPauseGuardian(google.protobuf.Empty)returns(aelf.Address){
+option (aelf.is_view) = true;
+}
+rpc GetTransferGuardianPaused(google.protobuf.Empty)returns(google.protobuf.BoolValue){
+option (aelf.is_view) = true;
+} 
+rpc GetSeizeGuardianPaused(google.protobuf.Empty)returns(google.protobuf.BoolValue){
+option (aelf.is_view) = true;
+} 
+rpc GetMintGuardianPaused(aelf.Address)returns(google.protobuf.BoolValue){
+option (aelf.is_view) = true;
+}
+rpc GetBorrowGuardianPaused(aelf.Address)returns(google.protobuf.BoolValue){
+option (aelf.is_view) = true;
+}  
+rpc GetPlatformTokenClaimThreshold(google.protobuf.Empty)returns(google.protobuf.Int64Value){
+option (aelf.is_view) = true;
+} 
 }
 message InitializeInput{
 aelf.Address a_token_contract = 1;
