@@ -168,6 +168,9 @@ option (aelf.is_view) = true;
 rpc GetPlatformTokenClaimThreshold(google.protobuf.Empty)returns(google.protobuf.Int64Value){
 option (aelf.is_view) = true;
 } 
+rpc GetPlatformTokenClaimAmount(ClaimPlatformTokenInput)returns(google.protobuf.Int64Value){
+option (aelf.is_view) = true;
+} 
 }
 message InitializeInput{
 aelf.Address a_token_contract = 1;

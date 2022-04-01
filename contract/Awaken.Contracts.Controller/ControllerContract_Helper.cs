@@ -163,7 +163,7 @@ namespace Awaken.Contracts.Controller
             }
         }
 
-        private void DistributeSupplierPlatformToken(Address aToken, Address supplier, bool distributeAll)
+        private long DistributeSupplierPlatformToken(Address aToken, Address supplier, bool distributeAll)
         {
             var supplyState = State.PlatformTokenSupplyState[aToken];
             var supplyIndex = supplyState.Index;
@@ -186,8 +186,9 @@ namespace Awaken.Contracts.Controller
                 PlatformTokenDelta = supplierDelta,
                 PlatformTokenSupplyIndex = supplierIndex
             });
+            return supplierAccrued;
         }
-        private void  DistributeBorrowerPlatformToken(Address aToken, Address borrower, long marketBorrowIndex, bool distributeAll)
+        private long DistributeBorrowerPlatformToken(Address aToken, Address borrower, long marketBorrowIndex, bool distributeAll)
         {
             var borrowState = State.PlatformTokenBorrowState[aToken];
             var borrowIndex = borrowState.Index;
@@ -209,7 +210,9 @@ namespace Awaken.Contracts.Controller
                     PlatformTokenDelta = borrowerDelta,
                     PlatformTokenBorrowIndex = borrowerIndex
                 });
+                return borrowerAccrued;
             }
+            return 0;
         }
 
         private long TransferPlatformToken(Address user, long userAccrued, long threshold)

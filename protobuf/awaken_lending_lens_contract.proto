@@ -45,8 +45,6 @@ option (aelf.is_view) = true;
 
 rpc GetPlatformTokenBalanceMetadataExt(GetPlatformTokenBalanceMetadataExtInput)returns(PlatformTokenBalanceMetadataExt){
 }
-rpc GetPlatformTokenBalanceInline(GetPlatformTokenBalanceMetadataExtInput)returns(google.protobuf.Int64Value){
-}
 }
 message InitializeInput {
 aelf.Address a_token_contract = 1;

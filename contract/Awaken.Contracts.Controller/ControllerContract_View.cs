@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using AElf.Sdk.CSharp;
 using AElf.Types;
 using AElf.CSharp.Core;
@@ -211,6 +212,33 @@ namespace Awaken.Contracts.Controller
             return new Int64Value()
             {
                 Value = PlatformTokenClaimThreshold
+            };
+        }
+
+        public override Int64Value GetPlatformTokenClaimAmount(ClaimPlatformTokenInput input)
+        {
+            long claimAmount = 0;
+            foreach (var aToken in input.ATokens)
+            {
+               
+                Assert(State.Markets[aToken].IsListed, "market must be listed");
+                if (input.Borrowers)
+                {
+                    var borrowIndex = State.ATokenContract.GetBorrowIndex.Call(aToken).Value;
+                    UpdatePlatformTokenBorrowIndex(aToken, borrowIndex);
+                    claimAmount = input.Holders.Select(t => DistributeBorrowerPlatformToken(aToken, t, borrowIndex, true)).Aggregate(claimAmount, (current, amount) => current.Add(amount));
+                }
+
+                if (!input.Suppliers) continue;
+                {
+                    UpdatePlatformTokenSupplyIndex(aToken);
+                    claimAmount = input.Holders.Select(t => DistributeSupplierPlatformToken(aToken, t, true)).Aggregate(claimAmount, (current, amount) => current.Add(amount));
+                }
+            }
+
+            return new Int64Value()
+            {
+                Value = claimAmount
             };
         }
     }

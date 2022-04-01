@@ -141,28 +141,18 @@ namespace Awaken.Contracts.AwakenLendingLens
             var balance = State.TokenContract.GetBalance.Call(
                 new GetBalanceInput() {Owner = input.User, Symbol = input.PlatformToken}).Balance;
             var market = State.ControllerContract.GetAllMarkets.Call(new Empty());
-            State.ControllerContract.ClaimPlatformToken.Call(new ClaimPlatformTokenInput(){ ATokens = { market.AToken},Holders = { input.User},Borrowers = true,Suppliers = true});
-            var total = GetPlatformTokenBalanceInline(input).Value;
+            var allocatedAmount = State.ControllerContract.GetPlatformTokenClaimAmount.Call(new ClaimPlatformTokenInput(){ ATokens = { market.AToken},Holders = { input.User},Borrowers = true,Suppliers = true}).Value;
+           
+        
             return new PlatformTokenBalanceMetadataExt()
             {
-                Allocated = total.Sub(balance),
+                Allocated = allocatedAmount,
                 Balance = balance,
                 Delegate = new Address(),
                 Votes = 0
             };
         }
-
-        public override Int64Value GetPlatformTokenBalanceInline(GetPlatformTokenBalanceMetadataExtInput input)
-        {
-            var balance = State.TokenContract.GetBalance.Call(
-                new GetBalanceInput() {Owner = input.User, Symbol = input.PlatformToken}).Balance;
-            var accrued = State.ControllerContract.GetPlatformTokenAccrued.Call(input.User).Value;
-            var total = balance.Add(accrued);
-            return new Int64Value()
-            {
-                Value = total
-            };
-        }
+        
 
         public override ATokenMetadata GetATokenMetadataInline(Address input)
         {
