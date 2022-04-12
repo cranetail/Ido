@@ -275,7 +275,11 @@ namespace Awaken.Contracts.Controller
             var utilities = new RepeatedField<BigIntValue>{};
             for (var i = 0; i < list.AToken.Count; i++)
             {
-                if (!State.Markets[list.AToken[i]].IsPlatformTokened) continue;
+                if (!State.Markets[list.AToken[i]].IsPlatformTokened)
+                {
+                    utilities.Add(new BigIntValue(0));
+                    continue;
+                }
                 var price = GetUnderlyingPrice(list.AToken[i]);
                 var totalBorrows = State.ATokenContract.GetTotalBorrows.Call(list.AToken[i]).Value;
                 utilities.Add(new BigIntValue(totalBorrows).Mul(price));
