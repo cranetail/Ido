@@ -49,6 +49,9 @@ service ATokenContract {
  
     rpc AddReserves (AddReservesInput) returns (google.protobuf.Empty) {
     }
+    
+    rpc ReduceReserves(ReduceReservesInput) returns (google.protobuf.Empty) {
+    }
  
     rpc AccrueInterest(aelf.Address) returns (google.protobuf.Empty) {
     }
@@ -234,6 +237,10 @@ message AddReservesInput{
       aelf.Address a_token = 1; 
     int64 amount = 2; 
 }
+message ReduceReservesInput{
+    aelf.Address a_token = 1; 
+    int64 amount = 2; 
+}
 message SeizeInput{
     aelf.Address collateral_token = 1; 
     aelf.Address seizer_token = 2;
@@ -261,7 +268,7 @@ message GetAccountSnapshotOutput{
 // Events
 message AccrueInterest {
     option (aelf.is_event) = true;
-    aelf.Address symbol = 1;
+    aelf.Address a_token = 1;
     int64 cash = 2;
     int64 interestAccumulated = 3;
     int64 borrowIndex = 4;
@@ -271,17 +278,20 @@ message AccrueInterest {
 }
 message Mint{
     option (aelf.is_event) = true;
-    aelf.Address symbol = 1;
-    aelf.Address address = 2;
-    int64 amount = 3;
-    int64 c_token_amount = 4;
+    string underlying = 1;
+    aelf.Address a_token = 2;
+    int64 underlying_amount = 3;
+    int64 a_token_amount = 4;
+    aelf.Address sender =5;
+    string channel = 6;
 }
 message Redeem {
     option (aelf.is_event) = true;
-    aelf.Address symbol = 1;
-    aelf.Address address = 2;
-    int64 amount = 3;
-    int64 c_token_amount = 4;
+    string underlying = 1;
+    aelf.Address a_token = 2;
+    int64 underlying_amount = 3;
+    int64 a_token_amount = 4;
+    aelf.Address sender =5;
 }
 message Borrow{
     option (aelf.is_event) = true;
@@ -294,7 +304,7 @@ message Borrow{
 }
 message RepayBorrow{
     option (aelf.is_event) = true;
-    aelf.Address symbol = 1;
+    aelf.Address a_token = 1;
     aelf.Address payer = 2;
     aelf.Address borrower = 3;
     int64 amount = 4;
@@ -303,18 +313,14 @@ message RepayBorrow{
 }
 message LiquidateBorrow{
     option (aelf.is_event) = true;
-    aelf.Address repay_symbol = 1;
+    aelf.Address repay_a_token = 1;
     aelf.Address liquidator = 2;
     aelf.Address borrower = 3;
     int64 repay_amount = 4;
-    aelf.Address seize_symbol = 5;
+    aelf.Address seize_a_token = 5;
     int64 seize_token_amount = 6;
 }
-message PendingAdminChanged{
-    option (aelf.is_event) = true;
-    aelf.Address old_pending_admin = 1;
-    aelf.Address new_pending_admin = 2;
-}
+
 message AdminChanged{
     option (aelf.is_event) = true;
     aelf.Address old_admin = 1;
@@ -324,7 +330,7 @@ message ReserveFactorChanged{
     option (aelf.is_event) = true;
     int64 old_reserve_factor = 1;
     int64 new_reserve_factor = 2;
-    aelf.Address symbol=3;
+    aelf.Address a_token= 3;
 }
 message ReservesAdded{
     option (aelf.is_event) = true;
@@ -336,46 +342,13 @@ message ReservesAdded{
 }
 message ReservesReduced{
     option (aelf.is_event) = true;
-    aelf.Address symbol = 1;
-    aelf.Address address = 2;
-    int64 amount = 3;
+    string underlying = 1;
+    aelf.Address a_token = 2;
+    int64 reduce_amount = 3;
     int64 total_reserves = 4;
+    aelf.Address sender = 5;
 }
 
-message MarketListed{
-    option (aelf.is_event) = true;
-    aelf.Address symbol = 1;
-    int64 base_rate_per_block = 2;
-    int64 multiplier_per_block = 3;
-    int64 reserve_factor = 4;
-};
-
-message CloseFactorChanged{
-    option (aelf.is_event) = true;
-    int64 old_close_factor = 1;
-    int64 new_close_factor = 2;
-}
-message CollateralFactorChanged{
-    option (aelf.is_event) = true;
-    int64 old_collateral_factor = 1;
-    int64 new_collateral_factor = 2;
-    string symbol=3;
-}
-message LiquidationIncentiveChanged{
-    option (aelf.is_event) = true;
-    int64 old_liquidation_incentive = 1;
-    int64 new_liquidation_incentive = 2;
-}
-message MaxAssetsChanged{
-    option (aelf.is_event) = true;
-    int32 old_max_assets = 1;
-    int32 new_max_assets = 2;
-}
-message PauseGuardianChanged{
-    option (aelf.is_event) = true;
-    aelf.Address old_pause_guardian = 1;
-    aelf.Address new_pause_guardian = 2;
-}
 
 //basic token 
 // Structs

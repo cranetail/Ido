@@ -240,7 +240,32 @@ namespace Awaken.Contracts.Controller
             await AdminPriceContractStub.SetPrice.SendAsync(new SetPriceInput() {TokenSymbol = "DAI",Price = 1100000000000000000}); 
             await AdminATokenContractStub.LiquidateBorrow.SendAsync(new LiquidateBorrowInput(){CollateralToken = aElfAddress,BorrowToken = aDaiAddress,Borrower = UserTomAddress,RepayAmount = repayAmount});
         }
-
+        [Fact]
+        public async Task RedeemAfterBorrowTest()
+        {
+            await Initialize();
+            await CreateAToken();
+            
+            await AddMarket();
+            
+            const long mintAmount = 100000000;
+            const long borrowAmount = 75000000;
+            const long redeemAmount = 10000000;
+            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+            var aDaiAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "DAI"});
+            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
+            await AdminStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aDaiAddress}});
+            await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = mintAmount, Channel = ""});
+            
+            await AdminATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aDaiAddress, MintAmount = mintAmount, Channel = ""});
+            
+            await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
+                {AToken = aDaiAddress, Amount = borrowAmount});
+            var result = await UserTomATokenContractStub.Redeem.SendWithExceptionAsync(new RedeemInput() {AToken = aElfAddress, Amount = redeemAmount});
+            result.TransactionResult.Error.ShouldContain("Insufficient Liquidity");
+            //await UserTomATokenContractStub.RedeemUnderlying.SendAsync(new RedeemUnderlyingInput() {AToken = aElfAddress, Amount = redeemAmount});
+        }
+        
         [Fact]
         public async Task AddPlatformTokenMarketsTest()
         {
@@ -455,7 +480,7 @@ namespace Awaken.Contracts.Controller
             
             const long closeFactorExpect = 500000000000000000;
             const long collateralFactorExpect = 750000000000000000;
-            const long liquidationIncentiveExpect = 1080000000000000000;
+            const long liquidationIncentiveExpect = 1_080000000000000000;
             const int maxAssetsExpect = 20;
             
             //ELF

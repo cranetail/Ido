@@ -17,7 +17,7 @@ namespace Awaken.Contracts.AToken
                         new MethodFee
                         {
                             Symbol = Context.Variables.NativeSymbol,
-                            BasicFee = 100_00000000
+                            BasicFee = 0
                         }
                     }
                 };

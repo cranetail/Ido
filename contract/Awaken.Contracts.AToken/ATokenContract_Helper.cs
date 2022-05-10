@@ -28,7 +28,8 @@ namespace Awaken.Contracts.AToken
             });
             Assert(State.AccrualBlockNumbers[aToken] == Context.CurrentHeight,"Market's block number should equals current block number");
             var exchangeRate = ExchangeRateStoredInternal(aToken);
-            DoTransferIn(Context.Sender, amount, State.UnderlyingMap[aToken]);
+            var underlying = State.UnderlyingMap[aToken];
+            DoTransferIn(Context.Sender, amount, underlying);
             //  mintTokens = actualMintAmount / exchangeRate
             var mintTokensStr =  new BigIntValue(Mantissa).Mul(amount).Div(exchangeRate).Value;
             if (!long.TryParse(mintTokensStr, out var mintTokens))
@@ -43,10 +44,12 @@ namespace Awaken.Contracts.AToken
             State.AccountTokens[aToken][Context.Sender] = accountTokensNew;
             Context.Fire(new Mint()
             {
-                Address = Context.Sender,
-                Amount = amount,
-                CTokenAmount = mintTokens,
-                Symbol = aToken
+                Sender = Context.Sender,
+                Underlying = underlying,
+                UnderlyingAmount = amount,
+                AToken = aToken,
+                ATokenAmount = mintTokens,
+                Channel = channel
             });
         }
 
@@ -277,10 +280,11 @@ namespace Awaken.Contracts.AToken
             
             Context.Fire(new Redeem()
             {
-                Address = redeemer,
-                Amount = redeemAmount,
-                CTokenAmount = redeemTokens,
-                Symbol = aToken
+                Sender = redeemer,
+                UnderlyingAmount = redeemAmount,
+                Underlying = underlying,
+                ATokenAmount = redeemTokens,
+                AToken = aToken
             });
             Context.Fire(new Transferred()
             {
@@ -357,8 +361,8 @@ namespace Awaken.Contracts.AToken
                 Borrower = borrower,
                 Liquidator = liquidator,
                 RepayAmount = actualRepayAmount,
-                RepaySymbol = borrowToken,
-                SeizeSymbol = collateralToken,
+                RepayAToken = borrowToken,
+                SeizeAToken = collateralToken,
                 SeizeTokenAmount = seizeTokens
             });
             State.ControllerContract.LiquidateBorrowVerify.Send(new LiquidateBorrowVerifyInput()
@@ -426,7 +430,7 @@ namespace Awaken.Contracts.AToken
                 Borrower = borrower,
                 BorrowBalance = accountBorrowsNew,
                 Payer = payer,
-                Symbol = aToken,
+                AToken = aToken,
                 TotalBorrows = totalBorrowsNew
             });
             State.ControllerContract.RepayBorrowVerify.Send(new RepayBorrowVerifyInput()
@@ -479,27 +483,50 @@ namespace Awaken.Contracts.AToken
             }
         }
 
-        private void AddReservesInternal(Address aToken, long underlyingAmount)
+        private void AddReservesInternal(Address aToken, long underlyingAddAmount)
         {
             var symbol = State.UnderlyingMap[aToken];
             AccrueInterest(aToken);
             var accrualBlockNumberPrior = State.AccrualBlockNumbers[aToken];
             Assert(accrualBlockNumberPrior == Context.CurrentHeight,
                 "market's block number should equals current block number");
-            DoTransferIn(Context.Sender,underlyingAmount,symbol);
-            var totalReservesNew = State.TotalReserves[aToken].Add(underlyingAmount);
+            DoTransferIn(Context.Sender,underlyingAddAmount,symbol);
+            var totalReservesNew = State.TotalReserves[aToken].Add(underlyingAddAmount);
             State.TotalReserves[aToken] = totalReservesNew;
              Context.Fire(new ReservesAdded()
              {
                  Underlying = symbol,
                  AToken= aToken,
-                 AddAmount = underlyingAmount,
+                 AddAmount = underlyingAddAmount,
                  Sender = Context.Sender,
                  TotalReserves = totalReservesNew
                  
              });
         }
 
+        private void ReduceReservesInternal(Address aToken, long underlyingReduceAmount)
+        {
+            var symbol = State.UnderlyingMap[aToken];
+            AccrueInterest(aToken);
+            AssertSenderIsAdmin();
+            var accrualBlockNumberPrior = State.AccrualBlockNumbers[aToken];
+            Assert(accrualBlockNumberPrior == Context.CurrentHeight,
+                "market's block number should equals current block number");
+            Assert(GetCashPrior(aToken) >= underlyingReduceAmount, "reduce reserve cash not available");
+            var totalReserve = State.TotalReserves[aToken];
+            Assert(totalReserve >= underlyingReduceAmount);
+            DoTransferOut(Context.Sender, underlyingReduceAmount, symbol);
+            var totalReservesNew = totalReserve.Sub(underlyingReduceAmount);
+            State.TotalReserves[aToken] = totalReservesNew;
+            Context.Fire(new ReservesReduced()
+            {
+                Underlying = symbol,
+                AToken= aToken,
+                ReduceAmount = underlyingReduceAmount,
+                Sender = Context.Sender,
+                TotalReserves = totalReservesNew
+            });
+        }
         private void TransferTokens(Address spender, Address src, Address dst, string aTokenSymbol, long amount)
         {
             var aToken = State.ATokenVirtualAddressMap[aTokenSymbol];
@@ -536,6 +563,24 @@ namespace Awaken.Contracts.AToken
             });
             State.ControllerContract.TransferVerify.Send(new TransferVerifyInput{AToken = aToken,Src = src,Dst = dst,TransferTokens = amount});
 
+            
+        }
+
+        private void SetReserveFactorFresh(Address aToken, long newReserveFactor)
+        {
+            AssertSenderIsAdmin();
+            var accrualBlockNumberPrior = State.AccrualBlockNumbers[aToken];
+            Assert(accrualBlockNumberPrior == Context.CurrentHeight,
+                "market's block number should equals current block number");
+            Assert(newReserveFactor <= MaxReserveFactor,"Invalid ReserveFactor input");
+            var oldReserveFactor = State.ReserveFactor[aToken];
+            State.ReserveFactor[aToken] = newReserveFactor;
+            Context.Fire(new ReserveFactorChanged()
+            {
+                OldReserveFactor = oldReserveFactor,
+                NewReserveFactor = newReserveFactor,
+                AToken = aToken
+            });
             
         }
     }

@@ -34,6 +34,12 @@ namespace Awaken.Contracts.AToken
             State.InterestRateModelContractsAddress[symbolVirtualAddress] = input.InterestRateModel;
             State.InitialExchangeRate[symbolVirtualAddress] = input.InitialExchangeRate;
             State.BorrowIndex[symbolVirtualAddress] = Mantissa;
+            Context.Fire(new TokenCreated()
+            {
+                Symbol = symbolString,
+                Decimals = 8,
+                TokenName = symbolString
+            });
             return new Empty();
         }
 
@@ -95,7 +101,7 @@ namespace Awaken.Contracts.AToken
             
             Context.Fire(new AccrueInterest()
             {
-                Symbol = aToken,
+                AToken = aToken,
                 Cash = cashPrior,
                 InterestAccumulated = interestAccumulatedInt64,
                 BorrowIndex = borrowIndexNew,
@@ -156,7 +162,13 @@ namespace Awaken.Contracts.AToken
             AddReservesInternal(input.AToken, input.Amount);
             return new Empty();
         }
-        
+
+        public override Empty ReduceReserves(ReduceReservesInput input)
+        {
+            ReduceReservesInternal(input.AToken, input.Amount);
+            return new Empty();
+        }
+
         public override Empty Transfer(TransferInput input)
         {
             TransferTokens(Context.Sender, Context.Sender, input.To, input.Symbol, input.Amount);
@@ -189,24 +201,34 @@ namespace Awaken.Contracts.AToken
         //Set Fuction
         public override Empty SetAdmin(Address input)
         {
+            AssertSenderIsAdmin();
+            var oldAdmin = State.Admin.Value;
             State.Admin.Value = input;
+            Context.Fire(new AdminChanged()
+            {
+                OldAdmin = oldAdmin,
+                NewAdmin = input
+            });
             return new Empty();
         }
 
         public override Empty SetComptroller(Address input)
         {
+            AssertSenderIsAdmin();
             State.ControllerContract.Value = input;
             return new Empty();
         }
 
         public override Empty SetReserveFactor(SetReserveFactorInput input)
         {
-            State.ReserveFactor[input.AToken] = input.ReserveFactor;
+            AccrueInterest(input.AToken);
+            SetReserveFactorFresh(input.AToken, input.ReserveFactor);
             return new Empty();
         }
 
         public override Empty SetInterestRateModel(SetInterestRateModelInput input)
         {
+            AssertSenderIsAdmin();
             State.InterestRateModelContractsAddress[input.AToken] = input.Model;
             return new Empty();
         }

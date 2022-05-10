@@ -27,7 +27,7 @@ namespace Awaken.Contracts.Controller
             AssertSenderIsAdmin();
             var oldCloseFactor = State.CloseFactor.Value;
             var newCloseFactor = input.Value;
-            Assert(newCloseFactor > MinCloseFactor && newCloseFactor < MaxCloseFactor,
+            Assert(newCloseFactor >= MinCloseFactor && newCloseFactor <= MaxCloseFactor,
                 "Invalid CloseFactor"); //INVALID_CLOSE_FACTOR
             State.CloseFactor.Value = input.Value;
             Context.Fire(new CloseFactorChanged()
@@ -46,7 +46,7 @@ namespace Awaken.Contracts.Controller
             var oldCollateralFactor = market.CollateralFactor;
             var newCollateralFactor = input.NewCollateralFactor;
             Assert(newCollateralFactor <= MaxCollateralFactor && newCollateralFactor >= 0,
-                "Invalid CloseFactor");
+                "Invalid CollateralFactor");
             if (newCollateralFactor > 0 && GetUnderlyingPrice(input.AToken) == 0)
             {
                 throw new AssertionException("Error Price");
