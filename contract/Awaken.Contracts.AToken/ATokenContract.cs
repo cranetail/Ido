@@ -37,8 +37,10 @@ namespace Awaken.Contracts.AToken
             Context.Fire(new TokenCreated()
             {
                 Symbol = symbolString,
-                Decimals = 8,
-                TokenName = symbolString
+                Decimals = Decimals,
+                TokenName = symbolString,
+                AToken = symbolVirtualAddress,
+                Underlying = input.UnderlyingSymbol
             });
             return new Empty();
         }

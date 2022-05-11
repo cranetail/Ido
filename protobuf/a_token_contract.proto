@@ -354,10 +354,6 @@ message ReservesReduced{
 // Structs
  
 
-message ExternalInfo {
-    map<string, string> value = 1;
-}
-
 message CallbackInfo {
     aelf.Address contract_address = 1;
     string method_name = 2;
@@ -447,11 +443,7 @@ message TokenCreated {
     string symbol = 1;
     string token_name = 2;
     int32 decimals = 3;
-    ExternalInfo external_info = 6;
+    aelf.Address a_token = 4;
+    string underlying = 5;
 }
 
-message ExternalInfoChanged {
-    option (aelf.is_event) = true;
-    string symbol = 1;
-    ExternalInfo external_info = 2;
-    }
