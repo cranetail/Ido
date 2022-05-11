@@ -40,7 +40,9 @@ namespace Awaken.Contracts.AToken
                 Decimals = Decimals,
                 TokenName = symbolString,
                 AToken = symbolVirtualAddress,
-                Underlying = input.UnderlyingSymbol
+                Underlying = input.UnderlyingSymbol,
+                TokenContract = State.TokenContract.Value,
+                Controller = State.ControllerContract.Value
             });
             return new Empty();
         }

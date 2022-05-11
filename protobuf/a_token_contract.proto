@@ -445,5 +445,7 @@ message TokenCreated {
     int32 decimals = 3;
     aelf.Address a_token = 4;
     string underlying = 5;
+    aelf.Address token_contract = 6;
+    aelf.Address controller = 7;
 }
 
