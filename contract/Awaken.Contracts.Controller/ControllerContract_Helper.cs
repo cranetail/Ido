@@ -79,17 +79,17 @@ namespace Awaken.Contracts.Controller
                 var price = GetUnderlyingPrice(aToken);
                  
                 var collateralFactor = State.Markets[aToken].CollateralFactor;
-                var tokensToDenom = new BigIntValue(exchangeRate).Mul(price).Mul(collateralFactor).Div(Mantissa).Div(Mantissa);
-                sumCollateral = sumCollateral.Add(new BigIntValue(aTokenBalance).Mul(tokensToDenom).Div(Mantissa));
-                sumBorrowPlusEffects = sumBorrowPlusEffects.Add(new BigIntValue(borrowBalance).Mul(price).Div(Mantissa));
+                var tokensToDenom = new BigIntValue(exchangeRate).Mul(price).Mul(collateralFactor).Div(Mantissa).Div(PriceMantissa);
+                sumCollateral = sumCollateral.Add(new BigIntValue(aTokenBalance).Mul(tokensToDenom).Div(ExchangeMantissa));
+                sumBorrowPlusEffects = sumBorrowPlusEffects.Add(new BigIntValue(borrowBalance).Mul(price).Div(PriceMantissa));
                 if (aTokenModify == aToken)
                 {
                     // redeem effect
                     // sumBorrowPlusEffects += tokensToDenom * redeemTokens
-                    sumBorrowPlusEffects  = sumBorrowPlusEffects.Add(new BigIntValue(tokensToDenom).Mul(redeemTokens).Div(Mantissa));
+                    sumBorrowPlusEffects  = sumBorrowPlusEffects.Add(new BigIntValue(tokensToDenom).Mul(redeemTokens).Div(ExchangeMantissa));
                     // borrow effect
                     // sumBorrowPlusEffects += oraclePrice * borrowAmount
-                    sumBorrowPlusEffects = sumBorrowPlusEffects.Add(new BigIntValue(price).Mul(borrowAmount).Div(Mantissa));
+                    sumBorrowPlusEffects = sumBorrowPlusEffects.Add(new BigIntValue(price).Mul(borrowAmount).Div(PriceMantissa));
                 }
             }
 
@@ -132,7 +132,7 @@ namespace Awaken.Contracts.Controller
             }
         }
         
-        private void UpdatePlatformTokenBorrowIndex(Address aToken, long marketBorrowIndex)
+        private void UpdatePlatformTokenBorrowIndex(Address aToken, BigIntValue marketBorrowIndex)
         {
             State.PlatformTokenBorrowState[aToken] =
                 State.PlatformTokenBorrowState[aToken] ?? new PlatformTokenMarketState(){Index = new BigIntValue(0)};
@@ -188,7 +188,7 @@ namespace Awaken.Contracts.Controller
             });
             return supplierAccrued;
         }
-        private long DistributeBorrowerPlatformToken(Address aToken, Address borrower, long marketBorrowIndex, bool distributeAll)
+        private long DistributeBorrowerPlatformToken(Address aToken, Address borrower, BigIntValue marketBorrowIndex, bool distributeAll)
         {
             var borrowState = State.PlatformTokenBorrowState[aToken];
             var borrowIndex = borrowState.Index;

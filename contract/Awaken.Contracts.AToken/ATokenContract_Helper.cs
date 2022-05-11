@@ -31,7 +31,7 @@ namespace Awaken.Contracts.AToken
             var underlying = State.UnderlyingMap[aToken];
             DoTransferIn(Context.Sender, amount, underlying);
             //  mintTokens = actualMintAmount / exchangeRate
-            var mintTokensStr =  new BigIntValue(Mantissa).Mul(amount).Div(exchangeRate).Value;
+            var mintTokensStr =  new BigIntValue(ExchangeMantissa).Mul(amount).Div(exchangeRate).Value;
             if (!long.TryParse(mintTokensStr, out var mintTokens))
             {
                 throw new AssertionException($"Failed to parse {mintTokensStr}");
@@ -106,7 +106,7 @@ namespace Awaken.Contracts.AToken
             }
 
             // exchangeRate = (totalCash + totalBorrows - totalReserves) / totalSupply
-            var exchangeRateStr = new BigIntValue(totalCash).Add(totalBorrow).Sub(totalReserves).Mul(Mantissa).Div(totalSupply).Value;
+            var exchangeRateStr = new BigIntValue(totalCash).Add(totalBorrow).Sub(totalReserves).Mul(ExchangeMantissa).Div(totalSupply).Value;
             if (!long.TryParse(exchangeRateStr, out var exchangeRate))
             {
                 throw new AssertionException($"Failed to parse {exchangeRate}");
@@ -196,7 +196,7 @@ namespace Awaken.Contracts.AToken
             //Calculate new borrow balance using the interest index:
             //recentBorrowBalance = borrower.borrowBalance * market.borrowIndex / borrower.borrowIndex
             var borrowIndex = State.BorrowIndex[input.AToken];
-            if (borrowSnapshot.InterestIndex == 0)
+            if (borrowSnapshot.InterestIndex == new BigIntValue(0))
             {
                 return 0;
             }
@@ -231,7 +231,7 @@ namespace Awaken.Contracts.AToken
             if (redeemTokensIn > 0)
             {
                 redeemTokens = redeemTokensIn;
-                var redeemAmountStr = new BigIntValue(exchangeRate).Mul(redeemTokensIn).Div(Mantissa).Value ;
+                var redeemAmountStr = new BigIntValue(exchangeRate).Mul(redeemTokensIn).Div(ExchangeMantissa).Value ;
                 if (!long.TryParse(redeemAmountStr, out redeemAmount))
                 {
                     throw new AssertionException($"Failed to parse {redeemAmountStr}");
@@ -239,7 +239,7 @@ namespace Awaken.Contracts.AToken
             }
             else
             {
-                var redeemTokensStr = new BigIntValue(redeemAmountIn).Mul(Mantissa).Div(exchangeRate).Value ;
+                var redeemTokensStr = new BigIntValue(redeemAmountIn).Mul(ExchangeMantissa).Div(exchangeRate).Value ;
                 redeemAmount = redeemAmountIn;
                 if (!long.TryParse(redeemTokensStr, out redeemTokens))
                 {

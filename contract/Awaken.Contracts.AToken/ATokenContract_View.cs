@@ -100,12 +100,10 @@ namespace Awaken.Contracts.AToken
                 };
         }
 
-        public override Int64Value GetBorrowIndex(Address input)
+        public override BigIntValue GetBorrowIndex(Address input)
         {
-            return new Int64Value
-            {
-                Value = State.BorrowIndex[input]
-            };
+            return State.BorrowIndex[input];
+
         }
 
         public override Int64Value GetTotalBorrows(Address input)
@@ -148,7 +146,7 @@ namespace Awaken.Contracts.AToken
         public override Int64Value GetUnderlyingBalance(Account input)
         {
             var exchangeRate = GetCurrentExchangeRate(input.AToken);
-            var underlyingBalance = new BigIntValue(State.AccountTokens[input.AToken][input.User]).Mul(Mantissa)
+            var underlyingBalance = new BigIntValue(State.AccountTokens[input.AToken][input.User]).Mul(ExchangeMantissa)
                 .Div(exchangeRate.Value);
             if (!long.TryParse(underlyingBalance.Value, out var balance))
             {

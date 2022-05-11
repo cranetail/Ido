@@ -14,5 +14,8 @@ namespace Awaken.Contracts.InterestRateModel
         public SingletonState<long> JumpMultiplierPerBlock { get; set; }
  
         public SingletonState<long> Kink{ get; set; }
+        
+        //bool : 0:WhitePaperInterestRateModel  1:JumpInterestRateModel
+        public SingletonState<bool> InterestRateModelType { get; set; }
     }
 }

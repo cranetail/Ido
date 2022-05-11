@@ -228,7 +228,7 @@ aelf.Address a_token=1;
 aelf.Address payer=2; 
 aelf.Address borrower=3; 
 int64 repay_amount=4; 
-int64 borrower_index=5; 
+aelf.BigIntValue borrower_index=5; 
 }
 message LiquidateBorrowAllowedInput{
 aelf.Address a_token_borrowed=1; 

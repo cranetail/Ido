@@ -16,6 +16,8 @@ namespace Awaken.Contracts.AToken
 
         private const long Mantissa = 1000000000000000000;
 
+        private const long ExchangeMantissa = 100000000;
+
         private const int Decimals = 8;
     }
 }

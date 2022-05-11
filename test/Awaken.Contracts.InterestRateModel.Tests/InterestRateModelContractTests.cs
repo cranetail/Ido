@@ -29,12 +29,13 @@ namespace Awaken.Contracts.InterestRateModel
             const long  multiplierPerYear = 57500000000000000;
             const long jumpMultiplierPerYear = 3000000000000000000;
             const long kink = 800000000000000000;
-            await AdminStub.Initialize.SendAsync(new UpdateJumpRateModelInput()
+            await AdminStub.Initialize.SendAsync(new InitializeInput()
             {
                 BaseRatePerYear = baseRatePerYear,
                 MultiplierPerYear = multiplierPerYear,
                 JumpMultiplierPerYear = jumpMultiplierPerYear,
-                Kink = kink
+                Kink = kink,
+                InterestRateModelType = false
             });
         } 
         
@@ -45,7 +46,7 @@ namespace Awaken.Contracts.InterestRateModel
             const long  multiplierPerYear = 57500000000000000;
             const long jumpMultiplierPerYear = 3000000000000000000;
             const long kink = 800000000000000000;
-            const int blocksPerYear = 63072000;
+            const int blocksPerYear = 62208000;
             const long mantissa = 1000000000000000000;
             await Initialize();
             var owner = await AdminStub.GetOwner.CallAsync(new Empty());
@@ -109,7 +110,7 @@ namespace Awaken.Contracts.InterestRateModel
             const long jumpMultiplierPerYear = 3000000000000000000;
             const long kink = 700000000000000000;
             await Initialize();
-            await AdminStub.UpdateJumpRateModel.SendAsync(new UpdateJumpRateModelInput()
+            await AdminStub.UpdateRateModel.SendAsync(new UpdateRateModelInput()
             {
                 BaseRatePerYear = baseRatePerYear,
                 MultiplierPerYear = multiplierPerYear,

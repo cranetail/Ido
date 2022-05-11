@@ -502,7 +502,7 @@ namespace Awaken.Contracts.Controller
 
         private async Task CreateAToken()
         {
-            const long initialExchangeRate = 1000000000000000000;
+            const long initialExchangeRate = 100000000;
             await InitializeInterestRateModel();
             await AdminATokenContractStub.Initialize.SendAsync(new AToken.InitializeInput()
             {
@@ -532,12 +532,13 @@ namespace Awaken.Contracts.Controller
             const long  multiplierPerYear = 57500000000000000;
             const long jumpMultiplierPerYear = 3000000000000000000;
             const long kink = 800000000000000000;
-            await AdminInterestRateModelStub.Initialize.SendAsync(new UpdateJumpRateModelInput()
+            await AdminInterestRateModelStub.Initialize.SendAsync(new InterestRateModel.InitializeInput()
             {
                 BaseRatePerYear = baseRatePerYear,
                 MultiplierPerYear = multiplierPerYear,
                 JumpMultiplierPerYear = jumpMultiplierPerYear,
-                Kink = kink
+                Kink = kink,
+                InterestRateModelType = false
             });
         } 
     }

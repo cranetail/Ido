@@ -8,12 +8,24 @@ namespace Awaken.Contracts.InterestRateModel
 {
     public partial class InterestRateModelContract
     {
-        private Empty UpdateJumpRateModelInputInternal(long baseRatePerYear, long multiplierPerYear, long jumpMultiplierPerYear, long kink)
+        private void UpdateWhitePaperInterestRateModel(long baseRatePerYear, long multiplierPerYear)
+        {
+            var newBaseRatePerBlock = baseRatePerYear.Div(BlocksPerYear);
+            var newMultiplierPerBlock =  multiplierPerYear.Div(BlocksPerYear);
+            
+            State.BaseRatePerBlock.Value = newBaseRatePerBlock;
+            State.MultiplierPerBlock.Value = newMultiplierPerBlock;
+            Context.Fire(new NewInterestParams()
+            {
+                BaseRatePerBlock = newBaseRatePerBlock,
+                MultiplierPerBlock = newMultiplierPerBlock
+            });
+        }
+        private void UpdateJumpRateModelInputInternal(long baseRatePerYear, long multiplierPerYear, long jumpMultiplierPerYear, long kink)
         {
             var newBaseRatePerBlock =  baseRatePerYear.Div(BlocksPerYear);
             var newMultiplierPerBlockStr =  new BigIntValue(multiplierPerYear).Mul(Mantissa).Div(new BigIntValue(BlocksPerYear).Mul(kink)).Value ;
             var newJumpMultiplierPerBlock = jumpMultiplierPerYear.Div(BlocksPerYear);
-            
             if (!long.TryParse(newMultiplierPerBlockStr, out var newMultiplierPerBlock))
             {
                 throw new AssertionException($"Failed to parse {newMultiplierPerBlockStr}");
@@ -25,22 +37,18 @@ namespace Awaken.Contracts.InterestRateModel
             
             Context.Fire(new NewInterestParams()
             {
-                BaseRatePerYear = newBaseRatePerBlock,
-                MultiplierPerYear = newMultiplierPerBlock,
-                JumpMultiplierPerYear = newJumpMultiplierPerBlock,
+                BaseRatePerBlock = newBaseRatePerBlock,
+                MultiplierPerBlock = newMultiplierPerBlock,
+                JumpMultiplierPerBlock = newJumpMultiplierPerBlock,
                 Kink = kink
             });
-            return new Empty();
         }
 
-        private static Int64Value GetUtilizationRateInternal(long cash, long borrows, long reserves)
+        private static long GetUtilizationRateInternal(long cash, long borrows, long reserves)
         {
             if (borrows == 0)
             {
-                return new Int64Value()
-                {
-                    Value = 0
-                };
+                return 0;
             }
 
             var utilizationRateStr = new BigIntValue(borrows).Mul(Mantissa)
@@ -49,45 +57,42 @@ namespace Awaken.Contracts.InterestRateModel
             {
                 throw new AssertionException($"Failed to parse {utilizationRateStr}");
             }
-            return new Int64Value()
-            {
-                Value = utilizationRate
-            };
+
+            return utilizationRate;
         }
 
-        private Int64Value GetBorrowRateInternal(long cash, long borrows, long reserves)
+        private long GetBorrowRateInternal(long cash, long borrows, long reserves)
         {
             var util = GetUtilizationRateInternal(cash, borrows, reserves);
-             
-            if (util.Value <= State.Kink.Value)
+            string borrowRateStr;
+            if (State.InterestRateModelType.Value)
             {
-                var borrowRateStr = new BigIntValue(State.Kink.Value).Mul(State.MultiplierPerBlock.Value).Div(Mantissa)
+                 borrowRateStr = new BigIntValue(util).Mul(State.MultiplierPerBlock.Value).Div(Mantissa)
                     .Add(State.BaseRatePerBlock.Value).Value;
-                if (!long.TryParse(borrowRateStr, out var borrowRate))
-                {
-                    throw new AssertionException($"Failed to parse {borrowRateStr}");
-                }
-                return new Int64Value()
-                {
-                    Value = borrowRate
-                };
             }
             else
             {
-                var normalRate = new BigIntValue(State.Kink.Value).Mul(State.MultiplierPerBlock.Value).Div(Mantissa)
-                    .Add(State.BaseRatePerBlock.Value);
-                var excessUtil = new BigIntValue(util.Value.Sub(State.Kink.Value));
-                var borrowRateStr = excessUtil.Mul(State.JumpMultiplierPerBlock.Value).Div(Mantissa)
-                    .Add(normalRate).Value;
-                if (!long.TryParse(borrowRateStr, out var borrowRate))
+                if (util <= State.Kink.Value)
                 {
-                    throw new AssertionException($"Failed to parse {borrowRateStr}");
+                     borrowRateStr = new BigIntValue(State.Kink.Value).Mul(State.MultiplierPerBlock.Value).Div(Mantissa)
+                        .Add(State.BaseRatePerBlock.Value).Value;
                 }
-                return new Int64Value()
+                else
                 {
-                    Value = borrowRate
-                };
+                    var normalRate = new BigIntValue(State.Kink.Value).Mul(State.MultiplierPerBlock.Value).Div(Mantissa)
+                        .Add(State.BaseRatePerBlock.Value);
+                    var excessUtil = new BigIntValue(util.Sub(State.Kink.Value)); 
+                    borrowRateStr = excessUtil.Mul(State.JumpMultiplierPerBlock.Value).Div(Mantissa)
+                        .Add(normalRate).Value;
+                }
             }
+            if (!long.TryParse(borrowRateStr, out var borrowRate))
+            {
+                throw new AssertionException($"Failed to parse {borrowRateStr}");
+            }
+
+            return borrowRate;
+
         }
     }
 }

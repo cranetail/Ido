@@ -10,20 +10,28 @@ namespace Awaken.Contracts.InterestRateModel
     {
         public override Int64Value GetUtilizationRate(GetUtilizationRateInput input)
         {
-            return GetUtilizationRateInternal(input.Cash,input.Borrows,input.Reserves);
+            var util = GetUtilizationRateInternal(input.Cash,input.Borrows,input.Reserves);
+            return new Int64Value()
+            {
+                Value = util
+            };
         }
 
         public override Int64Value GetBorrowRate(GetBorrowRateInput input)
         {
-            return GetBorrowRateInternal(input.Cash,input.Borrows,input.Reserves);
+            var borrowRate = GetBorrowRateInternal(input.Cash,input.Borrows,input.Reserves);
+            return new Int64Value()
+            {
+                Value = borrowRate
+            };
         }
 
         public override Int64Value GetSupplyRate(GetSupplyRateInput input)
         {
             var oneMinusReserveFactor = Mantissa.Sub(input.ReserveFactor);
-            var borrowRate = GetBorrowRateInternal(input.Cash, input.Borrows, input.Reserves).Value;
+            var borrowRate = GetBorrowRateInternal(input.Cash, input.Borrows, input.Reserves);
             var rateToPool = new BigIntValue(borrowRate).Mul(oneMinusReserveFactor).Div(Mantissa);
-            var util = GetUtilizationRateInternal(input.Cash, input.Borrows, input.Reserves).Value;
+            var util = GetUtilizationRateInternal(input.Cash, input.Borrows, input.Reserves);
             var supplyRateStr = new BigIntValue(util).Mul(rateToPool).Div(Mantissa).Value;
             if (!long.TryParse(supplyRateStr, out var supplyRate))
             {

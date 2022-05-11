@@ -33,7 +33,7 @@ namespace Awaken.Contracts.AToken
             State.TokenSymbolMap[symbolVirtualAddress] = symbolString;
             State.InterestRateModelContractsAddress[symbolVirtualAddress] = input.InterestRateModel;
             State.InitialExchangeRate[symbolVirtualAddress] = input.InitialExchangeRate;
-            State.BorrowIndex[symbolVirtualAddress] = Mantissa;
+            State.BorrowIndex[symbolVirtualAddress] = new BigIntValue(Mantissa);
             Context.Fire(new TokenCreated()
             {
                 Symbol = symbolString,
@@ -80,7 +80,7 @@ namespace Awaken.Contracts.AToken
             var totalBorrowsNewStr = interestAccumulated.Add(borrowPrior).Value;
             var totalReservesNewStr =
                 interestAccumulated.Mul(State.ReserveFactor[aToken]).Div(Mantissa).Add(reservesPrior).Value;
-            var borrowIndexNewStr = simpleInterestFactor.Mul(borrowIndexPrior).Div(Mantissa).Add(borrowIndexPrior).Value;
+            var borrowIndexNew = simpleInterestFactor.Mul(borrowIndexPrior).Div(Mantissa).Add(borrowIndexPrior);
   
             if (!long.TryParse(totalBorrowsNewStr, out var totalBorrowsNew))
             {
@@ -89,10 +89,6 @@ namespace Awaken.Contracts.AToken
             if (!long.TryParse(totalReservesNewStr, out var totalReservesNew))
             {
                 throw new AssertionException($"Failed to parse {totalReservesNewStr}");
-            }
-            if (!long.TryParse(borrowIndexNewStr, out var borrowIndexNew))
-            {
-                throw new AssertionException($"Failed to parse {borrowIndexNewStr}");
             }
             if (!long.TryParse(interestAccumulated.Value, out var interestAccumulatedInt64))
             {

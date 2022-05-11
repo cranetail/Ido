@@ -116,8 +116,7 @@ namespace Awaken.Contracts.Controller
             var shortfall =
                 GetHypotheticalAccountLiquidityInternal(input.Borrower, input.AToken, 0, input.BorrowAmount);
             Assert(shortfall <= 0, "Insufficient liquidity"); //INSUFFICIENT_LIQUIDITY
-             //To do:get borrowIndex from AToken
-            var borrowIndex =  State.ATokenContract.GetBorrowIndex.Call(input.AToken).Value;
+            var borrowIndex =  State.ATokenContract.GetBorrowIndex.Call(input.AToken);
             UpdatePlatformTokenBorrowIndex(input.AToken, borrowIndex);
             DistributeBorrowerPlatformToken(input.AToken, input.Borrower, borrowIndex, false);
             
@@ -132,8 +131,7 @@ namespace Awaken.Contracts.Controller
         public override Empty RepayBorrowAllowed(RepayBorrowAllowedInput input)
         {
             MarketVerify(input.AToken);
-            //To do:get borrowIndex from AToken
-            long borrowIndex = 1;
+            var borrowIndex =  State.ATokenContract.GetBorrowIndex.Call(input.AToken);
             UpdatePlatformTokenBorrowIndex(input.AToken, borrowIndex);
             DistributeBorrowerPlatformToken(input.AToken, input.Borrower, borrowIndex, false);
             return new Empty();
@@ -209,8 +207,8 @@ namespace Awaken.Contracts.Controller
              
             Assert(priceBorrow != 0 && priceCollateral != 0, "Error Price");
             var exchangeRate = State.ATokenContract.GetExchangeRateStored.Call(input.ATokenCollateral).Value;
-            var numerator = new BigIntValue(priceBorrow).Mul(State.LiquidationIncentive.Value);
-            var denominator = new BigIntValue(priceCollateral).Mul(exchangeRate);
+            var numerator = new BigIntValue(priceBorrow).Mul(State.LiquidationIncentive.Value).Div(Mantissa);
+            var denominator = new BigIntValue(priceCollateral).Mul(exchangeRate).Div(ExchangeMantissa);
             var seizeTokensStr = numerator.Div(denominator).Mul(input.ActualRepayAmount).Value;
             
             if (!long.TryParse(seizeTokensStr, out var seizeTokens))
@@ -254,12 +252,13 @@ namespace Awaken.Contracts.Controller
 
         public override Empty ClaimPlatformToken(ClaimPlatformTokenInput input)
         {
-            foreach (var aToken in input.ATokens)
+            var aTokens = input.ATokens.Count == 0 ? State.AccountAssets[input.Holders[0]].Assets : input.ATokens;
+            foreach (var aToken in aTokens)
             {
                 Assert(State.Markets[aToken].IsListed, "market must be listed");
                 if (input.Borrowers)
                 {
-                    var borrowIndex = State.ATokenContract.GetBorrowIndex.Call(aToken).Value;
+                    var borrowIndex = State.ATokenContract.GetBorrowIndex.Call(aToken);
                     UpdatePlatformTokenBorrowIndex(aToken, borrowIndex);
                     foreach (var t in input.Holders)
                     {

@@ -9,6 +9,10 @@ namespace Awaken.Contracts.Controller
 
         private const long Mantissa = 1000000000000000000;
         
+        private const long ExchangeMantissa = 100000000; 
+        
+        private const long PriceMantissa = 1000000000000000000;
+        
         // closeFactorMantissa must be strictly greater than this value
         private const long MinCloseFactor = 50000000000000000; // 0.05  scaled by 1e18
 

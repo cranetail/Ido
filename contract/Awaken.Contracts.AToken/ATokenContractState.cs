@@ -43,7 +43,7 @@ namespace Awaken.Contracts.AToken
         /// <summary>
         /// Accumulator of the total earned interest rate since the opening of the market
         /// </summary>
-        public MappedState<Address, long> BorrowIndex { get; set; }
+        public MappedState<Address, BigIntValue> BorrowIndex { get; set; }
         /// <summary>
         /// Mapping of account addresses to outstanding borrow balances
         /// </summary>

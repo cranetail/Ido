@@ -224,7 +224,7 @@ namespace Awaken.Contracts.Controller
                 Assert(State.Markets[aToken].IsListed, "market must be listed");
                 if (input.Borrowers)
                 {
-                    var borrowIndex = State.ATokenContract.GetBorrowIndex.Call(aToken).Value;
+                    var borrowIndex = State.ATokenContract.GetBorrowIndex.Call(aToken);
                     UpdatePlatformTokenBorrowIndex(aToken, borrowIndex);
                     claimAmount = input.Holders.Select(t => DistributeBorrowerPlatformToken(aToken, t, borrowIndex, true)).Aggregate(claimAmount, (current, amount) => current.Add(amount));
                 }
