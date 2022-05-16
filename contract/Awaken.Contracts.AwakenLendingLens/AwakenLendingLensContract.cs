@@ -140,8 +140,7 @@ namespace Awaken.Contracts.AwakenLendingLens
         {
             var balance = State.TokenContract.GetBalance.Call(
                 new GetBalanceInput() {Owner = input.User, Symbol = input.PlatformToken}).Balance;
-            var market = State.ControllerContract.GetAllMarkets.Call(new Empty());
-            var allocatedAmount = State.ControllerContract.GetPlatformTokenClaimAmount.Call(new ClaimPlatformTokenInput(){ ATokens = { market.AToken},Holders = { input.User},Borrowers = true,Suppliers = true}).Value;
+            var allocatedAmount = State.ControllerContract.GetPlatformTokenClaimAmount.Call(new GetClaimPlatformTokenInput(){ Holder =  input.User,Borrowers = true,Suppliers = true}).Value;
            
         
             return new PlatformTokenBalanceMetadataExt()

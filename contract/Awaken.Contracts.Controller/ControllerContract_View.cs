@@ -215,10 +215,11 @@ namespace Awaken.Contracts.Controller
             };
         }
 
-        public override Int64Value GetPlatformTokenClaimAmount(ClaimPlatformTokenInput input)
+        public override Int64Value GetPlatformTokenClaimAmount(GetClaimPlatformTokenInput input)
         {
+            var aTokens = State.AccountAssets[input.Holder].Assets;
             long claimAmount = 0;
-            foreach (var aToken in input.ATokens)
+            foreach (var aToken in aTokens)
             {
                
                 Assert(State.Markets[aToken].IsListed, "market must be listed");
@@ -226,13 +227,13 @@ namespace Awaken.Contracts.Controller
                 {
                     var borrowIndex = State.ATokenContract.GetBorrowIndex.Call(aToken);
                     UpdatePlatformTokenBorrowIndex(aToken, borrowIndex);
-                    claimAmount = input.Holders.Select(t => DistributeBorrowerPlatformToken(aToken, t, borrowIndex, true)).Aggregate(claimAmount, (current, amount) => current.Add(amount));
+                    claimAmount = DistributeBorrowerPlatformToken(aToken, input.Holder, borrowIndex, true);
                 }
 
                 if (!input.Suppliers) continue;
                 {
                     UpdatePlatformTokenSupplyIndex(aToken);
-                    claimAmount = input.Holders.Select(t => DistributeSupplierPlatformToken(aToken, t, true)).Aggregate(claimAmount, (current, amount) => current.Add(amount));
+                    claimAmount = claimAmount.Add(DistributeSupplierPlatformToken(aToken, input.Holder, true));
                 }
             }
 

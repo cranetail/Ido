@@ -44,6 +44,7 @@ option (aelf.is_view) = true;
 }
 
 rpc GetPlatformTokenBalanceMetadataExt(GetPlatformTokenBalanceMetadataExtInput)returns(PlatformTokenBalanceMetadataExt){
+option (aelf.is_view) = true;
 }
 }
 message InitializeInput {
