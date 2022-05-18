@@ -213,6 +213,8 @@ message Invested{
     string invest_symbol = 3;
     int64 amount = 4;
     int64 total_amount = 5;
+    string project_currency = 6;
+    int64 to_claim_amount = 7;
 }
 
 message UnInvested{
