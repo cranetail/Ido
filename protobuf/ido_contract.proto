@@ -1,0 +1,173 @@
+syntax = "proto3";
+
+import "aelf/core.proto";
+import "aelf/options.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+option csharp_namespace = "AElf.Contracts.Ido";
+
+service IdoContract {
+    option (aelf.csharp_state) = "AElf.Contracts.Ido.IdoContractState";
+
+    //admin
+    rpc Initialize (InitializeInput) returns (google.protobuf.Empty) {
+    }
+    
+    //project manager
+    rpc Register (RegisterInput) returns (google.protobuf.Empty) {
+    }
+    rpc UpdateAdditionalInfo (UpdateAdditionalInfoInput) returns (google.protobuf.Empty) {
+    }
+    rpc Cancel (aelf.Hash) returns (google.protobuf.Empty) {
+    }
+    rpc LockLiquidity (aelf.Hash) returns (google.protobuf.Empty) {
+    }
+    rpc Withdraw (aelf.Hash) returns (google.protobuf.Empty) {
+    }
+    rpc EnableWhitelist (aelf.Hash) returns (google.protobuf.Empty) {
+    }
+    rpc DisableWhitelist(aelf.Hash) returns (google.protobuf.Empty) {
+    }
+    rpc AddWhitelists (AddWhitelistsInput) returns (google.protobuf.Empty) {
+    }
+    rpc RemoveWhitelists (RemoveWhitelistsInput) returns (google.protobuf.Empty) {
+    }
+    rpc NextPeriod (aelf.Hash) returns (google.protobuf.Empty) {
+   }
+    //user
+    rpc Invest (InvestInput) returns (google.protobuf.Empty) {
+    }
+    rpc UnInvest (aelf.Hash) returns (google.protobuf.Empty) {
+    }
+    rpc Claim (ClaimInput) returns (google.protobuf.Empty) {
+    }
+    rpc ClaimLiquidatedDamage (aelf.Hash) returns (google.protobuf.Empty) {
+    }
+   
+}
+
+//input
+message InitializeInput{
+    aelf.Address whitelist_contract = 1;
+}
+message RegisterInput {
+  string accepted_currency = 1;
+  string project_currency = 2;
+  string crowd_funding_type = 3;
+  int64 crowd_funding_issue_amount = 4;
+  int64 pre_sale_price = 5;
+  google.protobuf.Timestamp start_time = 6;
+  google.protobuf.Timestamp end_time =7;
+  int64 min_subscription = 8;
+  int64 max_subscription = 9;
+  int64 public_sale_price = 10;
+  ListMarketInfo list_market_info = 11;
+  int32 liquidity_lock_proportion = 12;
+  google.protobuf.Timestamp unlock_time = 13;
+  bool is_enable_whitelist = 14;
+  int32 whitelist_id = 15;
+  bool is_burn_rest_token = 16;
+  int32 total_period = 17;
+  AdditionalInfo additional_info = 18;
+}
+
+message UpdateAdditionalInfoInput{
+    aelf.Hash project_item_id = 1;
+    AdditionalInfo additional_info = 2;  
+}
+
+
+message AddWhitelistsInput{
+  aelf.Hash project_item_id = 1;
+  repeated aelf.Address users = 2;  
+}
+
+message RemoveWhitelistsInput{
+  aelf.Hash project_item_id = 1;
+  repeated aelf.Address users = 2;  
+}
+
+
+message InvestInput{
+   aelf.Hash project_item_id = 1;
+   string currency = 2;
+   int64 invest_amount = 3;
+}
+
+message ClaimInput{
+  aelf.Hash project_item_id = 1;
+  aelf.Address user = 2;
+  
+}
+//struct
+
+message ProjectInfo{
+  aelf.Hash project_item_id = 1;
+  string accepted_currency = 2;
+  string project_currency = 3;
+  string crowd_funding_type = 4;
+  int64 crowd_funding_issue_amount = 5;
+  int64 pre_sale_price = 6;
+  google.protobuf.Timestamp start_time = 8;
+  google.protobuf.Timestamp end_time = 9;
+  int64 min_subscription = 10;
+  int64 max_subscription = 11;
+  bool is_enable_whitelist = 12;
+  int32 whitelist_id = 13;
+  bool is_burn_rest_token = 14;
+  AdditionalInfo additional_info = 15;
+  aelf.Address creator = 16;
+  int64 current_raised_amount = 17;//已募集金额
+  bool enabled = 18; //是否取消众筹
+} 
+message ProjectListInfo{
+  aelf.Hash project_item_id = 1;
+  int64 public_sale_price = 2;
+  ListMarketInfo list_market_info = 3;
+  int32 liquidity_lock_proportion = 4;
+  google.protobuf.Timestamp unlock_time = 5;
+  int64 current_period = 6;
+  int64 total_period = 7;
+}
+message InvestDetail{
+   string invest_symbol = 1;
+   int64 amount = 2;
+   bool is_unInvest = 3;
+}
+
+message ProfitDetail{
+  int64 current_period = 1;
+  string symbol = 2;
+  map<int64,int64> amounts_map = 3; //period=>amount
+}
+
+message ClaimedProfitsInfo{
+  repeated ClaimedProfit details = 1;
+}
+message ClaimedProfit{
+    aelf.Hash project_item_id = 1;//项目id
+    int64 latest_period = 2;//当前周期
+    string symbol = 3;//代币名称
+    int64 amount = 4;//金额
+}
+
+message LiquidatedDamageDetails{
+   int64 totalAmount = 1;
+   repeated LiquidatedDamageDetail details = 2; 
+}
+message LiquidatedDamageDetail{
+  aelf.Address user = 1;//用户地址
+  string symbol = 2;//名称
+  int64 amount = 3;//违约金金额
+}
+message AdditionalInfo{
+map<string,string> data = 1;
+}
+message ListMarketInfo{
+repeated ListMarket data = 1;
+}
+message ListMarket{
+ aelf.Address market = 1;//用户地址
+ int32 weight = 2;
+}

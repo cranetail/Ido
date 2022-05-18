@@ -1,0 +1,361 @@
+syntax = "proto3";
+
+package whitelist;
+
+import "aelf/core.proto";
+import "aelf/options.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/wrappers.proto";
+import "acs1.proto";
+
+option csharp_namespace = "AElf.Contracts.Whitelist";
+
+service WhitelistContract {
+    option (aelf.csharp_state) = "AElf.Contracts.Whitelist.WhitelistContractState";
+    option (aelf.base) = "acs1.proto";
+
+    rpc Initialize (InitializeInput) returns (google.protobuf.Empty) {
+    }
+
+    //For Managers.
+    //Create whitelist.
+    rpc CreateWhitelist (CreateWhitelistInput) returns (aelf.Hash){
+    }
+
+    //Add an address to an existing whitelist.
+    rpc AddAddressInfoToWhitelist (AddAddressInfoToWhitelistInput) returns (google.protobuf.Empty){
+    }
+    
+    //Remove address from an existing whitelist.
+    rpc RemoveAddressInfoFromWhitelist (RemoveAddressInfoFromWhitelistInput) returns (google.protobuf.Empty){
+    }
+    
+    //Add multiple addresses to an existing whitelist.
+    rpc AddAddressInfoListToWhitelist (AddAddressInfoListToWhitelistInput) returns (google.protobuf.Empty){
+    }
+    
+    //Remove multiple addresses from an existing whitelist.
+    rpc RemoveAddressInfoListFromWhitelist (RemoveAddressInfoListFromWhitelistInput) returns (google.protobuf.Empty){
+    }
+    
+    //Disable whitelist.
+    rpc DisableWhitelist (DisableWhitelistInput) returns (google.protobuf.Empty){
+    }
+    
+    //Update state: Whether the whitelist is allowed to be cloned.
+    rpc ChangeWhitelistCloneable(UpdateWhitelistCloneableInput) returns (google.protobuf.Empty){
+    }
+    
+    //Add extra info.
+    rpc AddExtraInfo (AddExtraInfoInput) returns (google.protobuf.Empty){
+    }
+    
+    //Update whitelist extraInfo according to the whitelist_id and extraInfo.address.
+    rpc UpdateExtraInfo (UpdateExtraInfoInput) returns (google.protobuf.Empty){
+    }
+    
+    //Transfer Manager.
+    rpc TransferManager (TransferManagerInput) returns (google.protobuf.Empty){
+    }
+    
+    //For Subscribers.
+    //Subscribe whitelist.
+    rpc SubscribeWhitelist (SubscribeWhitelistInput) returns (aelf.Hash){
+    }
+    
+    // Cancel subscribe according to the subscribe_id.
+    rpc UnsubscribeWhitelist (aelf.Hash) returns (google.protobuf.Empty){
+    }
+    
+    //After used,address and extra info will be added into the consumedList. 
+    rpc ConsumeWhitelist (ConsumeWhitelistInput) returns (google.protobuf.Empty){
+    }
+    
+    //Clone whitelist.
+    rpc CloneWhitelist (CloneWhitelistInput) returns (aelf.Hash){
+    }
+    
+    
+    //Views.
+    //Get whitelist_id list according to the manager.
+    rpc GetWhitelistByManager (aelf.Address) returns (WhitelistIdList){
+        option (aelf.is_view) = true;
+    }
+    
+    //Get existing whitelist according to the whitelist_id.
+    rpc GetWhitelist (aelf.Hash) returns (WhitelistInfo){
+        option (aelf.is_view) = true;
+    }
+    
+    //Get subscribe whitelist info according to the subscribe_id.
+    rpc GetSubscribeWhitelist (aelf.Hash) returns (SubscribeWhitelistInfo){
+        option (aelf.is_view) = true;
+    }
+    
+    //Get consumed list according to the subscribe_id.
+    rpc GetConsumedList (aelf.Hash) returns (ConsumedList){
+        option (aelf.is_view) = true;
+    }
+    
+    //Get extra info according to the extra_info_id
+    rpc GetExtraInfoByHash (aelf.Hash) returns (google.protobuf.BytesValue){
+        option (aelf.is_view) = true;
+    }
+
+    //Get whitelist detail according to the whitelist_id.
+    rpc GetWhitelistDetail (aelf.Hash) returns(ExtraInfoList){
+        option (aelf.is_view) = true;
+    }
+    
+    //After consumed,get available whitelist according to the subscribe_id. 
+    rpc GetAvailableWhitelist (aelf.Hash) returns (WhitelistInfo){
+        option (aelf.is_view) = true;
+    }
+    
+    //Whether the extraInfo exist in the available whitelist.
+    rpc GetFromAvailableWhitelist (GetFromAvailableWhitelistInput) returns (google.protobuf.BoolValue){
+        option (aelf.is_view) = true;
+    }
+    
+    
+}
+
+//Structs.
+
+message WhitelistInfo {
+    //The whitelist id.
+    aelf.Hash whitelist_id = 1;
+    //The list of address and extra info in this whitelist.
+    ExtraInfoIdList extra_info_id_list = 2;
+    //Whether the whitelist is available.
+    bool is_available = 3;
+    //Whether the whiteList can be cloned.
+    bool is_cloneable = 4;
+    string remark = 5;
+    aelf.Hash clone_from = 6;
+    aelf.Address manager = 7;
+}
+
+message WhitelistIdList{
+    repeated aelf.Hash whitelist_id = 1;
+}
+
+message SubscribeWhitelistInfo {
+    //The subscribe id.
+    aelf.Hash subscribe_id = 1;
+    //The project id.
+    aelf.Hash project_id = 2;
+    //The whitelist id.
+    aelf.Hash whitelist_id = 3;
+}
+
+message ConsumedList {
+    //The subscribe id.
+    aelf.Hash subscribe_id = 1;
+    //The whitelist id.
+    aelf.Hash whitelist_id = 2;
+    //The consumed address and extra info list in this whitelist.
+    ExtraInfoIdList extra_info_id_list = 3;
+}
+
+message ExtraInfoIdList {
+    repeated ExtraInfoId value = 1;
+}
+
+message ExtraInfoId {
+    aelf.Address address = 1;
+    aelf.Hash id = 2;
+}
+
+message ExtraInfoList {
+    repeated ExtraInfo value = 1;
+}
+
+message ExtraInfo {
+    aelf.Address address = 1;
+    bytes info = 2;
+}
+
+message ExtraInfoUpdate{
+    aelf.Address address = 1;
+    //Before update: ExtraInfo.
+    bytes info_before = 2;
+    bytes info_update = 3;
+}
+
+message ExtraInfoUpdateList{
+    repeated ExtraInfoUpdate value = 1;
+}
+
+message AddressList {
+    repeated aelf.Address address = 1;
+}
+
+//Inputs.
+
+message InitializeInput{
+
+}
+
+message CreateWhitelistInput {
+    ExtraInfoList extra_info_list = 1;
+    bool is_cloneable = 2;
+    string remark = 3;
+}
+
+message AddAddressInfoToWhitelistInput {
+    aelf.Hash whitelist_id = 1;
+    ExtraInfo extra_info = 2;
+}
+
+message RemoveAddressInfoFromWhitelistInput {
+    aelf.Hash whitelist_id = 1;
+    ExtraInfo extra_info = 2;
+}
+
+message AddAddressInfoListToWhitelistInput {
+    aelf.Hash whitelist_id = 1;
+    ExtraInfoList extra_info_list = 2;
+}
+
+message RemoveAddressInfoListFromWhitelistInput{
+    aelf.Hash whitelist_id = 1;
+    ExtraInfoList extra_info_list = 2;
+}
+
+message DisableWhitelistInput{
+    aelf.Hash whitelist_id = 1;
+    string remark = 2;
+}
+
+message SubscribeWhitelistInput{
+    //The project id.
+    aelf.Hash project_id = 1;
+    //The whitelist id.
+    aelf.Hash whitelist_id = 2;
+}
+
+message ConsumeWhitelistInput{
+    aelf.Hash subscribe_id = 1;
+    aelf.Hash whitelist_id = 2;
+    ExtraInfoId extra_info_id = 3;
+}
+
+message CloneWhitelistInput{
+    aelf.Hash whitelist_id = 1;
+}
+
+message UpdateWhitelistCloneableInput{
+    aelf.Hash whitelist_id = 1;
+    bool is_cloneable = 2;
+}
+
+message AddExtraInfoInput{
+    aelf.Hash extra_info_id = 1;
+    bytes extra_info = 2;
+}
+
+message UpdateExtraInfoInput{
+    aelf.Hash whitelist_id = 1;
+    ExtraInfoUpdateList extra_info_list = 2;
+}
+
+message TransferManagerInput{
+    aelf.Hash whitelist_id = 1;
+    aelf.Address manager = 2;
+}
+
+message GetFromAvailableWhitelistInput{
+    aelf.Hash subscribe_id = 1;
+    ExtraInfo extra_info = 2;
+}
+
+//Events.
+
+message WhitelistCreated {
+    option (aelf.is_event) = true;
+    //The whitelist id.
+    aelf.Hash whitelist_id = 1;
+    //The list of address and extra info in this whitelist.
+    ExtraInfoIdList extra_info_id_list = 2;
+    //Whether the whitelist is available.
+    bool is_available = 3;
+    bool is_cloneable = 4;
+    string remark = 5;
+    aelf.Hash clone_from = 6;
+    aelf.Address manager = 7;
+}
+
+message WhitelistSubscribed {
+    option (aelf.is_event) = true;
+    //The subscribe id.
+    aelf.Hash subscribe_id = 1;
+    //The project id.
+    aelf.Hash project_id = 2;
+    //The whitelist id.
+    aelf.Hash whitelist_id = 3;
+}
+
+message WhitelistUnsubscribed{
+    option (aelf.is_event) = true;
+    aelf.Hash subscribe_id = 1;
+    aelf.Hash project_id = 2;
+    aelf.Hash whitelist_id = 3;
+}
+
+message WhitelistAddressInfoAdded {
+    option (aelf.is_event) = true;
+    aelf.Hash whitelist_id = 1;
+    ExtraInfoIdList extra_info_id_list = 2;
+}
+
+message WhitelistAddressInfoRemoved {
+    option (aelf.is_event) = true;
+    aelf.Hash whitelist_id = 1;
+    ExtraInfoIdList extra_info_id_list = 2;
+}
+
+message WhitelistDisabled {
+    option (aelf.is_event) = true;
+    aelf.Hash whitelist_id = 1;
+    bool is_available = 2;
+    string remark = 3;
+}
+
+message ConsumedListAdded {
+    option (aelf.is_event) = true;
+    aelf.Hash subscribe_id = 1;
+    aelf.Hash whitelist_id = 2;
+    ExtraInfoIdList extra_info_id_list = 3;
+}
+
+message IsCloneableChanged{
+    option (aelf.is_event) = true;
+    aelf.Hash whitelist_id = 1;
+    bool is_cloneable = 2;
+}
+
+message ExtraInfoAdded {
+    option (aelf.is_event) = true;
+    aelf.Hash extra_info_id = 1;
+    bytes extra_info = 2;
+}
+
+message WhitelistCloned {
+    option (aelf.is_event) = true;
+    aelf.Hash clone_from = 1;
+    aelf.Hash whitelist_id = 2;
+}
+
+message UpdateWhitelist {
+    option (aelf.is_event) = true;
+    aelf.Hash whitelist_id = 1;
+    ExtraInfoUpdateList extra_info_list = 2;
+}
+
+message ManagerTransferred{
+    option (aelf.is_event) = true;
+    aelf.Hash whitelist_id = 1;
+    aelf.Address transfer_from = 2;
+    aelf.Address transfer_to = 3;
+}

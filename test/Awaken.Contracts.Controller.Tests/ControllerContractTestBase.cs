@@ -13,15 +13,15 @@ using AElf.Standards.ACS0;
 using Awaken.Contracts.AToken;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Threading;
-using AElf.Contracts.Price;
+using AElf.Contracts.Ido;
 using Awaken.Contracts.AwakenLendingLens;
 using Awaken.Contracts.InterestRateModel;
 
 
 namespace Awaken.Contracts.Controller.Tests
 {
-    public class ControllerContractTestBase : DAppContractTestBase<ControllerContractTestModule>
-    {
+    public class ControllerContractTestBase                                                                                                   : DAppContractTestBase<ControllerContractTestModule>
+    {          
         // You can get address of any contract via GetAddress method, for example:
         internal readonly Address ControllerContractAddress;
 

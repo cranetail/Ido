@@ -65,8 +65,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\contract\AElf.Contracts.Ido\AElf.Contracts.Ido.csproj" />
     <ProjectReference Include="..\..\contract\Awaken.Contracts.AToken\Awaken.Contracts.AToken.csproj" />
-    <ProjectReference Include="..\..\contract\AElf.Contracts.Price\AElf.Contracts.Price.csproj" />
     <ProjectReference Include="..\..\contract\Awaken.Contracts.AwakenLendingLens\Awaken.Contracts.AwakenLendingLens.csproj" />
     <ProjectReference Include="..\..\contract\Awaken.Contracts.Controller\Awaken.Contracts.Controller.csproj" />
     <ProjectReference Include="..\..\contract\Awaken.Contracts.InterestRateModel\Awaken.Contracts.InterestRateModel.csproj" />
