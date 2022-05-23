@@ -66,43 +66,47 @@ message RegisterInput {
     int32 liquidity_lock_proportion = 12;
     google.protobuf.Timestamp unlock_time = 13;
     bool is_enable_whitelist = 14;
-    int32 whitelist_id = 15;
+    aelf.Hash whitelist_id = 15;
     bool is_burn_rest_token = 16;
     int32 total_period = 17;
     AdditionalInfo additional_info = 18;
+    int64 to_raised_amount = 19;
+    int32 first_distribute_proportion = 20;
+    int32 rest_distribute_proportion = 21;
+    int64 period_duration = 22;
 }
 
 message UpdateAdditionalInfoInput{
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     AdditionalInfo additional_info = 2;  
 }
 
 
 message AddWhitelistsInput{
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     repeated aelf.Address users = 2;  
 }
 
 message RemoveWhitelistsInput{
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     repeated aelf.Address users = 2;  
 }
 
 
 message InvestInput{
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     string currency = 2;
     int64 invest_amount = 3;
 }
 
 message ClaimInput{
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     aelf.Address user = 2;
 }
 //struct
 
 message ProjectInfo{
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     string accepted_currency = 2;
     string project_currency = 3;
     string crowd_funding_type = 4;
@@ -113,21 +117,25 @@ message ProjectInfo{
     int64 min_subscription = 10;
     int64 max_subscription = 11;
     bool is_enable_whitelist = 12;
-    int32 whitelist_id = 13;
+    aelf.Hash whitelist_id = 13;
     bool is_burn_rest_token = 14;
     AdditionalInfo additional_info = 15;
     aelf.Address creator = 16;
-    int64 current_raised_amount = 17;//已募集金额
-    bool enabled = 18; //是否取消众筹
+    int64 to_raised_amount = 17;
+    int64 current_raised_amount = 18;//已募集金额
+    bool enabled = 19; //是否取消众筹
 } 
 message ProjectListInfo{
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     int64 public_sale_price = 2;
     ListMarketInfo list_market_info = 3;
     int32 liquidity_lock_proportion = 4;
     google.protobuf.Timestamp unlock_time = 5;
     int64 latest_period = 6;
     int64 total_period = 7;
+    int32 first_distribute_proportion = 8;
+    int32 rest_distribute_proportion = 9;
+    int64 period_duration = 10;
 }
 message InvestDetail{
     string invest_symbol = 1;
@@ -145,7 +153,7 @@ message ClaimedProfitsInfo{
     repeated ClaimedProfit details = 1;
 }
 message ClaimedProfit{
-    aelf.Hash project_item_id = 1;//项目id
+    aelf.Hash project_id = 1;//项目id
     int64 latest_period = 2;//当前周期
     string symbol = 3;//代币名称
     int64 amount = 4;//金额
@@ -175,7 +183,7 @@ message ListMarket{
 
 message ProjectRegistered{
     option (aelf.is_event) = true;
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     string accepted_currency = 2;
     string project_currency = 3;
     string crowd_funding_type = 4;
@@ -194,21 +202,26 @@ message ProjectRegistered{
     bool is_burn_rest_token = 17;
     int32 total_period = 18;
     AdditionalInfo additional_info = 19;
+    int64 to_raised_amount = 20;
+    aelf.Address creator = 21; 
+    int32 first_distribute_proportion = 22;
+    int32 rest_distribute_proportion = 23;
+    int64 period_duration = 24;
 }
 message AdditionalInfoUpdated{
     option (aelf.is_event) = true;
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     AdditionalInfo additional_info = 2;
 }
 
 message ProjectCanceled{
     option (aelf.is_event) = true;
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
 }
 
 message Invested{
     option (aelf.is_event) = true;
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     aelf.Address user =2; 
     string invest_symbol = 3;
     int64 amount = 4;
@@ -219,15 +232,16 @@ message Invested{
 
 message UnInvested{
     option (aelf.is_event) = true;
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     aelf.Address user = 2; 
     string invest_symbol = 3;
-    int64 total_amount = 4;
+    int64 un_invest_amount = 4;
+    int64 total_amount = 5;
 }
 
 message LiquidatedDamageRecord{
     option (aelf.is_event) = true;
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     aelf.Address user = 2; 
     string invest_symbol = 3;
     int64 amount = 4;
@@ -235,7 +249,7 @@ message LiquidatedDamageRecord{
 
 message LiquidatedDamageClaimed{
     option (aelf.is_event) = true;
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     aelf.Address user = 2; 
     string invest_symbol = 3;
     int64 amount = 4;
@@ -243,7 +257,7 @@ message LiquidatedDamageClaimed{
 
 message Claimed{
     option (aelf.is_event) = true;
-    aelf.Hash project_item_id = 1;
+    aelf.Hash project_id = 1;
     aelf.Address user = 2; 
     string invest_symbol = 3;
     int64 amount = 4;
