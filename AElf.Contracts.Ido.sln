@@ -30,6 +30,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Awaken.Contracts.GToken.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElf.Contracts.Ido", "contract\AElf.Contracts.Ido\AElf.Contracts.Ido.csproj", "{D2A4FC82-3383-42AE-A0A4-525184489379}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AElf.Contracts.Whitelist", "contract\AElf.Contracts.Whitelist\AElf.Contracts.Whitelist.csproj", "{A1F678F4-0C1D-423A-8AFC-7C37E7C8503D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -72,6 +74,10 @@ Global
 		{D2A4FC82-3383-42AE-A0A4-525184489379}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D2A4FC82-3383-42AE-A0A4-525184489379}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D2A4FC82-3383-42AE-A0A4-525184489379}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1F678F4-0C1D-423A-8AFC-7C37E7C8503D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1F678F4-0C1D-423A-8AFC-7C37E7C8503D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1F678F4-0C1D-423A-8AFC-7C37E7C8503D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1F678F4-0C1D-423A-8AFC-7C37E7C8503D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -86,6 +92,7 @@ Global
 		{3C3DF640-340E-4CD0-B61F-DCFF49B09601} = {DBC47323-E6A2-42A2-A624-CE2EE6139567}
 		{A596E778-9A5E-4AFE-B637-6988FE3EA4B3} = {DBC47323-E6A2-42A2-A624-CE2EE6139567}
 		{D2A4FC82-3383-42AE-A0A4-525184489379} = {5C980166-C987-470D-AEE0-3858A170A903}
+		{A1F678F4-0C1D-423A-8AFC-7C37E7C8503D} = {5C980166-C987-470D-AEE0-3858A170A903}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D7426B41-E959-40E4-9ED8-ED8D9C50F133}

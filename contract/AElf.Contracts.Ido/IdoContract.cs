@@ -1,4 +1,5 @@
-﻿using AElf.Sdk.CSharp;
+﻿using AElf.CSharp.Core;
+using AElf.Sdk.CSharp;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
 
@@ -11,6 +12,7 @@ namespace AElf.Contracts.Ido
             Assert(State.TokenContract.Value == null, "Already initialized.");
             State.TokenContract.Value =
                 Context.GetContractAddressByName(SmartContractConstants.TokenContractSystemName);
+            State.WhitelistContract.Value = input.WhitelistContract;
             State.Admin.Value = Context.Sender;
             return new Empty();
         }
@@ -19,39 +21,125 @@ namespace AElf.Contracts.Ido
         {
             ValidTokenSymbolOwner(input.ProjectCurrency, Context.Sender);
             ValidTokenSymbol(input.AcceptedCurrency);
+            Assert(input.MaxSubscription > input.MinSubscription && input.MinSubscription > 0,"Invalid Subscription input");
+            Assert(input.StartTime <= input.EndTime && input.StartTime > Context.CurrentBlockTime,"Invalid Time input");
             var id = GetHash(input, Context.Sender);
             var projectInfo = new ProjectInfo()
             {
-                ProjectItemId = id,
+                ProjectId = id,
                 AcceptedCurrency = input.AcceptedCurrency,
                 ProjectCurrency = input.ProjectCurrency,
                 CrowdFundingType = input.CrowdFundingType,
-                DistributionTotalAmount = input.DistributionAmount,
+                CrowdFundingIssueAmount = input.CrowdFundingIssueAmount,
                 PreSalePrice = input.PreSalePrice,
                 StartTime = input.StartTime,
                 EndTime = input.EndTime,
                 MinSubscription = input.MinSubscription,
                 MaxSubscription = input.MaxSubscription,
-                CurrentPeriod = 0,
-                TotalPeriod = input.TotalPeriod,
                 IsEnableWhitelist = input.IsEnableWhitelist,
                 WhitelistId = input.WhitelistId,
                 IsBurnRestToken = input.IsBurnRestToken,
                 AdditionalInfo = input.AdditionalInfo,
-                Creator = Context.Sender
+                Creator = Context.Sender,
+                ToRaisedAmount = input.ToRaisedAmount,
             };
             State.ProjectInfoMap[id] = projectInfo;
             var listInfo = new ProjectListInfo()
             {
-                ProjectItemId = id,
+                ProjectId = id,
                 PublicSalePrice = input.PublicSalePrice,
                 LiquidityLockProportion = input.LiquidityLockProportion,
                 ListMarketInfo = input.ListMarketInfo,
-                UnlockTime = input.UnlockTime
+                UnlockTime = input.UnlockTime,
+                LatestPeriod = 0,
+                TotalPeriod = input.TotalPeriod,
+                FirstDistributeProportion = input.FirstDistributeProportion,
+                RestDistributeProportion = input.RestDistributeProportion,
+                PeriodDuration = input.PeriodDuration
             };
             State.ProjectListInfoMap[id] = listInfo;
             return new Empty();
         }
-        
+
+        public override Empty AddWhitelists(AddWhitelistsInput input)
+        {
+            return base.AddWhitelists(input);
+        }
+
+        public override Empty Invest(InvestInput input)
+        {
+            //check status
+            var projectInfo = ValidProjectExist(input.ProjectId);
+            Assert(projectInfo.Enabled,"project is not enabled");
+            Assert(projectInfo.AcceptedCurrency == input.Currency,"the currency is invalid");
+            CheckInvestInput(input.ProjectId, Context.Sender, input.InvestAmount);
+            var currentTimestamp = Context.CurrentBlockTime;
+            Assert(currentTimestamp >= projectInfo.StartTime && currentTimestamp <= projectInfo.EndTime,"can't invest right now");
+            //invest 
+            TransferIn(Context.Sender,input.Currency,input.InvestAmount);
+            var investDetail =  State.InvestDetailMap[projectInfo.ProjectId][Context.Sender] ?? new InvestDetail()
+            {
+                InvestSymbol = input.Currency,
+                Amount = 0
+            };
+            var totalInvestAmount = investDetail.Amount.Add(input.InvestAmount);
+            investDetail.Amount = totalInvestAmount;
+            State.InvestDetailMap[projectInfo.ProjectId][Context.Sender] = investDetail;
+            State.ProjectInfoMap[input.ProjectId].CurrentRaisedAmount = State.ProjectInfoMap[input.ProjectId]
+                .CurrentRaisedAmount.Add(input.InvestAmount);
+            
+            var toClaimAmount = ProfitDetailUpdate(input.ProjectId, Context.Sender, totalInvestAmount);
+            
+            Context.Fire(new Invested()
+            {
+                ProjectId = input.ProjectId,
+                InvestSymbol = input.Currency,
+                Amount = input.InvestAmount,
+                TotalAmount = totalInvestAmount,
+                ProjectCurrency = projectInfo.ProjectCurrency,
+                ToClaimAmount = toClaimAmount,
+                User = Context.Sender
+            });
+            return new Empty();
+        }
+
+        public override Empty Claim(ClaimInput input)
+        {
+            //check status
+            var projectInfo = ValidProjectExist(input.ProjectId);
+            Assert(projectInfo.Enabled,"project is not enabled");
+
+            var listInfo = State.ProjectListInfoMap[input.ProjectId];
+            var profitDetailInfo = State.ProfitDetailMap[input.ProjectId][input.User];
+            State.ClaimedProfitsInfoMap[input.User] = State.ClaimedProfitsInfoMap[input.User]?? new ClaimedProfitsInfo();
+            var claimedProfitsInfo = State.ClaimedProfitsInfoMap[input.User];
+            for (var i = profitDetailInfo.LatestPeriod; i < listInfo.LatestPeriod; i++)
+            {
+                var currentPeriod = i++;
+                var profitPeriodAmount = profitDetailInfo.AmountsMap[currentPeriod];
+                TransferOut(input.User, profitDetailInfo.Symbol, profitPeriodAmount);
+                claimedProfitsInfo.Details.Add(new ClaimedProfit()
+                {
+                    ProjectId = input.ProjectId,
+                    LatestPeriod = currentPeriod,
+                    Symbol = profitDetailInfo.Symbol,
+                    Amount = profitPeriodAmount
+                });
+                claimedProfitsInfo.TotalClaimedAmount = claimedProfitsInfo.TotalClaimedAmount.Add(profitPeriodAmount);
+                State.ClaimedProfitsInfoMap[input.User] = claimedProfitsInfo;
+                Context.Fire(new Claimed()
+                {
+                    ProjectId = input.ProjectId,
+                    LatestPeriod = currentPeriod,
+                    Amount = profitPeriodAmount,
+                    ProjectCurrency = profitDetailInfo.Symbol,
+                    TotalClaimedAmount = claimedProfitsInfo.TotalClaimedAmount,
+                    TotalPeriod = listInfo.LatestPeriod,
+                    User = input.User
+                });
+            }
+            
+            return new Empty();
+        }
     }
 }

@@ -20,6 +20,6 @@ namespace AElf.Contracts.Ido
         //违约金记录
         public MappedState<Hash, LiquidatedDamageDetails> LiquidatedDamageDetailsMap {get; set; }
         //白名单记录
-        public MappedState<Hash, long> WhitelistIdMap { get; set; }
+        public MappedState<Hash, Hash> WhitelistIdMap { get; set; }
     }
 }

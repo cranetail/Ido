@@ -1,3 +1,6 @@
+using AElf.Contracts.MultiToken;
+using AElf.Contracts.Whitelist;
+using AElf.CSharp.Core;
 using AElf.Types;
 
 namespace AElf.Contracts.Ido
@@ -31,5 +34,105 @@ namespace AElf.Contracts.Ido
                 HashHelper.ComputeFrom(registerAddress));
             return hash;
         }
+
+        private ProjectInfo ValidProjectExist(Hash projectId)
+        {
+            var projectInfo = State.ProjectInfoMap[projectId];
+            Assert(projectInfo != null,"project is not exist");
+            return projectInfo;
+        }
+
+
+        private ExtraInfoIdList GetWhitelist(Hash projectId)
+        {
+            var whitelistId = State.WhitelistIdMap[projectId];
+            var info = State.WhitelistContract.GetWhitelist.Call(whitelistId);
+            return info.ExtraInfoIdList;
+        }
+
+        
+        private void WhitelistCheck(Hash projectId, Address user)
+        {
+            var extraInfoIdList = GetWhitelist(projectId);
+            var infoIds = extraInfoIdList.Value;
+            //to do : check the address is in the whitelist
+        }
+        
+        private void TransferIn(Address from, string symbol, long amount)
+        {
+            State.TokenContract.TransferFrom.Send(
+                new TransferFromInput
+                {
+                    Symbol = symbol,
+                    Amount = amount,
+                    From = from,
+                    Memo = "TransferIn",
+                    To = Context.Self
+                });
+        }
+        
+        private void TransferOut(Address to, string symbol, long amount)
+        {
+            State.TokenContract.Transfer.Send(
+                new TransferInput()
+                {
+                    Symbol = symbol,
+                    Amount = amount,
+                    Memo = "TransferOut",
+                    To = to
+                });
+        }
+
+        private long GetAvailableInvestAmount(Hash projectId, Address user)
+        {
+
+           var investDetail =  State.InvestDetailMap[projectId][user];
+           if (investDetail == null)
+           {
+               return 0;
+           }
+
+           var availableInvestAmount = State.ProjectInfoMap[projectId].MaxSubscription.Sub(investDetail.Amount);
+           return availableInvestAmount;
+
+        }
+
+        private void CheckInvestInput(Hash projectId, Address user, long investAmount)
+        {
+            var projectInfo = State.ProjectInfoMap[projectId];
+            var latestAmount =  State.InvestDetailMap[projectId][user] == null ? 0 : State.InvestDetailMap[projectId][user].Amount;
+            var totalAmount = latestAmount.Add(investAmount);
+            Assert(totalAmount >= projectInfo.MinSubscription && totalAmount<= projectInfo.MaxSubscription,"Invalid investAmount");
+        }
+
+        private long ProfitDetailUpdate(Hash projectId, Address user, long investAmount)
+        {
+            var info = State.ProjectInfoMap[projectId];
+            var listInfo = State.ProjectListInfoMap[projectId];
+            State.ProfitDetailMap[projectId][user] = State.ProfitDetailMap[projectId][user] ?? new ProfitDetail()
+            {
+                LatestPeriod = 0,
+                Symbol = info.ProjectCurrency
+            };
+            var totalProjectTokenAmount = investAmount.Mul(info.PreSalePrice).Div(Mantissa);
+            for (var i = 1; i <= listInfo.TotalPeriod; i++)
+            {
+                long periodProfit;
+                if (i == 1)
+                { 
+                    periodProfit = totalProjectTokenAmount.Mul(listInfo.FirstDistributeProportion).Div(ProportionMax);
+                }
+                else
+                {
+                    periodProfit = totalProjectTokenAmount.Mul(listInfo.RestDistributeProportion).Div(ProportionMax);
+                }
+
+                State.ProfitDetailMap[projectId][user].TotalProfit = totalProjectTokenAmount;
+                State.ProfitDetailMap[projectId][user].AmountsMap[i] = periodProfit;
+            }
+
+            return totalProjectTokenAmount;
+        }
+
     }
 }
