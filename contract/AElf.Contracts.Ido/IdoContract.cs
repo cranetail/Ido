@@ -1,4 +1,6 @@
-﻿using AElf.CSharp.Core;
+﻿using System.Collections.Generic;
+using AElf.Contracts.Whitelist;
+using AElf.CSharp.Core;
 using AElf.Sdk.CSharp;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
@@ -58,12 +60,110 @@ namespace AElf.Contracts.Ido
                 PeriodDuration = input.PeriodDuration
             };
             State.ProjectListInfoMap[id] = listInfo;
+            
+            //SubscribeWhiteList
+            State.WhitelistContract.SubscribeWhitelist.Send(new SubscribeWhitelistInput()
+            {
+                ProjectId = id,
+                WhitelistId = input.WhitelistId
+            });
+            
+            Context.Fire(new ProjectRegistered()
+            {
+                ProjectId = id,
+                AcceptedCurrency = input.AcceptedCurrency,
+                ProjectCurrency = input.ProjectCurrency,
+                CrowdFundingType = input.CrowdFundingType,
+                CrowdFundingIssueAmount = input.CrowdFundingIssueAmount,
+                PreSalePrice = input.PreSalePrice,
+                StartTime = input.StartTime,
+                EndTime = input.EndTime,
+                MinSubscription = input.MinSubscription,
+                MaxSubscription = input.MaxSubscription,
+                PublicSalePrice = input.PublicSalePrice,
+                ListMarketInfo = input.ListMarketInfo,
+                LiquidityLockProportion = input.LiquidityLockProportion,
+                UnlockTime = input.UnlockTime,
+                IsEnableWhitelist = input.IsEnableWhitelist,
+                WhitelistId = input.WhitelistId,
+                IsBurnRestToken = input.IsBurnRestToken,
+                TotalPeriod = input.TotalPeriod,
+                AdditionalInfo = input.AdditionalInfo,
+                ToRaisedAmount = input.ToRaisedAmount,
+                Creator = Context.Sender,
+                FirstDistributeProportion = input.FirstDistributeProportion,
+                RestDistributeProportion = input.RestDistributeProportion,
+                PeriodDuration = input.PeriodDuration
+            });
             return new Empty();
         }
 
         public override Empty AddWhitelists(AddWhitelistsInput input)
         {
-            return base.AddWhitelists(input);
+            var projectInfo = ValidProjectExist(input.ProjectId);
+            Assert(projectInfo.Enabled,"project is not enabled");
+            ValidProjectOwner(input.ProjectId);
+
+            var list = new ExtraInfoList();
+            foreach (var user in input.Users)
+            {
+                var userInfo = new ExtraInfo()
+                {
+                    Address = user
+                };
+                list.Value.Add(userInfo);
+            }
+            State.WhitelistContract.AddAddressInfoListToWhitelist.Send(new AddAddressInfoListToWhitelistInput()
+            {
+                ExtraInfoList = list,
+                WhitelistId = projectInfo.WhitelistId
+            });
+            return new Empty();
+        }
+
+        public override Empty RemoveWhitelists(RemoveWhitelistsInput input)
+        {
+            var projectInfo = ValidProjectExist(input.ProjectId);
+            Assert(projectInfo.Enabled,"project is not enabled");
+            ValidProjectOwner(input.ProjectId);
+
+            var list = new ExtraInfoList();
+            foreach (var user in input.Users)
+            {
+                var userInfo = new ExtraInfo()
+                {
+                    Address = user
+                };
+                list.Value.Add(userInfo);
+            }
+            State.WhitelistContract.RemoveAddressInfoListFromWhitelist.Send(new RemoveAddressInfoListFromWhitelistInput()
+            {
+                ExtraInfoList = list,
+                WhitelistId = projectInfo.WhitelistId
+            });
+            return new Empty();
+        }
+
+        public override Empty EnableWhitelist(Hash input)
+        {
+            var projectInfo = ValidProjectExist(input);
+            Assert(projectInfo.Enabled,"project is not enabled");
+            ValidProjectOwner(input);
+
+            State.ProjectInfoMap[input].IsEnableWhitelist = true;
+            State.WhitelistContract.EnableWhitelist.Send(input);
+            return new Empty();
+        }
+
+        public override Empty DisableWhitelist(Hash input)
+        {
+            var projectInfo = ValidProjectExist(input);
+            Assert(projectInfo.Enabled,"project is not enabled");
+            ValidProjectOwner(input);
+
+            State.ProjectInfoMap[input].IsEnableWhitelist = false;
+            State.WhitelistContract.DisableWhitelist.Send(input);
+            return new Empty();
         }
 
         public override Empty Invest(InvestInput input)
@@ -71,6 +171,7 @@ namespace AElf.Contracts.Ido
             //check status
             var projectInfo = ValidProjectExist(input.ProjectId);
             Assert(projectInfo.Enabled,"project is not enabled");
+            WhitelistCheck(input.ProjectId, Context.Sender);
             Assert(projectInfo.AcceptedCurrency == input.Currency,"the currency is invalid");
             CheckInvestInput(input.ProjectId, Context.Sender, input.InvestAmount);
             var currentTimestamp = Context.CurrentBlockTime;

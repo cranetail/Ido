@@ -39,8 +39,12 @@ service WhitelistContract {
     }
     
     //Disable whitelist.
-    rpc DisableWhitelist (DisableWhitelistInput) returns (google.protobuf.Empty){
-    }
+   rpc DisableWhitelist (aelf.Hash) returns (google.protobuf.Empty){
+       }
+       
+       //Re-enable whitelist according to the whitelist_id.
+       rpc EnableWhitelist (aelf.Hash) returns (google.protobuf.Empty){
+       }
     
     //Update state: Whether the whitelist is allowed to be cloned.
     rpc ChangeWhitelistCloneable(UpdateWhitelistCloneableInput) returns (google.protobuf.Empty){
@@ -115,6 +119,10 @@ service WhitelistContract {
     //Whether the extraInfo exist in the available whitelist.
     rpc GetFromAvailableWhitelist (GetFromAvailableWhitelistInput) returns (google.protobuf.BoolValue){
         option (aelf.is_view) = true;
+    }
+    
+    rpc GetAddressFromWhitelist(GetAddressFromWhitelistInput) returns (google.protobuf.BoolValue){
+         option (aelf.is_view) = true;
     }
     
     
@@ -268,6 +276,11 @@ message TransferManagerInput{
 message GetFromAvailableWhitelistInput{
     aelf.Hash subscribe_id = 1;
     ExtraInfo extra_info = 2;
+}
+
+message GetAddressFromWhitelistInput{
+    aelf.Hash whitelist_id = 1;
+    aelf.Address address = 2;
 }
 
 //Events.

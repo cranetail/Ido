@@ -200,7 +200,7 @@ message ProjectRegistered{
     int32 liquidity_lock_proportion = 13;
     google.protobuf.Timestamp unlock_time = 14;
     bool is_enable_whitelist = 15;
-    int32 whitelist_id = 16;
+    aelf.Hash whitelist_id = 16;
     bool is_burn_rest_token = 17;
     int32 total_period = 18;
     AdditionalInfo additional_info = 19;

@@ -42,20 +42,22 @@ namespace AElf.Contracts.Ido
             return projectInfo;
         }
 
-
-        private ExtraInfoIdList GetWhitelist(Hash projectId)
+        private void ValidProjectOwner(Hash projectId)
         {
-            var whitelistId = State.WhitelistIdMap[projectId];
-            var info = State.WhitelistContract.GetWhitelist.Call(whitelistId);
-            return info.ExtraInfoIdList;
+            var projectInfo = State.ProjectInfoMap[projectId];
+            Assert(projectInfo.Creator == Context.Sender,"unauthorized to add the whitelist");
         }
 
-        
         private void WhitelistCheck(Hash projectId, Address user)
         {
-            var extraInfoIdList = GetWhitelist(projectId);
-            var infoIds = extraInfoIdList.Value;
-            //to do : check the address is in the whitelist
+            var projectInfo = State.ProjectInfoMap[projectId];
+            var isInWhitelist = State.WhitelistContract.GetAddressFromWhitelist.Call(new GetAddressFromWhitelistInput()
+            {
+                Address = user,
+                WhitelistId = projectInfo.WhitelistId
+            });
+            
+            Assert(isInWhitelist.Value,"user is not in the whitelist");
         }
         
         private void TransferIn(Address from, string symbol, long amount)
@@ -133,6 +135,8 @@ namespace AElf.Contracts.Ido
 
             return totalProjectTokenAmount;
         }
+        
+       
 
     }
 }
