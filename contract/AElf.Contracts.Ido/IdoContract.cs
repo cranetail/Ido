@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using AElf.Contracts.Whitelist;
 using AElf.CSharp.Core;
+using AElf.CSharp.Core.Extension;
 using AElf.Sdk.CSharp;
 using AElf.Types;
 using Google.Protobuf.WellKnownTypes;
@@ -166,6 +167,49 @@ namespace AElf.Contracts.Ido
             return new Empty();
         }
 
+        public override Empty UpdateAdditionalInfo(UpdateAdditionalInfoInput input)
+        {
+            var projectInfo = ValidProjectExist(input.ProjectId);
+            Assert(projectInfo.Enabled,"project is not enabled");
+            ValidProjectOwner(input.ProjectId);
+            State.ProjectInfoMap[input.ProjectId].AdditionalInfo = input.AdditionalInfo;
+            Context.Fire(new AdditionalInfoUpdated()
+            {
+                ProjectId = input.ProjectId,
+                AdditionalInfo = input.AdditionalInfo
+            });
+            return new Empty();
+        }
+
+        public override Empty Cancel(Hash input)
+        {
+            var projectInfo = ValidProjectExist(input);
+            Assert(projectInfo.Enabled,"project is not enabled");
+            ValidProjectOwner(input);
+            Assert(Context.CurrentBlockTime <= projectInfo.EndTime,"time is expired");
+            State.ProjectInfoMap[input].Enabled = false;
+            Context.Fire(new ProjectCanceled()
+            {
+                ProjectId = input
+            });
+            return new Empty();
+        }
+
+        public override Empty NextPeriod(Hash input)
+        {
+            var projectInfo = ValidProjectExist(input);
+            Assert(projectInfo.Enabled,"project is not enabled");
+            ValidProjectOwner(input);
+            var projectListInfo = State.ProjectListInfoMap[input];
+            Assert(projectListInfo.LatestPeriod < projectListInfo.TotalPeriod,"insufficient period");
+            var nextPeriodTime =
+                projectInfo.EndTime.Seconds.Add(projectListInfo.PeriodDuration.Mul(projectListInfo.LatestPeriod));
+            Assert(Context.CurrentBlockTime.Seconds >= nextPeriodTime,"time is not ready");
+            State.ProjectListInfoMap[input].LatestPeriod = State.ProjectListInfoMap[input].LatestPeriod.Add(1);
+            return new Empty();
+        }
+
+        
         public override Empty Invest(InvestInput input)
         {
             //check status
@@ -202,6 +246,12 @@ namespace AElf.Contracts.Ido
                 User = Context.Sender
             });
             return new Empty();
+        }
+
+        public override Empty UnInvest(Hash input)
+        {
+            var projectInfo = ValidProjectExist(input);
+            return base.UnInvest(input);
         }
 
         public override Empty Claim(ClaimInput input)
