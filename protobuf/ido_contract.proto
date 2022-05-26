@@ -169,6 +169,7 @@ message LiquidatedDamageDetail{
     aelf.Address user = 1;//用户地址
     string symbol = 2;//名称
     int64 amount = 3;//违约金金额
+    bool claimed = 4;
 }
 message AdditionalInfo{
     map<string,string> data = 1;

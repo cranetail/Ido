@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using AElf.Contracts.Whitelist;
 using AElf.CSharp.Core;
 using AElf.CSharp.Core.Extension;
@@ -227,6 +228,7 @@ namespace AElf.Contracts.Ido
                 InvestSymbol = input.Currency,
                 Amount = 0
             };
+            Assert(investDetail.IsUnInvest == false,"user has bad record");
             var totalInvestAmount = investDetail.Amount.Add(input.InvestAmount);
             investDetail.Amount = totalInvestAmount;
             State.InvestDetailMap[projectInfo.ProjectId][Context.Sender] = investDetail;
@@ -251,7 +253,69 @@ namespace AElf.Contracts.Ido
         public override Empty UnInvest(Hash input)
         {
             var projectInfo = ValidProjectExist(input);
-            return base.UnInvest(input);
+            var currentTimestamp = Context.CurrentBlockTime;
+            Assert(currentTimestamp >= projectInfo.StartTime && currentTimestamp <= projectInfo.EndTime,"can't invest right now");
+            //unInvest 
+            var userinfo = State.InvestDetailMap[input][Context.Sender];
+            Assert(userinfo.Amount > 0,"insufficient invest amount");
+            Assert(userinfo.IsUnInvest == false,"user has already unInvest");
+
+            State.LiquidatedDamageDetailsMap[input] =
+                State.LiquidatedDamageDetailsMap[input] ?? new LiquidatedDamageDetails();
+            var liquidatedDamageDetails = State.LiquidatedDamageDetailsMap[input];
+            var liquidatedDamageAmount = userinfo.Amount.Mul(LiquidatedDamageProportion).Div(ProportionMax);
+
+            var detail = new LiquidatedDamageDetail()
+            {
+                Amount = liquidatedDamageAmount,
+                Symbol = userinfo.InvestSymbol,
+                User = Context.Sender
+            };
+
+            State.InvestDetailMap[input][Context.Sender].Amount = 0;
+            State.InvestDetailMap[input][Context.Sender].IsUnInvest = true;
+            var unInvestAmount = userinfo.Amount.Sub(liquidatedDamageAmount);
+            TransferOut(Context.Sender,userinfo.InvestSymbol, unInvestAmount);
+            Context.Fire(new UnInvested()
+            {
+                ProjectId = input,
+                User = Context.Sender,
+                InvestSymbol = userinfo.InvestSymbol,
+                TotalAmount = userinfo.Amount,
+                UnInvestAmount = unInvestAmount
+            });
+            
+            liquidatedDamageDetails.Details.Add(detail);
+            liquidatedDamageDetails.TotalAmount = liquidatedDamageDetails.TotalAmount.Add(liquidatedDamageAmount);
+            State.LiquidatedDamageDetailsMap[input] = liquidatedDamageDetails;
+            Context.Fire(new LiquidatedDamageRecord()
+            {
+                ProjectId = input,
+                User = Context.Sender,
+                InvestSymbol = userinfo.InvestSymbol,
+                Amount = liquidatedDamageAmount
+            });
+            return new Empty();
+        }
+
+        public override Empty ClaimLiquidatedDamage(Hash input)
+        {
+            //check status
+            var projectInfo = ValidProjectExist(input);
+            Assert(projectInfo.Enabled == false,"project should be disabled");
+
+            var detail = State.LiquidatedDamageDetailsMap[input].Details.First(x => x.User == Context.Sender);
+            Assert(detail != null,"no record in LiquidatedDamageDetails");
+            Assert(detail.Claimed == false,"already claimed");
+            TransferOut(detail.User,detail.Symbol,detail.Amount);
+            Context.Fire(new LiquidatedDamageClaimed()
+            {
+                ProjectId = input,
+                Amount = detail.Amount,
+                InvestSymbol = detail.Symbol,
+                User = detail.User
+            });
+            return new Empty();
         }
 
         public override Empty Claim(ClaimInput input)
