@@ -5,6 +5,7 @@ using AElf.CSharp.Core;
 using AElf.CSharp.Core.Extension;
 using AElf.Sdk.CSharp;
 using AElf.Types;
+using Awaken.Contracts.Swap;
 using Google.Protobuf.WellKnownTypes;
 
 namespace AElf.Contracts.Ido
@@ -295,6 +296,45 @@ namespace AElf.Contracts.Ido
                 InvestSymbol = userinfo.InvestSymbol,
                 Amount = liquidatedDamageAmount
             });
+            return new Empty();
+        }
+
+        public override Empty LockLiquidity(Hash input)
+        {
+            var projectInfo = ValidProjectExist(input);
+            Assert(projectInfo.Enabled,"project is not enabled");
+            ValidProjectOwner(input);
+            var projectListInfo = State.ProjectListInfoMap[input];
+            Assert(Context.CurrentBlockTime >= projectInfo.EndTime,"time is not ready");
+            var acceptedCurrencyAmount = projectInfo.CurrentRaisedAmount.Mul(projectListInfo.LiquidityLockProportion)
+                .Div(ProportionMax);
+
+            var projectCurrencyAmount = acceptedCurrencyAmount.Mul(projectListInfo.PublicSalePrice).Div(Mantissa);
+            State.SwapContract.AddLiquidity.Send(new AddLiquidityInput()
+            {
+                SymbolA = projectInfo.AcceptedCurrency,
+                SymbolB = projectInfo.ProjectCurrency,
+                AmountADesired = acceptedCurrencyAmount,
+                AmountBDesired = projectCurrencyAmount,
+                AmountAMin = 0,
+                AmountBMin = 0,
+                Channel = "",
+                Deadline = Context.CurrentBlockTime.AddMinutes(3),
+                To = Context.Sender
+            });
+            return new Empty();
+        }
+
+        public override Empty Withdraw(Hash input)
+        {
+            var projectInfo = ValidProjectExist(input);
+            Assert(projectInfo.Enabled,"project is not enabled");
+            ValidProjectOwner(input);
+            var projectListInfo = State.ProjectListInfoMap[input];
+            Assert(Context.CurrentBlockTime >= projectInfo.EndTime,"time is not ready");
+            var withdrawAmount = projectInfo.CurrentRaisedAmount.Mul(ProportionMax.Sub(projectListInfo.LiquidityLockProportion))
+                .Div(ProportionMax);
+            TransferOut(Context.Sender, projectInfo.AcceptedCurrency, withdrawAmount);
             return new Empty();
         }
 
