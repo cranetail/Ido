@@ -6,8 +6,10 @@ namespace AElf.Contracts.Whitelist
 {
     public partial class WhitelistContract : WhitelistContractContainer.WhitelistContractBase
     {
-
-
+        public override Hash CreateWhitelist(CreateWhitelistInput input)
+        {
+            return new Hash();
+        }
     }
 
 

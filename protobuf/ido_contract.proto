@@ -35,6 +35,9 @@ service IdoContract {
     }
     rpc NextPeriod (aelf.Hash) returns (google.protobuf.Empty) {
    }
+   //inline 
+    rpc SetWhitelistId(aelf.Hash) returns(google.protobuf.Empty){
+    }
     //user
     rpc Invest (InvestInput) returns (google.protobuf.Empty) {
     }
@@ -44,7 +47,37 @@ service IdoContract {
     }
     rpc ClaimLiquidatedDamage (aelf.Hash) returns (google.protobuf.Empty) {
     }
-   
+    
+    //view function
+    rpc GetWhitelistContractAddress(google.protobuf.Empty)  returns (aelf.Address) {
+        option (aelf.is_view) = true;
+    }
+    
+    rpc GetAdmin(google.protobuf.Empty)  returns (aelf.Address) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetTokenAddress(google.protobuf.Empty)  returns (aelf.Address) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetProjectInfo(aelf.Hash) returns (ProjectInfo) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetProjectListInfo(aelf.Hash) returns (ProjectListInfo) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetWhitelist(aelf.Hash) returns (ExtraInfoIdList) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetInvestDetail(GetInvestDetailInput) returns (InvestDetail){
+        option (aelf.is_view) = true;
+    }
+    rpc GetProfitDetail(GetProfitDetailInput) returns (ProfitDetail){
+        option (aelf.is_view) = true;
+    }
+    rpc GetWhitelistId(aelf.Hash) returns (aelf.Hash) {
+        option (aelf.is_view) = true;
+    }
+
 }
 
 //input
@@ -102,6 +135,25 @@ message InvestInput{
 message ClaimInput{
     aelf.Hash project_id = 1;
     aelf.Address user = 2;
+}
+
+message GetInvestDetailInput{
+    aelf.Hash project_id = 1;//项目id
+    aelf.Address user = 2;
+}
+message GetProfitDetailInput{
+    aelf.Hash project_id = 1;//项目id
+    aelf.Address user = 2;
+}
+
+//Output
+message ExtraInfoIdList {
+    repeated ExtraInfoId value = 1;
+}
+
+message ExtraInfoId {
+    aelf.Address address = 1;
+    aelf.Hash id = 2;
 }
 //struct
 

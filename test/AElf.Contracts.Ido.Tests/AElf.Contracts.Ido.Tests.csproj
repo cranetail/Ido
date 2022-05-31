@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-    <RootNamespace>Awaken.Contracts.Controller</RootNamespace>
+    <RootNamespace>Awaken.Contracts.Ido</RootNamespace>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
@@ -42,28 +42,28 @@
     <ContractStub Include="..\..\protobuf\transaction_fee.proto">
       <Link>Protobuf\Proto\transaction_fee.proto</Link>
     </ContractStub>
+    <ContractStub Include="..\..\protobuf\token_contract.proto">
+      <Link>Protobuf\Proto\token_contract.proto</Link>
+    </ContractStub>
     <ContractStub Include="..\..\protobuf\awaken_token_contract.proto">
       <Link>Protobuf\Proto\awaken_token_contract.proto</Link>
     </ContractStub>
     <ContractStub Include="..\..\protobuf\awaken_swap_contract.proto">
       <Link>Protobuf\Proto\awaken_swap_contract.proto</Link>
     </ContractStub>
-  </ItemGroup>
-  <ItemGroup>
     <ContractStub Include="..\..\protobuf\ido_contract.proto">
       <Link>Protobuf\Proto\ido_contract.proto</Link>
     </ContractStub>
     <ContractStub Include="..\..\protobuf\whitelist_contract.proto">
-    <Link>Protobuf\Proto\whitelist_contract.proto</Link>
+      <Link>Protobuf\Proto\whitelist_contract.proto</Link>
     </ContractStub>
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\contract\AElf.Contracts.Ido\AElf.Contracts.Ido.csproj" />
-    <ProjectReference Include="..\..\contract\Awaken.Contracts.AToken\Awaken.Contracts.AToken.csproj" />
-    <ProjectReference Include="..\..\contract\Awaken.Contracts.AwakenLendingLens\Awaken.Contracts.AwakenLendingLens.csproj" />
-    <ProjectReference Include="..\..\contract\Awaken.Contracts.Controller\Awaken.Contracts.Controller.csproj" />
-    <ProjectReference Include="..\..\contract\Awaken.Contracts.InterestRateModel\Awaken.Contracts.InterestRateModel.csproj" />
+    <ProjectReference Include="..\..\contract\Awaken.Contracts.Swap\Awaken.Contracts.Swap.csproj" />
+    <ProjectReference Include="..\..\contract\AElf.Contracts.Whitelist\AElf.Contracts.Whitelist.csproj" />
+    <ProjectReference Include="..\..\contract\Awaken.Contracts.Token\Awaken.Contracts.Token.csproj" />
     <ProjectReference Include="..\..\src\AElf.Boilerplate.TestBase\AElf.Boilerplate.TestBase.csproj" />
   </ItemGroup>
 

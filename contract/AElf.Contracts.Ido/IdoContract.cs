@@ -6,6 +6,7 @@ using AElf.CSharp.Core.Extension;
 using AElf.Sdk.CSharp;
 using AElf.Types;
 using Awaken.Contracts.Swap;
+using Google.Protobuf;
 using Google.Protobuf.WellKnownTypes;
 
 namespace AElf.Contracts.Ido
@@ -65,12 +66,20 @@ namespace AElf.Contracts.Ido
             State.ProjectListInfoMap[id] = listInfo;
             
             //SubscribeWhiteList
-            State.WhitelistContract.SubscribeWhitelist.Send(new SubscribeWhitelistInput()
+            if (input.WhitelistId != null)
             {
-                ProjectId = id,
-                WhitelistId = input.WhitelistId
-            });
-            
+                State.WhiteListIdMap[id] = input.WhitelistId;
+            }
+            else
+            {
+                
+                //create whitelist
+                
+                //write id to state
+                Context.SendInline(Context.Self, nameof(SetWhitelistId), id);
+            }
+           
+          
             Context.Fire(new ProjectRegistered()
             {
                 ProjectId = id,

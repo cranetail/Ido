@@ -2,416 +2,120 @@ using System.Linq;
 using System.Threading.Tasks;
 using AElf.Contracts.MultiToken;
 using AElf.Contracts.Ido;
-using AElf.ContractTestBase.ContractTestKit;
-using AElf.Types;
-using Awaken.Contracts.AToken;
-using Awaken.Contracts.AwakenLendingLens;
-using Awaken.Contracts.Controller.Tests;
-using Awaken.Contracts.InterestRateModel;
-using Google.Protobuf;
+using AElf.Contracts.Ido.Tests;
+using System.Threading.Tasks;
+using Awaken.Contracts.Swap;
 using Google.Protobuf.WellKnownTypes;
-using Org.BouncyCastle.Tsp;
-using Shouldly;
 using Xunit;
-using ApproveInput = AElf.Contracts.MultiToken.ApproveInput;
-using CreateInput = Awaken.Contracts.AToken.CreateInput;
+using System;
+using System.Linq;
+using System.Threading;
+using AElf.Contracts.MultiToken;
+using AElf.ContractTestBase.ContractTestKit;
+using AElf.CSharp.Core;
+using AElf.CSharp.Core.Extension;
+using AElf.Types;
+using Shouldly;
+using Awaken.Contracts.Token;
+using Google.Protobuf.Collections;
+using Xunit.Sdk;
 
-namespace Awaken.Contracts.Controller
+namespace AElf.Contracts.Ido
 {
-    public class ControllerContractTests : ControllerContractTestBase
+    public class IdoContractTests : IdoContractTestBase
     {
         
         [Fact]
         public async Task InitializeTest()
         {
-            await Initialize();
-            var address = await AdminStub.GetAdmin.CallAsync(new Empty());
-            address.ShouldBe(AdminAddress);
-        }
-        [Fact]
-        public async Task SupportMarketTest()
-        {
            await Initialize();
-           await CreateAToken();
-           var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-           await AdminStub.SupportMarket.SendAsync(aElfAddress); ;
-           var aTokens =  await AdminStub.GetAllMarkets.CallAsync(new Empty());
-           aElfAddress.Value.ShouldNotBeEmpty();
-           aTokens.AToken.ShouldContain(aElfAddress);
-           
+           await AdminStub.Initialize.SendAsync(new InitializeInput()
+           {
+               WhitelistContract = WhitelistContractAddress
+           });
+           var whitelistAddress = await AdminStub.GetWhitelistContractAddress.CallAsync(new Empty());
+           whitelistAddress.ShouldNotBe(new Address());
         }
 
         [Fact]
-        public async Task SetCloseFactorTest()
+        public async Task RegisterTest()
         {
-            const long closeFactorExpect = 500000000000000000;
-            await Initialize();
-            await AdminStub.SetCloseFactor.SendAsync(new Int64Value() {Value = closeFactorExpect});
-            var closeFactor = await AdminStub.GetCloseFactor.CallAsync(new Empty());
-            closeFactor.Value.ShouldBe(closeFactorExpect);
-        }
-        [Fact]
-        public async Task SetCollateralFactorTest()
-        {
-            const long collateralFactorExpect = 750000000000000000;
-            
-            await Initialize();
-            await CreateAToken();
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-            await AdminStub.SupportMarket.SendAsync(aElfAddress); 
-            await AdminStub.SetPriceOracle.SendAsync(PriceContractAddress);
-       
-            await AdminStub.SetCollateralFactor.SendAsync(new SetCollateralFactorInput()
-                {AToken = aElfAddress, NewCollateralFactor = collateralFactorExpect});
-            var collateralFactor = await AdminStub.GetCollateralFactor.CallAsync(aElfAddress);
-            collateralFactor.Value.ShouldBe(collateralFactorExpect);
-        }
-        [Fact]
-        public async Task SetLiquidationIncentiveTest()
-        {
-            const long liquidationIncentiveExpect = 1080000000000000000;
-            await Initialize();
-            await AdminStub.SetLiquidationIncentive.SendAsync(new Int64Value() {Value = liquidationIncentiveExpect});
-            var liquidationIncentive = await AdminStub.GetLiquidationIncentive.CallAsync(new Empty());
-            liquidationIncentive.Value.ShouldBe(liquidationIncentiveExpect);
-        }
-        [Fact]
-        public async Task SetMaxAssetsTest()
-        {
-            const int maxAssetsExpect = 20;
-            await Initialize();
-            await AdminStub.SetMaxAssets.SendAsync(new Int32Value() {Value = maxAssetsExpect});
-            var maxAssets = await AdminStub.GetMaxAssets.CallAsync(new Empty());
-            maxAssets.Value.ShouldBe(maxAssetsExpect);
-        }
-        [Fact]
-        public async Task SetPriceOracleTest()
-        {
-            await Initialize();
-            await AdminStub.SetPriceOracle.SendAsync(PriceContractAddress);
-            var oracle = await AdminStub.GetPriceOracle.CallAsync(new Empty());
-            oracle.ShouldBe(PriceContractAddress);
-        }
-        [Fact]
-        public async Task EnterMarketsTest()
-        {
-            await Initialize();
-            await CreateAToken();
-            await AddMarket();
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            var assetList = await TomStub.GetAssetsIn.CallAsync(UserTomAddress);
-            assetList.Assets.ShouldContain(aElfAddress);
-        }
-        [Fact]
-        public async Task ExitMarketsTest()
-        {
-            await Initialize();
-            await CreateAToken();
-            
-            await AddMarket();
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-           
-            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await TomStub.ExitMarket.SendAsync(aElfAddress);
-        }
-        
-        [Fact]
-        public async Task MintTest()
-        {
-            await Initialize();
-            await CreateAToken();
-            
-            await AddMarket();
-            const long amount = 100000000;
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-           
-            //await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = amount, Channel = ""});
-           var aElfBalance =  await UserTomATokenContractStub.GetBalance.CallAsync(new AToken.Account()
+            await InitializeTest();
+            var registerInput = new RegisterInput()
             {
-                AToken = aElfAddress,
-                User = UserTomAddress
-            });
-           aElfBalance.Value.ShouldBe(amount);
-        }
-        
-        [Fact]
-        public async Task RedeemTest()
-        {
-            await Initialize();
-            await CreateAToken();
-            
-            await AddMarket();
-            const long amount = 100000000;
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
+                AcceptedCurrency = "ELF",
+                ProjectCurrency = "TEST",
+                CrowdFundingType = "标价销售",
+                CrowdFundingIssueAmount = 10000_00000000,
+                PreSalePrice = 1_00000000,
+                StartTime =  Timestamp.FromDateTime(DateTime.UtcNow.Add(new TimeSpan(0, 0, 3))),
+                EndTime =  Timestamp.FromDateTime(DateTime.UtcNow.Add(new TimeSpan(0, 0, 30000))),
+                MinSubscription = 10,
+                MaxSubscription = 100,
+                IsEnableWhitelist = false,
+                IsBurnRestToken = true,
+                AdditionalInfo = new AdditionalInfo(),
+                ToRaisedAmount = 1_00000000,
+                PublicSalePrice = 2_000000000,
+                LiquidityLockProportion = 50,
+                ListMarketInfo = new ListMarketInfo()
+                {
+                    Data = { new ListMarket()
+                    {
+                        Market = AwakenSwapContractAddress,
+                        Weight = 100
+                    }}
+                },
+                UnlockTime =Timestamp.FromDateTime(DateTime.UtcNow.Add(new TimeSpan(0, 0, 30000))),
+                TotalPeriod = 1,
+                FirstDistributeProportion = 100,
+                RestDistributeProportion = 0,
+                PeriodDuration = 0
+            };
+           var executionResult = await AdminStub.Register.SendAsync(registerInput);
+
+           var projectId = ProjectRegistered.Parser
+               .ParseFrom(executionResult.TransactionResult.Logs.First(l => l.Name.Contains(nameof(ProjectRegistered))).NonIndexed)
+               .ProjectId;
+
+          var whitelistId =  await AdminStub.GetWhitelistId.CallAsync(projectId);
+          whitelistId.ShouldBe(HashHelper.ComputeFrom(0));
            
-            //await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = amount, Channel = ""});
-            await UserTomATokenContractStub.Redeem.SendAsync(new RedeemInput() {AToken = aElfAddress, Amount = amount});
-            var balance= await UserTomATokenContractStub.GetBalance.CallAsync(new AToken.Account()
-                {AToken = aElfAddress, User = UserTomAddress});
-            balance.Value.ShouldBe(0);
-        }
-        [Fact]
-        public async Task RedeemUnderlyingTest()
-        {
-            await Initialize();
-            await CreateAToken();
-            
-            await AddMarket();
-            const long amount = 100000000;
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-           
-            //await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = amount, Channel = ""});
-            await UserTomATokenContractStub.RedeemUnderlying.SendAsync(new RedeemUnderlyingInput() {AToken = aElfAddress, Amount = amount});
-            var balance= await UserTomATokenContractStub.GetBalance.CallAsync(new AToken.Account()
-                {AToken = aElfAddress, User = UserTomAddress});
-            balance.Value.ShouldBe(0);
-        }
 
-        [Fact]
-        public async Task BorrowTest()
-        {
-            await Initialize();
-            await CreateAToken();
-            
-            await AddMarket();
-            
-            const long mintAmount = 100000000;
-            const long borrowAmount = 10000000;
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            //await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = mintAmount, Channel = ""});
-            
-            await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
-                {AToken = aElfAddress, Amount = borrowAmount});
-            var balance =  await UserTomATokenContractStub.GetBorrowBalanceStored.CallAsync(new AToken.Account()
-                {AToken = aElfAddress, User = UserTomAddress});
-            balance.Value.ShouldBe(borrowAmount);
-        }
-        [Fact]
-        public async Task RepayBorrowTest()
-        {
-            await Initialize();
-            await CreateAToken();
-            
-            await AddMarket();
-            
-            const long mintAmount = 100000000;
-            const long borrowAmount = 10000000;
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            //await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = mintAmount, Channel = ""});
-            
-            await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
-                {AToken = aElfAddress, Amount = borrowAmount});
 
-            await UserTomATokenContractStub.RepayBorrow.SendAsync(new RepayBorrowInput()
-                {AToken = aElfAddress, Amount = borrowAmount});
-        }
-        
-        [Fact]
-        public async Task LiquidateBorrowTest()
-        {
-            await Initialize();
-            await CreateAToken();
-            
-            await AddMarket();
-            
-            const long mintAmount = 100000000;
-            const long borrowAmount = 75000000;
-            const long repayAmount = 10000000;
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-            var aDaiAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "DAI"});
-            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-             await AdminStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aDaiAddress}});
-             await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = mintAmount, Channel = ""});
-            
-            await AdminATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aDaiAddress, MintAmount = mintAmount, Channel = ""});
-            
-            await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
-                {AToken = aDaiAddress, Amount = borrowAmount});
-
-            //set the borrow Token Price arise to trigger LiquidateBorrow
-            await AdminPriceContractStub.SetPrice.SendAsync(new SetPriceInput() {TokenSymbol = "DAI",Price = 1100000000000000000}); 
-            await AdminATokenContractStub.LiquidateBorrow.SendAsync(new LiquidateBorrowInput(){CollateralToken = aElfAddress,BorrowToken = aDaiAddress,Borrower = UserTomAddress,RepayAmount = repayAmount});
-        }
-        [Fact]
-        public async Task RedeemAfterBorrowTest()
-        {
-            await Initialize();
-            await CreateAToken();
-            
-            await AddMarket();
-            
-            const long mintAmount = 100000000;
-            const long borrowAmount = 75000000;
-            const long redeemAmount = 10000000;
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-            var aDaiAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "DAI"});
-            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await AdminStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aDaiAddress}});
-            await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = mintAmount, Channel = ""});
-            
-            await AdminATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aDaiAddress, MintAmount = mintAmount, Channel = ""});
-            
-            await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
-                {AToken = aDaiAddress, Amount = borrowAmount});
-            var result = await UserTomATokenContractStub.Redeem.SendWithExceptionAsync(new RedeemInput() {AToken = aElfAddress, Amount = redeemAmount});
-            result.TransactionResult.Error.ShouldContain("Insufficient Liquidity");
-            //await UserTomATokenContractStub.RedeemUnderlying.SendAsync(new RedeemUnderlyingInput() {AToken = aElfAddress, Amount = redeemAmount});
-        }
-        
-        [Fact]
-        public async Task AddPlatformTokenMarketsTest()
-        {
-            await Initialize();
-            await CreateAToken();
-            
-            await AddMarket();
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            
-            await AdminTokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
-            {
-                Amount = 100000000000,
-                Symbol = "PLATFORM",
-                Memo = "Recharge",
-                To = ControllerContractAddress
-            });
-            await AdminStub.SetPlatformTokenRate.SendAsync(new Int64Value() {Value = 10000000});
-            var marketBefore =  await AdminStub.GetMarket.CallAsync(aElfAddress);
-            await AdminStub.AddPlatformTokenMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            var marketAfter =  await AdminStub.GetMarket.CallAsync(aElfAddress);
-            marketBefore.IsPlatformTokened.ShouldBeFalse();
-            marketAfter.IsPlatformTokened.ShouldBeTrue();
-            var speed = await AdminStub.GetPlatformTokenSpeeds.CallAsync(aElfAddress);
-            speed.Value.ShouldBe(0);
-        }
-        [Fact]
-        public async Task ClaimPlatformTokenTest()
-        {
-            await Initialize();
-            await CreateAToken();
-            const long mintAmount =  100000000;
-            const long borrowAmount = 5000000;
-            await AddMarket();
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-            var aDaiAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "DAI"});
-            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            
-            await AdminTokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
-            {
-                Amount = 100000000000,
-                Symbol = "PLATFORM",
-                Memo = "Recharge",
-                To = ControllerContractAddress
-            });
-            await AdminStub.SetPlatformTokenRate.SendAsync(new Int64Value() {Value = 10000000});
-            await AdminStub.AddPlatformTokenMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await AdminStub.AddPlatformTokenMarkets.SendAsync(new ATokens() {AToken = {aDaiAddress}});
-            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await AdminStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = mintAmount, Channel = ""});
-            await AdminATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aDaiAddress, MintAmount = mintAmount, Channel = ""});
-         //   await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
-         //       {AToken = aDaiAddress, Amount = borrowAmount});
-            // await AdminStub.RefreshPlatformTokenSpeeds.SendAsync(new Empty());
-            // var speed = await AdminStub.GetPlatformTokenSpeeds.CallAsync(aDaiAddress);
-            // speed.Value.ShouldNotBe(0);
-            // await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
-            //     {AToken = aDaiAddress, Amount = borrowAmount});
-            
-             await TomStub.ClaimPlatformToken.SendAsync(new ClaimPlatformTokenInput()
-                 {Holders = {UserTomAddress},ATokens = { aDaiAddress},Borrowers = true, Suppliers = true});
-            // var balance =  await AdminTokenContractStub.GetBalance.CallAsync(new GetBalanceInput()
-            //     {Owner = UserTomAddress, Symbol = "PLATFORM"});
-            // balance.Balance.ShouldNotBe(0);
-          
-        }
-        
-        
-        //AwakenLendingLens Test
-        [Fact]
-        public async Task LensTest()
-        {  
-            await Initialize();
-            await CreateAToken();
-            const long mintAmount =  100000000;
-            const long borrowAmount = 5000000;
-            await AddMarket();
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-            var aDaiAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "DAI"});
-            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            
-            await AdminTokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
-            {
-                Amount = 100000000000,
-                Symbol = "PLATFORM",
-                Memo = "Recharge",
-                To = ControllerContractAddress
-            });
-            await AdminStub.SetPlatformTokenRate.SendAsync(new Int64Value() {Value = 10000000});
-            await AdminStub.AddPlatformTokenMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await AdminStub.AddPlatformTokenMarkets.SendAsync(new ATokens() {AToken = {aDaiAddress}});
-            await TomStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await AdminStub.EnterMarkets.SendAsync(new ATokens() {AToken = {aElfAddress}});
-            await UserTomATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aElfAddress, MintAmount = mintAmount, Channel = ""});
-            await AdminATokenContractStub.Mint.SendAsync(new MintInput() {AToken = aDaiAddress, MintAmount = mintAmount, Channel = ""});
-            await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
-                {AToken = aDaiAddress, Amount = borrowAmount});
-            await AdminStub.RefreshPlatformTokenSpeeds.SendAsync(new Empty());
-            var speed = await AdminStub.GetPlatformTokenSpeeds.CallAsync(aDaiAddress);
-            speed.Value.ShouldNotBe(0);
-            await UserTomATokenContractStub.Borrow.SendAsync(new BorrowInput()
-                {AToken = aDaiAddress, Amount = borrowAmount});
-           await AdminAwakenLendingLensContract.Initialize.SendAsync(new AwakenLendingLens.InitializeInput()
-                {ATokenContract = ATokenContractAddress, ComtrollerContract = ControllerContractAddress});
-           await AdminATokenContractStub.AccrueInterest.SendAsync(aDaiAddress);
-           var result = await AdminAwakenLendingLensContract.GetATokenMetadata.CallAsync(aDaiAddress);
-           result.ShouldNotBeNull();
-           var result2= await AdminAwakenLendingLensContract.GetATokenUnderlyingPrice.CallAsync(aDaiAddress);
-           result2.ShouldNotBeNull();
 
         }
-        private async Task Initialize()
-        {
-            await CreateAndGetToken();
-            await AdminStub.Initialize.SendAsync(new InitializeInput()
-            {
-                ATokenContract =  ATokenContractAddress,
-                PlatformTokenSymbol = "PLATFORM"
-            });
-        }
-
+   
         private async Task CreateAndGetToken()
         {
-            const long approveAmount = long.MaxValue;
-            await AdminTokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+            //TEST
+            var result = await TokenContractStub.Create.SendAsync(new AElf.Contracts.MultiToken.CreateInput
             {
-                Amount = 100000000000,
-                Symbol = "ELF",
-                Memo = "Recharge",
-                To = UserTomAddress
+                Issuer = AdminAddress,
+                Symbol = "TEST",
+                Decimals = 8,
+                IsBurnable = true,
+                TokenName = "TEST symbol",
+                TotalSupply = 100000000_00000000
             });
-            await UserTomTokenContractStub.Approve.SendAsync(new ApproveInput()
+
+            result.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
+
+            var issueResult = await TokenContractStub.Issue.SendAsync(new AElf.Contracts.MultiToken.IssueInput
             {
-                Amount = approveAmount,
-                Spender = ATokenContractAddress,
-                Symbol = "ELF"
+                Amount = 100000000000000,
+                Symbol = "TEST",
+                To = AdminAddress
             });
-            await AdminTokenContractStub.Approve.SendAsync(new AElf.Contracts.MultiToken.ApproveInput
+            issueResult.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
+            var balance = await TokenContractStub.GetBalance.SendAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
             {
-                Amount = approveAmount,
-                Spender = ATokenContractAddress,
-                Symbol = "ELF"
+                Owner = AdminAddress,
+                Symbol = "TEST"
             });
+            balance.Output.Balance.ShouldBe(100000000000000);
             //DAI
-            var result2 = await AdminTokenContractStub.Create.SendAsync(new AElf.Contracts.MultiToken.CreateInput
+            var result2 = await TokenContractStub.Create.SendAsync(new AElf.Contracts.MultiToken.CreateInput
             {
                 Issuer = AdminAddress,
                 Symbol = "DAI",
@@ -423,124 +127,116 @@ namespace Awaken.Contracts.Controller
 
             result2.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
 
-            var issueResult2 = await AdminTokenContractStub.Issue.SendAsync(new AElf.Contracts.MultiToken.IssueInput
+            var issueResult2 = await TokenContractStub.Issue.SendAsync(new AElf.Contracts.MultiToken.IssueInput
             {
                 Amount = 100000000000000,
-                Symbol ="DAI",
+                Symbol = "DAI",
                 To = AdminAddress
             });
             issueResult2.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
-            await AdminTokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+            var balance2 = await TokenContractStub.GetBalance.SendAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = AdminAddress,
+                Symbol = "DAI"
+            });
+            balance2.Output.Balance.ShouldBe(100000000000000);
+            await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+            {
+                Amount = 100000000000,
+                Symbol = "ELF",
+                Memo = "Recharge",
+                To = UserTomAddress
+            });
+            await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+            {
+                Amount = 100000000000,
+                Symbol = "ELF",
+                Memo = "Recharge",
+                To = UserLilyAddress
+            });
+            await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+            {
+                Amount = 100000000000,
+                Symbol = "TEST",
+                Memo = "Recharge",
+                To = UserTomAddress
+            });
+            await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+            {
+                Amount = 100000000000,
+                Symbol = "TEST",
+                Memo = "Recharge",
+                To = UserLilyAddress
+            });
+            await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
             {
                 Amount = 100000000000,
                 Symbol = "DAI",
                 Memo = "Recharge",
                 To = UserTomAddress
             });
-            
-            await UserTomTokenContractStub.Approve.SendAsync(new ApproveInput()
-            {
-                Amount = approveAmount,
-                Spender = ATokenContractAddress,
-                Symbol = "DAI"
-            });
-            await AdminTokenContractStub.Approve.SendAsync(new AElf.Contracts.MultiToken.ApproveInput
-            {
-                Amount = approveAmount,
-                Spender = ATokenContractAddress,
-                Symbol = "DAI"
-            });
-
-            //
-            var result3 = await AdminTokenContractStub.Create.SendAsync(new AElf.Contracts.MultiToken.CreateInput
-            {
-                Issuer = AdminAddress,
-                Symbol = "PLATFORM",
-                Decimals = 10,
-                IsBurnable = true,
-                TokenName = "PLATFORM token symbol",
-                TotalSupply = 100000000_00000000
-            });
-
-            result2.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
-
-            var issueResult3 = await AdminTokenContractStub.Issue.SendAsync(new AElf.Contracts.MultiToken.IssueInput
-            {
-                Amount = 100000000000000,
-                Symbol ="PLATFORM",
-                To = AdminAddress
-            });
-            issueResult2.TransactionResult.Status.ShouldBe(TransactionResultStatus.Mined);
-            //set PRICE
-            await AdminPriceContractStub.SetPrice.SendAsync(new SetPriceInput() {TokenSymbol = "ELF",Price = 1000000000000000000});
-            await AdminPriceContractStub.SetPrice.SendAsync(new SetPriceInput() {TokenSymbol = "DAI",Price = 1000000000000000000});
+            //authorize  Tom and Lily and admin to transfer ELF and TEST and DAI to FinanceContract
+            // await UserTomTokenContractStub.Approve.SendAsync(new AElf.Contracts.MultiToken.ApproveInput()
+            // {
+            //     Amount = 100000000000,
+            //     Spender = AwakenSwapContractAddress,
+            //     Symbol = "ELF"
+            // });
+            // await UserTomTokenContractStub.Approve.SendAsync(new AElf.Contracts.MultiToken.ApproveInput()
+            // {
+            //     Amount = 100000000000,
+            //     Spender = AwakenSwapContractAddress,
+            //     Symbol = "DAI"
+            // });
+            // await TokenContractStub.Approve.SendAsync(new AElf.Contracts.MultiToken.ApproveInput()
+            // {
+            //     Amount = 100000000000,
+            //     Spender = AwakenSwapContractAddress,
+            //     Symbol = "ELF"
+            // });
+            // await UserLilyTokenContractStub.Approve.SendAsync(new AElf.Contracts.MultiToken.ApproveInput()
+            // {
+            //     Amount = 100000000000,
+            //     Spender = AwakenSwapContractAddress,
+            //     Symbol = "ELF"
+            // });
+            // await UserTomTokenContractStub.Approve.SendAsync(new AElf.Contracts.MultiToken.ApproveInput()
+            // {
+            //     Amount = 100000000000,
+            //     Spender = AwakenSwapContractAddress,
+            //     Symbol = "TEST"
+            // });
+            // await TokenContractStub.Approve.SendAsync(new AElf.Contracts.MultiToken.ApproveInput()
+            // {
+            //     Amount = 100000000000,
+            //     Spender = AwakenSwapContractAddress,
+            //     Symbol = "TEST"
+            // });
+            // await UserLilyTokenContractStub.Approve.SendAsync(new AElf.Contracts.MultiToken.ApproveInput()
+            // {
+            //     Amount = 100000000000,
+            //     Spender = AwakenSwapContractAddress,
+            //     Symbol = "TEST"
+            // });
         }
-
-        private async Task AddMarket()
+        private async Task Initialize()
         {
-            
-            const long closeFactorExpect = 500000000000000000;
-            const long collateralFactorExpect = 750000000000000000;
-            const long liquidationIncentiveExpect = 1_080000000000000000;
-            const int maxAssetsExpect = 20;
-            
-            //ELF
-            var aElfAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "ELF"});
-            await AdminStub.SetPriceOracle.SendAsync(PriceContractAddress);
-            await AdminStub.SupportMarket.SendAsync(aElfAddress);
-            await AdminStub.SetCloseFactor.SendAsync(new Int64Value() {Value = closeFactorExpect});
-            await AdminStub.SetCollateralFactor.SendAsync(new SetCollateralFactorInput()
-                {AToken = aElfAddress, NewCollateralFactor = collateralFactorExpect});
-            await AdminStub.SetLiquidationIncentive.SendAsync(new Int64Value() {Value = liquidationIncentiveExpect});
-            await AdminStub.SetMaxAssets.SendAsync(new Int32Value() {Value = maxAssetsExpect});
-          
-            //Dai
-            var aDaiAddress = await AdminATokenContractStub.GetATokenAddress.CallAsync(new StringValue() {Value = "DAI"});
-            await AdminStub.SupportMarket.SendAsync(aDaiAddress);
-            await AdminStub.SetCollateralFactor.SendAsync(new SetCollateralFactorInput()
-                {AToken = aDaiAddress, NewCollateralFactor = collateralFactorExpect});
-        }
-
-        private async Task CreateAToken()
-        {
-            const long initialExchangeRate = 100000000;
-            await InitializeInterestRateModel();
-            await AdminATokenContractStub.Initialize.SendAsync(new AToken.InitializeInput()
+            await CreateAndGetToken();
+            await AdminLpStub.Initialize.SendAsync(new Awaken.Contracts.Token.InitializeInput()
             {
-                Controller = ControllerContractAddress
+                Owner = AwakenSwapContractAddress
             });
-            await AdminATokenContractStub.Create.SendAsync(new CreateInput()
+            await AwakenSwapContractStub.Initialize.SendAsync(new Awaken.Contracts.Swap.InitializeInput()
             {
-                UnderlyingSymbol = "ELF",
-                InterestRateModel = InterestRateModelContractAddress,
-                InitialExchangeRate = initialExchangeRate
+                Admin = AdminAddress,
+                AwakenTokenContractAddress = LpTokentContractAddress
             });
-           
-            //Dai
-            await AdminATokenContractStub.Create.SendAsync(new CreateInput()
+            await AwakenSwapContractStub.SetFeeRate.SendAsync(new Int64Value(){Value = 30});
+            await UserTomSwapStub.CreatePair.SendAsync(new CreatePairInput()
             {
-                UnderlyingSymbol = "DAI",
-                InterestRateModel = InterestRateModelContractAddress,
-                InitialExchangeRate = initialExchangeRate
+                SymbolPair = "ELF-TEST"
             });
-            
-
             
         }
-        private async Task InitializeInterestRateModel()
-        {
-            const long baseRatePerYear = 0;
-            const long  multiplierPerYear = 57500000000000000;
-            const long jumpMultiplierPerYear = 3000000000000000000;
-            const long kink = 800000000000000000;
-            await AdminInterestRateModelStub.Initialize.SendAsync(new InterestRateModel.InitializeInput()
-            {
-                BaseRatePerYear = baseRatePerYear,
-                MultiplierPerYear = multiplierPerYear,
-                JumpMultiplierPerYear = jumpMultiplierPerYear,
-                Kink = kink,
-                InterestRateModelType = false
-            });
-        } 
     }
 }

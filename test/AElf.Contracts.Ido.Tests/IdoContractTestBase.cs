@@ -10,93 +10,86 @@ using System.Linq;
 using AElf.ContractTestBase.ContractTestKit;
 using AElf.Kernel.Token;
 using AElf.Standards.ACS0;
-using Awaken.Contracts.AToken;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Threading;
 using AElf.Contracts.Ido;
-using Awaken.Contracts.AwakenLendingLens;
-using Awaken.Contracts.InterestRateModel;
+using AElf.Contracts.Whitelist;
+using AElf.Kernel.Blockchain.Application;
+using Awaken.Contracts.Swap;
+using Awaken.Contracts.Token;
 
 
-namespace Awaken.Contracts.Controller.Tests
+namespace AElf.Contracts.Ido.Tests
 {
-    public class ControllerContractTestBase                                                                                                   : DAppContractTestBase<ControllerContractTestModule>
+    public class IdoContractTestBase                                                                                                   : DAppContractTestBase<IdoContractTestModule>
     {          
         // You can get address of any contract via GetAddress method, for example:
-        internal readonly Address ControllerContractAddress;
+        internal readonly Address IdoContractAddress;
 
-        internal readonly Address ATokenContractAddress;
+        internal readonly Address AwakenSwapContractAddress;
 
-        internal readonly Address AwakenLendingLensContractAddress;
+        internal readonly Address LpTokentContractAddress;
+
+        internal readonly Address WhitelistContractAddress;
         
-        internal readonly Address PriceContractAddress;
-
-        internal readonly Address InterestRateModelContractAddress;
+        internal readonly IBlockchainService blockChainService;
+        
         private Address tokenContractAddress => GetAddress(TokenSmartContractAddressNameProvider.StringName);
-        internal ControllerContractContainer.ControllerContractStub GetControllerContractStub(
+        internal IdoContractContainer.IdoContractStub GetIdoContractStub(
             ECKeyPair senderKeyPair)
         {
             return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
-                .Create<Awaken.Contracts.Controller.ControllerContractContainer.
-                    ControllerContractStub>(ControllerContractAddress, senderKeyPair);
+                .Create<AElf.Contracts.Ido.IdoContractContainer.
+                    IdoContractStub>(IdoContractAddress, senderKeyPair);
         }
         
-        internal ATokenContractContainer.ATokenContractStub GetATokenContractStub(
-            ECKeyPair senderKeyPair)
+        internal AwakenSwapContractContainer.AwakenSwapContractStub GetAwakenSwapContractStub(ECKeyPair senderKeyPair)
         {
-            return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
-                .Create<Awaken.Contracts.AToken.ATokenContractContainer.
-                    ATokenContractStub>(ATokenContractAddress, senderKeyPair);
+            return GetTester<AwakenSwapContractContainer.AwakenSwapContractStub>(AwakenSwapContractAddress, senderKeyPair);
         }
+
+        
+        internal AwakenSwapContractContainer.AwakenSwapContractStub AwakenSwapContractStub =>
+            GetAwakenSwapContractStub(SampleAccount.Accounts.First().KeyPair);
+        
+        internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub TokenContractStub =>
+            GetTokenContractStub(SampleAccount.Accounts.First().KeyPair);
 
         internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub GetTokenContractStub(ECKeyPair senderKeyPair)
         {
             return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
                 .Create<AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub>(tokenContractAddress, senderKeyPair);
         }
-        internal InterestRateModelContractContainer.InterestRateModelContractStub GetInterestRateModelContractStub(
+
+        internal TokenContractContainer.TokenContractStub GetLpContractStub(
             ECKeyPair senderKeyPair)
         {
             return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
-                .Create<Awaken.Contracts.InterestRateModel.InterestRateModelContractContainer.
-                    InterestRateModelContractStub>(InterestRateModelContractAddress, senderKeyPair);
-        }
-        internal PriceContractContainer.PriceContractStub GetPriceContractStub(ECKeyPair senderKeyPair)
-        {
-            return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
-                .Create<PriceContractContainer.PriceContractStub>(PriceContractAddress, senderKeyPair);
+                .Create<TokenContractContainer.TokenContractStub>(LpTokentContractAddress, senderKeyPair);
         }
         
-        internal AwakenLendingLensContractContainer.AwakenLendingLensContractStub GetAwakenLendingLensContractStub(ECKeyPair senderKeyPair)
+        internal WhitelistContractContainer.WhitelistContractStub GetWhitelistContractStub(
+            ECKeyPair senderKeyPair)
         {
             return Application.ServiceProvider.GetRequiredService<IContractTesterFactory>()
-                .Create<AwakenLendingLensContractContainer.AwakenLendingLensContractStub>(AwakenLendingLensContractAddress, senderKeyPair);
+                .Create<WhitelistContractContainer.WhitelistContractStub>(WhitelistContractAddress, senderKeyPair);
         }
-        public ControllerContractTestBase()
+        public IdoContractTestBase()
         {
-            ControllerContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
+            blockChainService = Application.ServiceProvider.GetRequiredService<IBlockchainService>();
+            IdoContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
                 KernelConstants.DefaultRunnerCategory,
-                File.ReadAllBytes(typeof(ControllerContract).Assembly.Location),
+                File.ReadAllBytes(typeof(IdoContract).Assembly.Location),
                 SampleAccount.Accounts[0].KeyPair));
-            ATokenContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
+            AwakenSwapContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
                 KernelConstants.DefaultRunnerCategory,
-                File.ReadAllBytes(typeof(ATokenContract).Assembly.Location),
-                SampleAccount.Accounts[0].KeyPair));
-            PriceContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
+                File.ReadAllBytes(typeof(AwakenSwapContract).Assembly.Location), SampleAccount.Accounts[0].KeyPair));
+            LpTokentContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
                 KernelConstants.DefaultRunnerCategory,
-                File.ReadAllBytes(typeof(PriceContract).Assembly.Location),
-                SampleAccount.Accounts[0].KeyPair));
-       
-            InterestRateModelContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
+                File.ReadAllBytes(typeof(TokenContract).Assembly.Location), SampleAccount.Accounts[0].KeyPair));
+            WhitelistContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
                 KernelConstants.DefaultRunnerCategory,
-                File.ReadAllBytes(typeof(InterestRateModelContract).Assembly.Location),
-                SampleAccount.Accounts[0].KeyPair));
-            
-            AwakenLendingLensContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
-                KernelConstants.DefaultRunnerCategory,
-                File.ReadAllBytes(typeof(AwakenLendingLensContract).Assembly.Location),
-                SampleAccount.Accounts[0].KeyPair));
-            
+                File.ReadAllBytes(typeof(WhitelistContract).Assembly.Location), SampleAccount.Accounts[0].KeyPair));
         }
 
         private async Task<Address> DeployContractAsync(int category, byte[] code, ECKeyPair keyPair)
@@ -121,27 +114,16 @@ namespace Awaken.Contracts.Controller.Tests
         internal Address UserLilyAddress => Address.FromPublicKey(UserLilyKeyPair.PublicKey);
 
 
-        internal ControllerContractContainer.ControllerContractStub AdminStub =>
-            GetControllerContractStub(AdminKeyPair);
+        internal IdoContractContainer.IdoContractStub AdminStub =>
+            GetIdoContractStub(AdminKeyPair);
         
-        internal ControllerContractContainer.ControllerContractStub TomStub =>
-            GetControllerContractStub(UserTomKeyPair);
+        internal IdoContractContainer.IdoContractStub TomStub =>
+            GetIdoContractStub(UserTomKeyPair);
         
-        internal ATokenContractContainer.ATokenContractStub AdminATokenContractStub =>
-            GetATokenContractStub(AdminKeyPair);
-        internal ATokenContractContainer.ATokenContractStub UserTomATokenContractStub =>
-            GetATokenContractStub(UserTomKeyPair);
-        internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub AdminTokenContractStub =>
-            GetTokenContractStub(AdminKeyPair);
-        internal AElf.Contracts.MultiToken.TokenContractContainer.TokenContractStub UserTomTokenContractStub =>
-            GetTokenContractStub(UserTomKeyPair);
+        internal Awaken.Contracts.Token.TokenContractContainer.TokenContractStub AdminLpStub =>
+            GetLpContractStub(AdminKeyPair);
         
-        internal InterestRateModelContractContainer.InterestRateModelContractStub AdminInterestRateModelStub =>
-            GetInterestRateModelContractStub(AdminKeyPair);
-        internal PriceContractContainer.PriceContractStub AdminPriceContractStub =>
-            GetPriceContractStub(AdminKeyPair);
-        internal AwakenLendingLensContractContainer.AwakenLendingLensContractStub AdminAwakenLendingLensContract =>
-            GetAwakenLendingLensContractStub(AdminKeyPair);
-        
+        internal AwakenSwapContractContainer.AwakenSwapContractStub UserTomSwapStub =>
+            GetAwakenSwapContractStub(UserTomKeyPair);
     }
 }

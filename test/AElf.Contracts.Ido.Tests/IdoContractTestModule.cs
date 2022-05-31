@@ -10,10 +10,10 @@ using Volo.Abp;
 using Volo.Abp.Modularity;
 
 
-namespace Awaken.Contracts.Controller
+namespace AElf.Contracts.Ido
 {
     [DependsOn(typeof(MainChainDAppContractTestModule))]
-    public class ControllerContractTestModule: MainChainDAppContractTestModule
+    public class IdoContractTestModule: MainChainDAppContractTestModule
     {
         public override void ConfigureServices(ServiceConfigurationContext context)
         {
