@@ -42,25 +42,19 @@
     <ContractStub Include="..\..\protobuf\transaction_fee.proto">
       <Link>Protobuf\Proto\transaction_fee.proto</Link>
     </ContractStub>
-    <ContractStub Include="..\..\protobuf\token_contract.proto">
-      <Link>Protobuf\Proto\token_contract.proto</Link>
+    <ContractStub Include="..\..\protobuf\awaken_token_contract.proto">
+      <Link>Protobuf\Proto\awaken_token_contract.proto</Link>
     </ContractStub>
-    <ContractStub Include="..\..\protobuf\a_token_contract.proto">
-      <Link>Protobuf\Proto\a_token_contract.proto</Link>
-    </ContractStub>
-    <ContractStub Include="..\..\protobuf\price_contract.proto">
-      <Link>Protobuf\Proto\price_contract.proto</Link>
-    </ContractStub>
-    <ContractStub Include="..\..\protobuf\interest_rate_model_contract.proto">
-      <Link>Protobuf\Proto\interest_rate_model_contract.proto</Link>
-    </ContractStub>
-    <ContractStub Include="..\..\protobuf\awaken_lending_lens_contract.proto">
-      <Link>Protobuf\Proto\awaken_lending_lens_contract.proto</Link>
+    <ContractStub Include="..\..\protobuf\awaken_swap_contract.proto">
+      <Link>Protobuf\Proto\awaken_swap_contract.proto</Link>
     </ContractStub>
   </ItemGroup>
   <ItemGroup>
-    <ContractStub Include="..\..\protobuf\controller_contract.proto">
-      <Link>Protobuf\Proto\controller_contract.proto</Link>
+    <ContractStub Include="..\..\protobuf\ido_contract.proto">
+      <Link>Protobuf\Proto\ido_contract.proto</Link>
+    </ContractStub>
+    <ContractStub Include="..\..\protobuf\whitelist_contract.proto">
+    <Link>Protobuf\Proto\whitelist_contract.proto</Link>
     </ContractStub>
   </ItemGroup>
 

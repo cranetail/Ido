@@ -11,7 +11,7 @@ using AElf.Types;
 using Google.Protobuf;
 using Microsoft.Extensions.Options;
 
-namespace AElf.Boilerplate.ControllerContract.Launcher
+namespace AElf.Boilerplate.IdoContract.Launcher
 {
     public class DeployContractsSystemTransactionGenerator : ISystemTransactionGenerator
     {
