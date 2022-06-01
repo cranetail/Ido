@@ -43,7 +43,6 @@ namespace AElf.Contracts.Ido
                 MinSubscription = input.MinSubscription,
                 MaxSubscription = input.MaxSubscription,
                 IsEnableWhitelist = input.IsEnableWhitelist,
-                WhitelistId = input.WhitelistId,
                 IsBurnRestToken = input.IsBurnRestToken,
                 AdditionalInfo = input.AdditionalInfo,
                 Creator = Context.Sender,
@@ -72,9 +71,13 @@ namespace AElf.Contracts.Ido
             }
             else
             {
-                
                 //create whitelist
-                
+                State.WhitelistContract.CreateWhitelist.Send(new CreateWhitelistInput()
+                {
+                    Creator = Context.Self,
+                    ProjectId = id,
+                    ManagerList = new AddressList(){Value = { Context.Self, Context.Sender}}
+                });
                 //write id to state
                 Context.SendInline(Context.Self, nameof(SetWhitelistId), id);
             }
@@ -115,20 +118,20 @@ namespace AElf.Contracts.Ido
             var projectInfo = ValidProjectExist(input.ProjectId);
             Assert(projectInfo.Enabled,"project is not enabled");
             ValidProjectOwner(input.ProjectId);
-
-            var list = new ExtraInfoList();
+            
+            var isEnableWhitelist = projectInfo.IsEnableWhitelist;
+            Assert(isEnableWhitelist,"whitelist is disabled");
+            
+            var list = new AddressList();
             foreach (var user in input.Users)
             {
-                var userInfo = new ExtraInfo()
-                {
-                    Address = user
-                };
-                list.Value.Add(userInfo);
+                list.Value.Add(user);
             }
+            var whitelistId = State.WhiteListIdMap[input.ProjectId];
             State.WhitelistContract.AddAddressInfoListToWhitelist.Send(new AddAddressInfoListToWhitelistInput()
             {
-                ExtraInfoList = list,
-                WhitelistId = projectInfo.WhitelistId
+                ExtraInfoIdList = new Whitelist.ExtraInfoIdList(){Value = { new Whitelist.ExtraInfoId(){}}},
+                WhitelistId = whitelistId
             });
             return new Empty();
         }
@@ -139,19 +142,19 @@ namespace AElf.Contracts.Ido
             Assert(projectInfo.Enabled,"project is not enabled");
             ValidProjectOwner(input.ProjectId);
 
-            var list = new ExtraInfoList();
+            var isEnableWhitelist = projectInfo.IsEnableWhitelist;
+            Assert(isEnableWhitelist,"whitelist is disabled");
+            
+            var list = new AddressList();
             foreach (var user in input.Users)
             {
-                var userInfo = new ExtraInfo()
-                {
-                    Address = user
-                };
-                list.Value.Add(userInfo);
+                list.Value.Add(user);
             }
+            var whitelistId = State.WhiteListIdMap[input.ProjectId];
             State.WhitelistContract.RemoveAddressInfoListFromWhitelist.Send(new RemoveAddressInfoListFromWhitelistInput()
             {
-                ExtraInfoList = list,
-                WhitelistId = projectInfo.WhitelistId
+                ExtraInfoIdList = new Whitelist.ExtraInfoIdList(){Value = { new Whitelist.ExtraInfoId(){}}},
+                WhitelistId = whitelistId
             });
             return new Empty();
         }
@@ -161,7 +164,8 @@ namespace AElf.Contracts.Ido
             var projectInfo = ValidProjectExist(input);
             Assert(projectInfo.Enabled,"project is not enabled");
             ValidProjectOwner(input);
-
+            var isEnableWhitelist = projectInfo.IsEnableWhitelist;
+            Assert(!isEnableWhitelist,"whitelist is enabled");
             State.ProjectInfoMap[input].IsEnableWhitelist = true;
             State.WhitelistContract.EnableWhitelist.Send(input);
             return new Empty();
@@ -172,7 +176,8 @@ namespace AElf.Contracts.Ido
             var projectInfo = ValidProjectExist(input);
             Assert(projectInfo.Enabled,"project is not enabled");
             ValidProjectOwner(input);
-
+            var isEnableWhitelist = projectInfo.IsEnableWhitelist;
+            Assert(isEnableWhitelist,"whitelist is disabled");
             State.ProjectInfoMap[input].IsEnableWhitelist = false;
             State.WhitelistContract.DisableWhitelist.Send(input);
             return new Empty();
@@ -245,6 +250,8 @@ namespace AElf.Contracts.Ido
             State.ProjectInfoMap[input.ProjectId].CurrentRaisedAmount = State.ProjectInfoMap[input.ProjectId]
                 .CurrentRaisedAmount.Add(input.InvestAmount);
             
+                
+           
             var toClaimAmount = ProfitDetailUpdate(input.ProjectId, Context.Sender, totalInvestAmount);
             
             Context.Fire(new Invested()
@@ -403,6 +410,15 @@ namespace AElf.Contracts.Ido
                 });
             }
             
+            return new Empty();
+        }
+
+        public override Empty SetWhitelistId(Hash input)
+        {
+            Assert(Context.Sender == Context.Self,"only self contract can call this function");
+            var whitelistIdList = State.WhitelistContract.GetWhitelistByProject.Call(input);
+            var whitelistId = whitelistIdList.WhitelistId.First();
+            State.WhiteListIdMap[input] = whitelistId;
             return new Empty();
         }
     }

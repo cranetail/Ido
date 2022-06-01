@@ -80,9 +80,7 @@ namespace AElf.Contracts.Ido
 
           var whitelistId =  await AdminStub.GetWhitelistId.CallAsync(projectId);
           whitelistId.ShouldBe(HashHelper.ComputeFrom(0));
-           
-
-
+          
 
         }
    

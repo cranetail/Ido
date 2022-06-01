@@ -169,13 +169,12 @@ message ProjectInfo{
     int64 min_subscription = 10;
     int64 max_subscription = 11;
     bool is_enable_whitelist = 12;
-    aelf.Hash whitelist_id = 13;
-    bool is_burn_rest_token = 14;
-    AdditionalInfo additional_info = 15;
-    aelf.Address creator = 16;
-    int64 to_raised_amount = 17;
-    int64 current_raised_amount = 18;//已募集金额
-    bool enabled = 19; //是否取消众筹
+    bool is_burn_rest_token = 13;
+    AdditionalInfo additional_info = 14;
+    aelf.Address creator = 15;
+    int64 to_raised_amount = 16;
+    int64 current_raised_amount = 17;//已募集金额
+    bool enabled = 18; //是否取消众筹
 } 
 message ProjectListInfo{
     aelf.Hash project_id = 1;

@@ -50,11 +50,11 @@ namespace AElf.Contracts.Ido
 
         private void WhitelistCheck(Hash projectId, Address user)
         {
-            var projectInfo = State.ProjectInfoMap[projectId];
+            var whiteListId = State.WhiteListIdMap[projectId];
             var isInWhitelist = State.WhitelistContract.GetAddressFromWhitelist.Call(new GetAddressFromWhitelistInput()
             {
                 Address = user,
-                WhitelistId = projectInfo.WhitelistId
+                WhitelistId = whiteListId
             });
             
             Assert(isInWhitelist.Value,"user is not in the whitelist");
