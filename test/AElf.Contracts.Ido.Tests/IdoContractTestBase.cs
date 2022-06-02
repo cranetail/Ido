@@ -120,6 +120,10 @@ namespace AElf.Contracts.Ido.Tests
         internal IdoContractContainer.IdoContractStub TomStub =>
             GetIdoContractStub(UserTomKeyPair);
         
+        internal MultiToken.TokenContractContainer.TokenContractStub TomTokenContractStub =>
+            GetTokenContractStub(UserTomKeyPair);
+         
+        
         internal Awaken.Contracts.Token.TokenContractContainer.TokenContractStub AdminLpStub =>
             GetLpContractStub(AdminKeyPair);
         

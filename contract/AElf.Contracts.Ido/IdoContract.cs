@@ -47,6 +47,7 @@ namespace AElf.Contracts.Ido
                 AdditionalInfo = input.AdditionalInfo,
                 Creator = Context.Sender,
                 ToRaisedAmount = input.ToRaisedAmount,
+                Enabled = true
             };
             State.ProjectInfoMap[id] = projectInfo;
             var listInfo = new ProjectListInfo()
@@ -398,6 +399,7 @@ namespace AElf.Contracts.Ido
                 });
                 claimedProfitsInfo.TotalClaimedAmount = claimedProfitsInfo.TotalClaimedAmount.Add(profitPeriodAmount);
                 State.ClaimedProfitsInfoMap[input.User] = claimedProfitsInfo;
+            
                 Context.Fire(new Claimed()
                 {
                     ProjectId = input.ProjectId,
@@ -409,6 +411,7 @@ namespace AElf.Contracts.Ido
                     User = input.User
                 });
             }
+            State.ProfitDetailMap[input.ProjectId][input.User].LatestPeriod = listInfo.LatestPeriod;
             
             return new Empty();
         }

@@ -24,5 +24,15 @@ namespace AElf.Contracts.Ido
         {
             return State.WhiteListIdMap[input];
         }
+
+        public override ProjectInfo GetProjectInfo(Hash input)
+        {
+            return State.ProjectInfoMap[input];
+        }
+
+        public override InvestDetail GetInvestDetail(GetInvestDetailInput input)
+        {
+            return State.InvestDetailMap[input.ProjectId][input.User];
+        }
     }
 }

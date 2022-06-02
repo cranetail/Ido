@@ -117,6 +117,8 @@ namespace AElf.Contracts.Ido
                 Symbol = info.ProjectCurrency
             };
             var totalProjectTokenAmount = investAmount.Mul(info.PreSalePrice).Div(Mantissa);
+            State.ProfitDetailMap[projectId][user].TotalProfit = totalProjectTokenAmount;
+            State.ProfitDetailMap[projectId][user].LatestPeriod = 0;
             for (var i = 1; i <= listInfo.TotalPeriod; i++)
             {
                 long periodProfit;
@@ -129,7 +131,6 @@ namespace AElf.Contracts.Ido
                     periodProfit = totalProjectTokenAmount.Mul(listInfo.RestDistributeProportion).Div(ProportionMax);
                 }
 
-                State.ProfitDetailMap[projectId][user].TotalProfit = totalProjectTokenAmount;
                 State.ProfitDetailMap[projectId][user].AmountsMap[i] = periodProfit;
             }
 
