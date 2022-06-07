@@ -2,6 +2,7 @@ using AElf.Contracts.MultiToken;
 using AElf.Contracts.Whitelist;
 using AElf.CSharp.Core;
 using AElf.Types;
+using Google.Protobuf.Collections;
 
 namespace AElf.Contracts.Ido
 {

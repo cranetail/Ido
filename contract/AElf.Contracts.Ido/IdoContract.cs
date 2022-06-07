@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using AElf.Contracts.MultiToken;
 using AElf.Contracts.Whitelist;
 using AElf.CSharp.Core;
 using AElf.CSharp.Core.Extension;
@@ -327,18 +328,42 @@ namespace AElf.Contracts.Ido
                 .Div(ProportionMax);
 
             var projectCurrencyAmount = acceptedCurrencyAmount.Mul(projectListInfo.PublicSalePrice).Div(Mantissa);
-            State.SwapContract.AddLiquidity.Send(new AddLiquidityInput()
+     
+            foreach (var market in projectListInfo.ListMarketInfo.Data )
             {
-                SymbolA = projectInfo.AcceptedCurrency,
-                SymbolB = projectInfo.ProjectCurrency,
-                AmountADesired = acceptedCurrencyAmount,
-                AmountBDesired = projectCurrencyAmount,
-                AmountAMin = 0,
-                AmountBMin = 0,
-                Channel = "",
-                Deadline = Context.CurrentBlockTime.AddMinutes(3),
-                To = Context.Sender
-            });
+                var amountADesired = acceptedCurrencyAmount.Mul(market.Weight).Div(ProportionMax);
+                var amountBDesired = projectCurrencyAmount.Mul(market.Weight).Div(ProportionMax);
+                
+                State.TokenContract.Approve.Send(new ApproveInput()
+                {
+                    Spender = market.Market,
+                    Symbol = projectInfo.AcceptedCurrency,
+                    Amount = amountADesired
+                });
+                State.TokenContract.Approve.Send(new ApproveInput()
+                {
+                    Spender = market.Market,
+                    Symbol = projectInfo.ProjectCurrency,
+                    Amount = amountBDesired
+                });
+                State.SwapContract.Value = market.Market;
+                State.SwapContract.AddLiquidity.Send(new AddLiquidityInput()
+                {
+                    SymbolA = projectInfo.AcceptedCurrency,
+                    SymbolB = projectInfo.ProjectCurrency,
+                    AmountADesired = amountADesired,
+                    AmountBDesired = amountBDesired,
+                    AmountAMin = 0,
+                    AmountBMin = 0,
+                    Channel = "",
+                    Deadline = Context.CurrentBlockTime.AddMinutes(3),
+                    To = Context.Sender
+                });    
+                
+            }
+
+            
+           
             return new Empty();
         }
 
@@ -383,13 +408,17 @@ namespace AElf.Contracts.Ido
 
             var listInfo = State.ProjectListInfoMap[input.ProjectId];
             var profitDetailInfo = State.ProfitDetailMap[input.ProjectId][input.User];
+            Assert(profitDetailInfo.AmountsMap.Count > 0, "no invest record");
             State.ClaimedProfitsInfoMap[input.User] = State.ClaimedProfitsInfoMap[input.User]?? new ClaimedProfitsInfo();
             var claimedProfitsInfo = State.ClaimedProfitsInfoMap[input.User];
-            for (var i = profitDetailInfo.LatestPeriod; i < listInfo.LatestPeriod; i++)
+            for (var i = profitDetailInfo.LatestPeriod + 1; i <= listInfo.LatestPeriod; i++)
             {
-                var currentPeriod = i++;
+                var currentPeriod = i ;
                 var profitPeriodAmount = profitDetailInfo.AmountsMap[currentPeriod];
-                TransferOut(input.User, profitDetailInfo.Symbol, profitPeriodAmount);
+                if (profitPeriodAmount > 0)
+                {
+                    TransferOut(input.User, profitDetailInfo.Symbol, profitPeriodAmount);
+                }
                 claimedProfitsInfo.Details.Add(new ClaimedProfit()
                 {
                     ProjectId = input.ProjectId,

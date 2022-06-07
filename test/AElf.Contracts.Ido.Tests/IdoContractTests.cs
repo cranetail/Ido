@@ -138,9 +138,8 @@ namespace AElf.Contracts.Ido
         }
 
         [Fact]
-        public async Task Claim()
-        {  
-            var investAmount = 100;
+        public async Task ClaimTest()
+        {
             await InvestTest();
             Thread.Sleep(30000);
             await AdminStub.NextPeriod.SendAsync(projectId0);
@@ -150,12 +149,12 @@ namespace AElf.Contracts.Ido
                 Amount = 100000000000,
                 Symbol = "TEST",
                 Memo = "ForUserClaim",
-                To = UserTomAddress
+                To = IdoContractAddress
             });
             await TomStub.Claim.SendAsync(new ClaimInput()
             {
                 ProjectId = projectId0,
-                User = TokenContractAddress
+                User = UserTomAddress
             });
             var balance = await TokenContractStub.GetBalance.SendAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
             {
@@ -163,6 +162,22 @@ namespace AElf.Contracts.Ido
                 Symbol = "TEST"
             });
             balance.Output.Balance.ShouldNotBe(0);
+        }
+
+        [Fact]
+        public async Task AddLiquidityTest()
+        {
+            await InvestTest();
+            Thread.Sleep(30000);
+            await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+            {
+                Amount = 100000000000,
+                Symbol = "TEST",
+                Memo = "ForAddLiquidity",
+                To = IdoContractAddress
+            });
+            await AdminStub.LockLiquidity.SendAsync(projectId0);
+            
         }
         private async Task CreateAndGetToken()
         {
