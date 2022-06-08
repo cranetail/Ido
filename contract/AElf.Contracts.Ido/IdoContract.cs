@@ -463,5 +463,28 @@ namespace AElf.Contracts.Ido
             State.WhiteListIdMap[input] = whitelistId;
             return new Empty();
         }
+
+        public override Empty ReFund(Hash input)
+        {
+            var projectInfo = ValidProjectExist(input);
+            Assert(projectInfo.Enabled == false,"project should be disabled");
+            //unInvest 
+            
+            var userinfo = State.InvestDetailMap[input][Context.Sender];
+            Assert(userinfo.Amount > 0,"insufficient invest amount");
+            Assert(userinfo.IsUnInvest == false,"user has already unInvest");
+            State.InvestDetailMap[input][Context.Sender].Amount = 0;
+            State.InvestDetailMap[input][Context.Sender].IsUnInvest = true;
+            var unInvestAmount = userinfo.Amount;
+            TransferOut(Context.Sender,userinfo.InvestSymbol, unInvestAmount);
+            Context.Fire(new ReFunded()
+            {
+                ProjectId = input,
+                User = Context.Sender,
+                InvestSymbol = userinfo.InvestSymbol,
+                Amount = userinfo.Amount,
+            });
+            return new Empty();
+        }
     }
 }

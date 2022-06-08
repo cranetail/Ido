@@ -43,6 +43,9 @@ service IdoContract {
     }
     rpc UnInvest (aelf.Hash) returns (google.protobuf.Empty) {
     }
+    rpc ReFund(aelf.Hash) returns(google.protobuf.Empty) {
+    }
+    
     rpc Claim (ClaimInput) returns (google.protobuf.Empty) {
     }
     rpc ClaimLiquidatedDamage (aelf.Hash) returns (google.protobuf.Empty) {
@@ -323,5 +326,13 @@ message WhitelistStateChanged{
     option (aelf.is_event) = true;
     aelf.Hash project_id = 1;
     bool state = 2;
+}
+
+message ReFunded{
+    option (aelf.is_event) = true;
+    aelf.Hash project_id = 1;
+    aelf.Address user = 2; 
+    string invest_symbol = 3;
+    int64 amount = 4;
 }
 
