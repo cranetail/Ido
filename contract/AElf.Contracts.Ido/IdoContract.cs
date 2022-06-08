@@ -170,6 +170,11 @@ namespace AElf.Contracts.Ido
             Assert(!isEnableWhitelist,"whitelist is enabled");
             State.ProjectInfoMap[input].IsEnableWhitelist = true;
             State.WhitelistContract.EnableWhitelist.Send(input);
+            Context.Fire(new WhitelistStateChanged()
+            {
+                ProjectId = input,
+                State = true
+            });
             return new Empty();
         }
 
@@ -182,6 +187,11 @@ namespace AElf.Contracts.Ido
             Assert(isEnableWhitelist,"whitelist is disabled");
             State.ProjectInfoMap[input].IsEnableWhitelist = false;
             State.WhitelistContract.DisableWhitelist.Send(input);
+            Context.Fire(new WhitelistStateChanged()
+            {
+                ProjectId = input,
+                State = false
+            });
             return new Empty();
         }
 
