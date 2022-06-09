@@ -94,7 +94,7 @@ message RegisterInput {
     int64 crowd_funding_issue_amount = 4;
     int64 pre_sale_price = 5;
     google.protobuf.Timestamp start_time = 6;
-    google.protobuf.Timestamp end_time =7;
+    google.protobuf.Timestamp end_time = 7;
     int64 min_subscription = 8;
     int64 max_subscription = 9;
     int64 public_sale_price = 10;
@@ -264,6 +264,11 @@ message ProjectRegistered{
     int32 first_distribute_proportion = 22;
     int32 rest_distribute_proportion = 23;
     int64 period_duration = 24;
+}
+message NewWhitelistIdSet{
+    option (aelf.is_event) = true;
+    aelf.Hash project_id = 1;
+    aelf.Hash whitelist_id = 2;
 }
 message AdditionalInfoUpdated{
     option (aelf.is_event) = true;

@@ -84,8 +84,7 @@ namespace AElf.Contracts.Ido
                 //write id to state
                 Context.SendInline(Context.Self, nameof(SetWhitelistId), id);
             }
-           
-          
+            
             Context.Fire(new ProjectRegistered()
             {
                 ProjectId = id,
@@ -133,7 +132,10 @@ namespace AElf.Contracts.Ido
             var whitelistId = State.WhiteListIdMap[input.ProjectId];
             State.WhitelistContract.AddAddressInfoListToWhitelist.Send(new AddAddressInfoListToWhitelistInput()
             {
-                ExtraInfoIdList = new Whitelist.ExtraInfoIdList(){Value = { new Whitelist.ExtraInfoId(){}}},
+                ExtraInfoIdList = new Whitelist.ExtraInfoIdList(){Value = { new Whitelist.ExtraInfoId()
+                {
+                    AddressList = list
+                }}},
                 WhitelistId = whitelistId
             });
             return new Empty();
@@ -156,7 +158,10 @@ namespace AElf.Contracts.Ido
             var whitelistId = State.WhiteListIdMap[input.ProjectId];
             State.WhitelistContract.RemoveAddressInfoListFromWhitelist.Send(new RemoveAddressInfoListFromWhitelistInput()
             {
-                ExtraInfoIdList = new Whitelist.ExtraInfoIdList(){Value = { new Whitelist.ExtraInfoId(){}}},
+                ExtraInfoIdList = new Whitelist.ExtraInfoIdList(){Value = { new Whitelist.ExtraInfoId()
+                {
+                    AddressList = list
+                }}},
                 WhitelistId = whitelistId
             });
             return new Empty();
@@ -170,7 +175,8 @@ namespace AElf.Contracts.Ido
             var isEnableWhitelist = projectInfo.IsEnableWhitelist;
             Assert(!isEnableWhitelist,"whitelist is enabled");
             State.ProjectInfoMap[input].IsEnableWhitelist = true;
-            State.WhitelistContract.EnableWhitelist.Send(input);
+            var whitelistId = State.WhiteListIdMap[input];
+            State.WhitelistContract.EnableWhitelist.Send(whitelistId);
             Context.Fire(new WhitelistStateChanged()
             {
                 ProjectId = input,
@@ -187,7 +193,8 @@ namespace AElf.Contracts.Ido
             var isEnableWhitelist = projectInfo.IsEnableWhitelist;
             Assert(isEnableWhitelist,"whitelist is disabled");
             State.ProjectInfoMap[input].IsEnableWhitelist = false;
-            State.WhitelistContract.DisableWhitelist.Send(input);
+            var whitelistId = State.WhiteListIdMap[input];
+            State.WhitelistContract.DisableWhitelist.Send(whitelistId);
             Context.Fire(new WhitelistStateChanged()
             {
                 ProjectId = input,
@@ -244,7 +251,11 @@ namespace AElf.Contracts.Ido
             //check status
             var projectInfo = ValidProjectExist(input.ProjectId);
             Assert(projectInfo.Enabled,"project is not enabled");
-            WhitelistCheck(input.ProjectId, Context.Sender);
+            var isEnableWhitelist = projectInfo.IsEnableWhitelist;
+            if (isEnableWhitelist)
+            {
+                WhitelistCheck(input.ProjectId, Context.Sender);
+            }
             Assert(projectInfo.AcceptedCurrency == input.Currency,"the currency is invalid");
             CheckInvestInput(input.ProjectId, Context.Sender, input.InvestAmount);
             var currentTimestamp = Context.CurrentBlockTime;
@@ -263,8 +274,6 @@ namespace AElf.Contracts.Ido
             State.ProjectInfoMap[input.ProjectId].CurrentRaisedAmount = State.ProjectInfoMap[input.ProjectId]
                 .CurrentRaisedAmount.Add(input.InvestAmount);
             
-                
-           
             var toClaimAmount = ProfitDetailUpdate(input.ProjectId, Context.Sender, totalInvestAmount);
             
             Context.Fire(new Invested()
@@ -372,9 +381,6 @@ namespace AElf.Contracts.Ido
                 });    
                 
             }
-
-            
-           
             return new Empty();
         }
 
@@ -388,6 +394,16 @@ namespace AElf.Contracts.Ido
             var withdrawAmount = projectInfo.CurrentRaisedAmount.Mul(ProportionMax.Sub(projectListInfo.LiquidityLockProportion))
                 .Div(ProportionMax);
             TransferOut(Context.Sender, projectInfo.AcceptedCurrency, withdrawAmount);
+            if (projectInfo.IsBurnRestToken)
+            {
+                var profit =  projectInfo.CurrentRaisedAmount.Mul(projectInfo.PreSalePrice).Div(Mantissa);
+                var toBurnAmount = projectInfo.CrowdFundingIssueAmount.Sub(profit);
+                State.TokenContract.Burn.Send(new BurnInput()
+                {
+                    Symbol = projectInfo.ProjectCurrency,
+                    Amount = toBurnAmount
+                });
+            }
             return new Empty();
         }
 
@@ -462,6 +478,11 @@ namespace AElf.Contracts.Ido
             var whitelistIdList = State.WhitelistContract.GetWhitelistByProject.Call(input);
             var whitelistId = whitelistIdList.WhitelistId.First();
             State.WhiteListIdMap[input] = whitelistId;
+            Context.Fire(new NewWhitelistIdSet()
+            {
+                ProjectId = input,
+                WhitelistId = whitelistId
+            });
             return new Empty();
         }
 
