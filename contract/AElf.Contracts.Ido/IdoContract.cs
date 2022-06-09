@@ -78,6 +78,7 @@ namespace AElf.Contracts.Ido
                 {
                     Creator = Context.Self,
                     ProjectId = id,
+                    ExtraInfoList = new ExtraInfoList(),
                     ManagerList = new AddressList(){Value = { Context.Self, Context.Sender}}
                 });
                 //write id to state
