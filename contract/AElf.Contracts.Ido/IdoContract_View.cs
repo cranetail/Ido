@@ -15,11 +15,6 @@ namespace AElf.Contracts.Ido
             return State.TokenContract.Value;
         }
 
-        public override ExtraInfoIdList GetWhitelist(Hash input)
-        {
-            return base.GetWhitelist(input);
-        }
-
         public override Hash GetWhitelistId(Hash input)
         {
             return State.WhiteListIdMap[input];
@@ -33,6 +28,21 @@ namespace AElf.Contracts.Ido
         public override InvestDetail GetInvestDetail(GetInvestDetailInput input)
         {
             return State.InvestDetailMap[input.ProjectId][input.User];
+        }
+
+        public override ProfitDetail GetProfitDetail(GetProfitDetailInput input)
+        {
+            return State.ProfitDetailMap[input.ProjectId][input.User];
+        }
+
+        public override ProjectListInfo GetProjectListInfo(Hash input)
+        {
+            return State.ProjectListInfoMap[input];
+        }
+
+        public override Address GetAdmin(Empty input)
+        {
+            return State.Admin.Value;
         }
     }
 }
