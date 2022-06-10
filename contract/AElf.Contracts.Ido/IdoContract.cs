@@ -241,7 +241,13 @@ namespace AElf.Contracts.Ido
             var nextPeriodTime =
                 projectInfo.EndTime.Seconds.Add(projectListInfo.PeriodDuration.Mul(projectListInfo.LatestPeriod));
             Assert(Context.CurrentBlockTime.Seconds >= nextPeriodTime,"time is not ready");
-            State.ProjectListInfoMap[input].LatestPeriod = State.ProjectListInfoMap[input].LatestPeriod.Add(1);
+            var newPeriod = State.ProjectListInfoMap[input].LatestPeriod.Add(1);
+            State.ProjectListInfoMap[input].LatestPeriod = newPeriod;
+            Context.Fire(new PeriodUpdated()
+            {
+                ProjectId = input,
+                NewPeriod = newPeriod
+            });
             return new Empty();
         }
 

@@ -280,7 +280,11 @@ message ProjectCanceled{
     option (aelf.is_event) = true;
     aelf.Hash project_id = 1;
 }
-
+message PeriodUpdated{
+    option (aelf.is_event) = true;
+    aelf.Hash project_id = 1;
+    int32 new_period = 2;
+}
 message Invested{
     option (aelf.is_event) = true;
     aelf.Hash project_id = 1;
