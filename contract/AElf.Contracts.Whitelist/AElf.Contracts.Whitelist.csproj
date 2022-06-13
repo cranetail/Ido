@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <!-- The root namespace -->
         <!-- Mark this project as a contract -->
         <IsContract>true</IsContract>
@@ -29,5 +29,6 @@
     </ItemGroup>
     <ItemGroup>
         <PackageReference Include="AElf.Contracts.MultiToken" Version="1.0.0" />
+        <PackageReference Include="AElf.Types" Version="1.2.0" />
     </ItemGroup>
 </Project>

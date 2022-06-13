@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>netstandard2.0</TargetFramework>
+        <TargetFramework>net6.0</TargetFramework>
         <RootNamespace>Awaken.Contracts.Token</RootNamespace>
         <IsContract>true</IsContract>
     </PropertyGroup>
@@ -26,5 +26,8 @@
         <ContractBase Include="..\..\protobuf\transaction_fee.proto">
             <Link>Protobuf\Proto\transaction_fee.proto</Link>
         </ContractBase>
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="AElf.Types" Version="1.2.0" />
     </ItemGroup>
 </Project>
