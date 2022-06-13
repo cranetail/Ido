@@ -400,6 +400,12 @@ namespace AElf.Contracts.Ido
             var withdrawAmount = projectInfo.CurrentRaisedAmount.Mul(ProportionMax.Sub(projectListInfo.LiquidityLockProportion))
                 .Div(ProportionMax);
             TransferOut(Context.Sender, projectInfo.AcceptedCurrency, withdrawAmount);
+
+            var liquidatedDamageDetails = State.LiquidatedDamageDetailsMap[input];
+            if (liquidatedDamageDetails != null && liquidatedDamageDetails.TotalAmount > 0)
+            {
+                TransferOut(Context.Sender, projectInfo.AcceptedCurrency, liquidatedDamageDetails.TotalAmount);
+            }
             if (projectInfo.IsBurnRestToken)
             {
                 var profit =  projectInfo.CurrentRaisedAmount.Mul(projectInfo.PreSalePrice).Div(Mantissa);
