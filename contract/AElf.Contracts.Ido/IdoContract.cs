@@ -349,6 +349,7 @@ namespace AElf.Contracts.Ido
             Assert(projectInfo.Enabled,"project is not enabled");
             ValidProjectOwner(input);
             var projectListInfo = State.ProjectListInfoMap[input];
+            Assert(!projectListInfo.IsListed, "already listed");
             Assert(Context.CurrentBlockTime >= projectInfo.EndTime,"time is not ready");
             var acceptedCurrencyAmount = projectInfo.CurrentRaisedAmount.Mul(projectListInfo.LiquidityLockProportion)
                 .Div(ProportionMax);
@@ -384,8 +385,8 @@ namespace AElf.Contracts.Ido
                     Channel = "",
                     Deadline = Context.CurrentBlockTime.AddMinutes(3),
                     To = Context.Sender
-                });    
-                
+                });
+                State.ProjectListInfoMap[input].IsListed = true;
             }
             return new Empty();
         }
