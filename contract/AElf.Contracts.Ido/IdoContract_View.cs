@@ -44,5 +44,10 @@ namespace AElf.Contracts.Ido
         {
             return State.Admin.Value;
         }
+
+        public override LiquidatedDamageDetails GetLiquidatedDamageDetails(Hash input)
+        {
+            return State.LiquidatedDamageDetailsMap[input];
+        }
     }
 }

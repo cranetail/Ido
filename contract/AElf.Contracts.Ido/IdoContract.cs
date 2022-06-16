@@ -30,6 +30,7 @@ namespace AElf.Contracts.Ido
             ValidTokenSymbol(input.AcceptedCurrency);
             Assert(input.MaxSubscription > input.MinSubscription && input.MinSubscription > 0,"Invalid Subscription input");
             Assert(input.StartTime <= input.EndTime && input.StartTime > Context.CurrentBlockTime,"Invalid Time input");
+            Assert(input.CrowdFundingIssueAmount == input.ToRaisedAmount.Mul(input.PreSalePrice).Div(Mantissa),"Invalid preSalePrice input");
             Assert(input.FirstDistributeProportion.Add(input.TotalPeriod.Sub(1).Mul(input.RestDistributeProportion))<= ProportionMax,"Invalid distributeProportion input");
             var id = GetHash(input, Context.Sender);
             var projectInfo = new ProjectInfo()
@@ -449,6 +450,8 @@ namespace AElf.Contracts.Ido
             Assert(detail != null,"no record in LiquidatedDamageDetails");
             Assert(detail.Claimed == false,"already claimed");
             TransferOut(detail.User,detail.Symbol,detail.Amount);
+
+            detail.Claimed = true;
             Context.Fire(new LiquidatedDamageClaimed()
             {
                 ProjectId = input,
@@ -532,6 +535,7 @@ namespace AElf.Contracts.Ido
             var unInvestAmount = userinfo.Amount;
             TransferOut(Context.Sender, userinfo.InvestSymbol, unInvestAmount);
             State.InvestDetailMap[input][Context.Sender].Amount = 0;
+            ProfitDetailUpdate(input, Context.Sender, 0);
             Context.Fire(new ReFunded()
             {
                 ProjectId = input,
