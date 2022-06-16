@@ -33,7 +33,8 @@ namespace AElf.Contracts.Ido.Tests
         internal readonly Address WhitelistContractAddress;
         
         internal readonly IBlockchainService blockChainService;
-        
+
+        internal readonly IBlockTimeProvider blockTimeProvider;
         private Address tokenContractAddress => GetAddress(TokenSmartContractAddressNameProvider.StringName);
         internal IdoContractContainer.IdoContractStub GetIdoContractStub(
             ECKeyPair senderKeyPair)
@@ -77,6 +78,7 @@ namespace AElf.Contracts.Ido.Tests
         public IdoContractTestBase()
         {
             blockChainService = Application.ServiceProvider.GetRequiredService<IBlockchainService>();
+            blockTimeProvider = Application.ServiceProvider.GetRequiredService<IBlockTimeProvider>();
             IdoContractAddress = AsyncHelper.RunSync(() => DeployContractAsync(
                 KernelConstants.DefaultRunnerCategory,
                 File.ReadAllBytes(typeof(IdoContract).Assembly.Location),

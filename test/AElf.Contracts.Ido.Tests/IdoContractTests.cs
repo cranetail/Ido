@@ -48,8 +48,8 @@ namespace AElf.Contracts.Ido
                 CrowdFundingType = "标价销售",
                 CrowdFundingIssueAmount = 10000_00000000,
                 PreSalePrice = 1_00000000,
-                StartTime =  Timestamp.FromDateTime(DateTime.UtcNow.Add(new TimeSpan(0, 0, 3))),
-                EndTime =  Timestamp.FromDateTime(DateTime.UtcNow.Add(new TimeSpan(0, 0, 30))),
+                StartTime = blockTimeProvider.GetBlockTime().AddSeconds(3),
+                EndTime = blockTimeProvider.GetBlockTime().AddSeconds(30),
                 MinSubscription = 10,
                 MaxSubscription = 100,
                 IsEnableWhitelist = false,
@@ -66,7 +66,7 @@ namespace AElf.Contracts.Ido
                         Weight = 100
                     }}
                 },
-                UnlockTime =Timestamp.FromDateTime(DateTime.UtcNow.Add(new TimeSpan(0, 0, 30000))),
+                UnlockTime = Timestamp.FromDateTime(DateTime.UtcNow.Add(new TimeSpan(0, 0, 30000))),
                 TotalPeriod = 1,
                 FirstDistributeProportion = 100,
                 RestDistributeProportion = 0,
@@ -113,8 +113,9 @@ namespace AElf.Contracts.Ido
         {
             var investAmount = 100;
             await RegisterTest();
-            await AdminStub.EnableWhitelist.SendAsync(projectId0); 
-            Thread.Sleep(3000);
+            await AdminStub.EnableWhitelist.SendAsync(projectId0);
+            
+            blockTimeProvider.SetBlockTime(blockTimeProvider.GetBlockTime().AddSeconds(3));
             await TomTokenContractStub.Approve.SendAsync(new MultiToken.ApproveInput()
             {
                 Spender = IdoContractAddress,
@@ -141,7 +142,7 @@ namespace AElf.Contracts.Ido
         public async Task ClaimTest()
         {
             await InvestTest();
-            Thread.Sleep(30000);
+            blockTimeProvider.SetBlockTime(blockTimeProvider.GetBlockTime().AddSeconds(30));
             await AdminStub.NextPeriod.SendAsync(projectId0);
             
             await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
@@ -165,19 +166,79 @@ namespace AElf.Contracts.Ido
         }
 
         [Fact]
-        public async Task AddLiquidityTest()
+        public async Task CancelTest()
         {
             await InvestTest();
-            Thread.Sleep(30000);
+            var projectInfoBefore = await AdminStub.GetProjectInfo.CallAsync(projectId0);
+            projectInfoBefore.Enabled.ShouldBeTrue();
+            await AdminStub.Cancel.SendAsync(projectId0);
+            
+            var projectInfoAfter = await AdminStub.GetProjectInfo.CallAsync(projectId0);
+            projectInfoAfter.Enabled.ShouldBeFalse();
+        }
+        
+
+        // [Fact]
+        // public async Task AddLiquidityTest()
+        // {
+        //     await InvestTest();
+        //     blockTimeProvider.SetBlockTime(blockTimeProvider.GetBlockTime().AddSeconds(30));
+        //     await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+        //     {
+        //         Amount = 100000000000,
+        //         Symbol = "TEST",
+        //         Memo = "ForAddLiquidity",
+        //         To = IdoContractAddress
+        //     });
+        //     await AdminStub.LockLiquidity.SendAsync(projectId0);
+        //     
+        // }
+        
+        [Fact]
+        public async Task RefundTest()
+        {
+            await InvestTest();
+            await AdminStub.Cancel.SendAsync(projectId0);
+            var balanceBefore = await TokenContractStub.GetBalance.SendAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = UserTomAddress,
+                Symbol = "ELF"
+            });
+            
+            await TomStub.ReFund.SendAsync(projectId0);
+            var balanceAfter = await TokenContractStub.GetBalance.SendAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = UserTomAddress,
+                Symbol = "ELF"
+            });
+          
+            balanceAfter.Output.Balance.Sub(balanceBefore.Output.Balance).ShouldBePositive();
+        }
+
+        [Fact]
+        public async Task WithdrawTest()
+        {
+            await InvestTest();
             await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
             {
-                Amount = 100000000000,
+                Amount = 10000_00000000,
                 Symbol = "TEST",
-                Memo = "ForAddLiquidity",
+                Memo = "ForUserClaim",
                 To = IdoContractAddress
             });
-            await AdminStub.LockLiquidity.SendAsync(projectId0);
-            
+            blockTimeProvider.SetBlockTime(blockTimeProvider.GetBlockTime().AddSeconds(30));
+            var balanceBefore = await TokenContractStub.GetBalance.SendAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = AdminAddress,
+                Symbol = "ELF"
+            });
+            await AdminStub.Withdraw.SendAsync(projectId0);
+            var balanceAfter = await TokenContractStub.GetBalance.SendAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = AdminAddress,
+                Symbol = "ELF"
+            });
+            balanceAfter.Output.Balance.Sub(balanceBefore.Output.Balance).ShouldBePositive();
         }
         private async Task CreateAndGetToken()
         {

@@ -49,6 +49,11 @@ namespace AElf.Contracts.Ido
             Assert(projectInfo.Creator == Context.Sender,"unauthorized to add the whitelist");
         }
 
+        private void AdminCheck()
+        {
+            Assert(State.Admin.Value == Context.Sender,"unauthorized to ");
+        }
+
         private void WhitelistCheck(Hash projectId, Address user)
         {
             var whiteListId = State.WhiteListIdMap[projectId];
@@ -104,14 +109,24 @@ namespace AElf.Contracts.Ido
         {
             var projectInfo = State.ProjectInfoMap[projectId];
             var latestAmount =  State.InvestDetailMap[projectId][user] == null ? 0 : State.InvestDetailMap[projectId][user].Amount;
+            Assert(investAmount > 0,"investAmount should be positive");
             var totalAmount = latestAmount.Add(investAmount);
-            Assert(totalAmount >= projectInfo.MinSubscription && totalAmount<= projectInfo.MaxSubscription,"Invalid investAmount");
+            Assert(totalAmount >= projectInfo.MinSubscription && totalAmount <= projectInfo.MaxSubscription,"Invalid investAmount");
         }
 
         private long ProfitDetailUpdate(Hash projectId, Address user, long investAmount)
         {
             var info = State.ProjectInfoMap[projectId];
             var listInfo = State.ProjectListInfoMap[projectId];
+            if (investAmount == 0)
+            {
+                State.ProfitDetailMap[projectId][user] = new ProfitDetail()
+                {
+                    LatestPeriod = 0,
+                    Symbol = info.ProjectCurrency
+                };
+                return 0;
+            }
             State.ProfitDetailMap[projectId][user] = State.ProfitDetailMap[projectId][user] ?? new ProfitDetail()
             {
                 LatestPeriod = 0,
