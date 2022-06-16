@@ -14,6 +14,7 @@
         <None Pack="true" PackagePath="build\" Include="*.targets;" />
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="AElf.Contracts.Genesis" Version="1.2.0" />
         <PackageReference Include="AElf.CSharp.CodeOps" Version="1.2.0" />
         <PackageReference Include="AElf.Runtime.CSharp.Core" Version="1.2.0" />
         <PackageReference Include="AElf.Types" Version="1.2.0" />
