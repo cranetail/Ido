@@ -13,7 +13,10 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="AElf.ContractDeployer" Version="1.0.0" />
+        <PackageReference Include="AElf.ContractDeployer" Version="1.2.0" />
+        <PackageReference Include="AElf.Contracts.Genesis" Version="1.2.0" />
+        <PackageReference Include="AElf.CSharp.Core" Version="1.2.0" />
+        <PackageReference Include="AElf.Kernel.Node" Version="1.2.0" />
         <PackageReference Include="Volo.Abp.AspNetCore.Mvc" Version="3.1.0" />
         <PackageReference Include="Volo.Abp.Autofac" Version="1.1.2" />
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
