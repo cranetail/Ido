@@ -30,7 +30,10 @@ namespace AElf.Contracts.Ido
             ValidTokenSymbol(input.AcceptedCurrency);
             Assert(input.MaxSubscription > input.MinSubscription && input.MinSubscription > 0,"Invalid Subscription input");
             Assert(input.StartTime <= input.EndTime && input.StartTime > Context.CurrentBlockTime,"Invalid Time input");
-            Assert(input.CrowdFundingIssueAmount == input.ToRaisedAmount.Mul(input.PreSalePrice).Div(Mantissa),"Invalid preSalePrice input");
+            var crowdFundingIssueAmount = new BigIntValue(input.CrowdFundingIssueAmount);
+            var crowdFundingIssueAmountCalculated =
+                new BigIntValue(input.ToRaisedAmount).Mul(input.PreSalePrice).Div(Mantissa);
+            Assert(crowdFundingIssueAmount.Equals(crowdFundingIssueAmountCalculated),"Invalid preSalePrice input");
             Assert(input.FirstDistributeProportion.Add(input.TotalPeriod.Sub(1).Mul(input.RestDistributeProportion))<= ProportionMax,"Invalid distributeProportion input");
             var id = GetHash(input, Context.Sender);
             var projectInfo = new ProjectInfo()
