@@ -67,7 +67,7 @@ namespace AElf.Contracts.Ido
                 },
                 UnlockTime = Timestamp.FromDateTime(DateTime.UtcNow.Add(new TimeSpan(0, 0, 30000))),
                 TotalPeriod = 1,
-                FirstDistributeProportion = 100,
+                FirstDistributeProportion = 100_000000,
                 RestDistributeProportion = 0,
                 PeriodDuration = 0
             };

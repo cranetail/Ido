@@ -47,7 +47,7 @@ namespace AElf.Contracts.Ido
         private void ValidProjectOwner(Hash projectId)
         {
             var projectInfo = State.ProjectInfoMap[projectId];
-            Assert(projectInfo.Creator == Context.Sender,"Unauthorized to add the whitelist");
+            Assert(projectInfo.Creator == Context.Sender,"Only project owner can call this function");
         }
 
         private void AdminCheck()
@@ -133,21 +133,23 @@ namespace AElf.Contracts.Ido
                 LatestPeriod = 0,
                 Symbol = info.ProjectCurrency
             };
-            var totalProjectTokenAmount = investAmount.Mul(info.PreSalePrice).Div(Mantissa);
+            var totalProjectTokenAmountStr = new BigIntValue(investAmount).Mul(info.PreSalePrice).Div(Mantissa);
+            var totalProjectTokenAmount = Parse(totalProjectTokenAmountStr.Value);
             State.ProfitDetailMap[projectId][user].TotalProfit = totalProjectTokenAmount;
             State.ProfitDetailMap[projectId][user].LatestPeriod = 0;
             for (var i = 1; i <= listInfo.TotalPeriod; i++)
             {
-                long periodProfit;
+                BigIntValue periodProfitStr;
                 if (i == 1)
                 { 
-                    periodProfit = totalProjectTokenAmount.Mul(listInfo.FirstDistributeProportion).Div(ProportionMax);
+                    periodProfitStr = new BigIntValue(totalProjectTokenAmount).Mul(listInfo.FirstDistributeProportion).Div(ProportionMax);
                 }
                 else
                 {
-                    periodProfit = totalProjectTokenAmount.Mul(listInfo.RestDistributeProportion).Div(ProportionMax);
+                    periodProfitStr =  new BigIntValue(totalProjectTokenAmount).Mul(listInfo.RestDistributeProportion).Div(ProportionMax);
                 }
 
+                var periodProfit = Parse(periodProfitStr.Value);
                 State.ProfitDetailMap[projectId][user].AmountsMap[i] = periodProfit;
             }
 

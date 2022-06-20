@@ -175,7 +175,7 @@ namespace AElf.Contracts.Ido
             Assert(projectInfo.Enabled,"Project is not enabled");
             ValidProjectOwner(input);
             var isEnableWhitelist = projectInfo.IsEnableWhitelist;
-            Assert(!isEnableWhitelist,"Whitelist is not enabled");
+            Assert(!isEnableWhitelist,"Whitelist is already enabled");
             State.ProjectInfoMap[input].IsEnableWhitelist = true;
             var whitelistId = State.WhiteListIdMap[input];
             State.WhitelistContract.EnableWhitelist.Send(whitelistId);
@@ -193,7 +193,7 @@ namespace AElf.Contracts.Ido
             Assert(projectInfo.Enabled,"Project is not enabled");
             ValidProjectOwner(input);
             var isEnableWhitelist = projectInfo.IsEnableWhitelist;
-            Assert(isEnableWhitelist,"Whitelist is not enabled");
+            Assert(isEnableWhitelist,"Whitelist is already disabled");
             State.ProjectInfoMap[input].IsEnableWhitelist = false;
             var whitelistId = State.WhiteListIdMap[input];
             State.WhitelistContract.DisableWhitelist.Send(whitelistId);
@@ -275,9 +275,10 @@ namespace AElf.Contracts.Ido
                 InvestSymbol = input.Currency,
                 Amount = 0
             };
-            Assert(investDetail.IsUnInvest == false,"User has bad record");
+             
             var totalInvestAmount = investDetail.Amount.Add(input.InvestAmount);
             investDetail.Amount = totalInvestAmount;
+            investDetail.IsUnInvest = false;
             State.InvestDetailMap[projectInfo.ProjectId][Context.Sender] = investDetail;
             State.ProjectInfoMap[input.ProjectId].CurrentRaisedAmount = State.ProjectInfoMap[input.ProjectId]
                 .CurrentRaisedAmount.Add(input.InvestAmount);
@@ -313,8 +314,8 @@ namespace AElf.Contracts.Ido
             State.LiquidatedDamageDetailsMap[input] =
                 State.LiquidatedDamageDetailsMap[input] ?? new LiquidatedDamageDetails();
             var liquidatedDamageDetails = State.LiquidatedDamageDetailsMap[input];
-            var liquidatedDamageAmount = userinfo.Amount.Mul(LiquidatedDamageProportion).Div(ProportionMax);
-
+            var liquidatedDamageAmountStr = new BigIntValue(userinfo.Amount).Mul(LiquidatedDamageProportion).Div(ProportionMax);
+            var liquidatedDamageAmount = Parse(liquidatedDamageAmountStr.Value);
             var detail = new LiquidatedDamageDetail()
             {
                 Amount = liquidatedDamageAmount,
