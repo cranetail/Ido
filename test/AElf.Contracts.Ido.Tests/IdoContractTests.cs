@@ -55,7 +55,6 @@ namespace AElf.Contracts.Ido
                 IsEnableWhitelist = false,
                 IsBurnRestToken = true,
                 AdditionalInfo = new AdditionalInfo(),
-                ToRaisedAmount = 1_00000000,
                 PublicSalePrice = 2_000000000,
                 LiquidityLockProportion = 50,
                 ListMarketInfo = new ListMarketInfo()

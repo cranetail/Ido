@@ -1,6 +1,7 @@
 using AElf.Contracts.MultiToken;
 using AElf.Contracts.Whitelist;
 using AElf.CSharp.Core;
+using AElf.Sdk.CSharp;
 using AElf.Types;
 using Google.Protobuf.Collections;
 
@@ -153,7 +154,15 @@ namespace AElf.Contracts.Ido
             return totalProjectTokenAmount;
         }
         
-       
+        private static long Parse(string input)
+        {
+            if (!long.TryParse(input, out var output))
+            {
+                throw new AssertionException($"Failed to parse {input}");
+            }
+
+            return output;
+        }
 
     }
 }

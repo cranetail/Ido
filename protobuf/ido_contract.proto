@@ -108,10 +108,9 @@ message RegisterInput {
     bool is_burn_rest_token = 16;
     int32 total_period = 17;
     AdditionalInfo additional_info = 18;
-    int64 to_raised_amount = 19;
-    int32 first_distribute_proportion = 20;
-    int32 rest_distribute_proportion = 21;
-    int64 period_duration = 22;
+    int32 first_distribute_proportion = 19;
+    int32 rest_distribute_proportion = 20;
+    int64 period_duration = 21;
 }
 
 message UpdateAdditionalInfoInput{

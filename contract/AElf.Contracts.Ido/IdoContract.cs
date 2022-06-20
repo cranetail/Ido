@@ -30,11 +30,8 @@ namespace AElf.Contracts.Ido
             ValidTokenSymbol(input.AcceptedCurrency);
             Assert(input.MaxSubscription > input.MinSubscription && input.MinSubscription > 0,"Invalid Subscription input");
             Assert(input.StartTime <= input.EndTime && input.StartTime > Context.CurrentBlockTime,"Invalid Time input");
-            var crowdFundingIssueAmount = new BigIntValue(input.CrowdFundingIssueAmount);
-            var crowdFundingIssueAmountCalculated =
-                new BigIntValue(input.ToRaisedAmount).Mul(input.PreSalePrice).Div(Mantissa);
-            Assert(crowdFundingIssueAmount.Equals(crowdFundingIssueAmountCalculated),"Invalid preSalePrice input");
             Assert(input.FirstDistributeProportion.Add(input.TotalPeriod.Sub(1).Mul(input.RestDistributeProportion))<= ProportionMax,"Invalid distributeProportion input");
+            var toRaisedAmount = Parse(new BigIntValue(input.CrowdFundingIssueAmount).Mul(Mantissa).Div(input.PreSalePrice).Value);
             var id = GetHash(input, Context.Sender);
             var projectInfo = new ProjectInfo()
             {
@@ -52,7 +49,7 @@ namespace AElf.Contracts.Ido
                 IsBurnRestToken = input.IsBurnRestToken,
                 AdditionalInfo = input.AdditionalInfo,
                 Creator = Context.Sender,
-                ToRaisedAmount = input.ToRaisedAmount,
+                ToRaisedAmount = toRaisedAmount,
                 Enabled = true
             };
             State.ProjectInfoMap[id] = projectInfo;
@@ -111,7 +108,7 @@ namespace AElf.Contracts.Ido
                 IsBurnRestToken = input.IsBurnRestToken,
                 TotalPeriod = input.TotalPeriod,
                 AdditionalInfo = input.AdditionalInfo,
-                ToRaisedAmount = input.ToRaisedAmount,
+                ToRaisedAmount = toRaisedAmount,
                 Creator = Context.Sender,
                 FirstDistributeProportion = input.FirstDistributeProportion,
                 RestDistributeProportion = input.RestDistributeProportion,
