@@ -40,19 +40,19 @@ namespace AElf.Contracts.Ido
         private ProjectInfo ValidProjectExist(Hash projectId)
         {
             var projectInfo = State.ProjectInfoMap[projectId];
-            Assert(projectInfo != null,"project is not exist");
+            Assert(projectInfo != null,"Project is not exist");
             return projectInfo;
         }
 
         private void ValidProjectOwner(Hash projectId)
         {
             var projectInfo = State.ProjectInfoMap[projectId];
-            Assert(projectInfo.Creator == Context.Sender,"unauthorized to add the whitelist");
+            Assert(projectInfo.Creator == Context.Sender,"Unauthorized to add the whitelist");
         }
 
         private void AdminCheck()
         {
-            Assert(State.Admin.Value == Context.Sender,"unauthorized to ");
+            Assert(State.Admin.Value == Context.Sender,"Only admin can call this function");
         }
 
         private void WhitelistCheck(Hash projectId, Address user)
@@ -64,7 +64,7 @@ namespace AElf.Contracts.Ido
                 WhitelistId = whiteListId
             });
             
-            Assert(isInWhitelist.Value,"user is not in the whitelist");
+            Assert(isInWhitelist.Value,"User is not in the whitelist");
         }
         
         private void TransferIn(Address from, string symbol, long amount)
@@ -110,9 +110,9 @@ namespace AElf.Contracts.Ido
         {
             var projectInfo = State.ProjectInfoMap[projectId];
             var latestAmount =  State.InvestDetailMap[projectId][user] == null ? 0 : State.InvestDetailMap[projectId][user].Amount;
-            Assert(investAmount > 0,"investAmount should be positive");
+            Assert(investAmount > 0,"Invest amount should be positive");
             var totalAmount = latestAmount.Add(investAmount);
-            Assert(totalAmount >= projectInfo.MinSubscription && totalAmount <= projectInfo.MaxSubscription,"Invalid investAmount");
+            Assert(totalAmount >= projectInfo.MinSubscription && totalAmount <= projectInfo.MaxSubscription,"Invest amount should be in the range of subscription");
         }
 
         private long ProfitDetailUpdate(Hash projectId, Address user, long investAmount)

@@ -28,8 +28,8 @@ namespace AElf.Contracts.Ido
         {
             ValidTokenSymbolOwner(input.ProjectCurrency, Context.Sender);
             ValidTokenSymbol(input.AcceptedCurrency);
-            Assert(input.MaxSubscription > input.MinSubscription && input.MinSubscription > 0,"Invalid Subscription input");
-            Assert(input.StartTime <= input.EndTime && input.StartTime > Context.CurrentBlockTime,"Invalid Time input");
+            Assert(input.MaxSubscription > input.MinSubscription && input.MinSubscription > 0,"Invalid subscription input");
+            Assert(input.StartTime <= input.EndTime && input.StartTime > Context.CurrentBlockTime,"Invalid startTime or endTime input");
             Assert(input.FirstDistributeProportion.Add(input.TotalPeriod.Sub(1).Mul(input.RestDistributeProportion))<= ProportionMax,"Invalid distributeProportion input");
             var toRaisedAmount = Parse(new BigIntValue(input.CrowdFundingIssueAmount).Mul(Mantissa).Div(input.PreSalePrice).Value);
             var id = GetHash(input, Context.Sender);
@@ -120,11 +120,11 @@ namespace AElf.Contracts.Ido
         public override Empty AddWhitelists(AddWhitelistsInput input)
         {
             var projectInfo = ValidProjectExist(input.ProjectId);
-            Assert(projectInfo.Enabled,"project is not enabled");
+            Assert(projectInfo.Enabled,"Project is not enabled");
             ValidProjectOwner(input.ProjectId);
             
             var isEnableWhitelist = projectInfo.IsEnableWhitelist;
-            Assert(isEnableWhitelist,"whitelist is disabled");
+            Assert(isEnableWhitelist,"Whitelist is not enabled");
             
             var list = new AddressList();
             foreach (var user in input.Users)
@@ -146,11 +146,11 @@ namespace AElf.Contracts.Ido
         public override Empty RemoveWhitelists(RemoveWhitelistsInput input)
         {
             var projectInfo = ValidProjectExist(input.ProjectId);
-            Assert(projectInfo.Enabled,"project is not enabled");
+            Assert(projectInfo.Enabled,"Project is not enabled");
             ValidProjectOwner(input.ProjectId);
 
             var isEnableWhitelist = projectInfo.IsEnableWhitelist;
-            Assert(isEnableWhitelist,"whitelist is disabled");
+            Assert(isEnableWhitelist,"Whitelist is not enabled");
             
             var list = new AddressList();
             foreach (var user in input.Users)
@@ -172,10 +172,10 @@ namespace AElf.Contracts.Ido
         public override Empty EnableWhitelist(Hash input)
         {
             var projectInfo = ValidProjectExist(input);
-            Assert(projectInfo.Enabled,"project is not enabled");
+            Assert(projectInfo.Enabled,"Project is not enabled");
             ValidProjectOwner(input);
             var isEnableWhitelist = projectInfo.IsEnableWhitelist;
-            Assert(!isEnableWhitelist,"whitelist is enabled");
+            Assert(!isEnableWhitelist,"Whitelist is not enabled");
             State.ProjectInfoMap[input].IsEnableWhitelist = true;
             var whitelistId = State.WhiteListIdMap[input];
             State.WhitelistContract.EnableWhitelist.Send(whitelistId);
@@ -190,10 +190,10 @@ namespace AElf.Contracts.Ido
         public override Empty DisableWhitelist(Hash input)
         {
             var projectInfo = ValidProjectExist(input);
-            Assert(projectInfo.Enabled,"project is not enabled");
+            Assert(projectInfo.Enabled,"Project is not enabled");
             ValidProjectOwner(input);
             var isEnableWhitelist = projectInfo.IsEnableWhitelist;
-            Assert(isEnableWhitelist,"whitelist is disabled");
+            Assert(isEnableWhitelist,"Whitelist is not enabled");
             State.ProjectInfoMap[input].IsEnableWhitelist = false;
             var whitelistId = State.WhiteListIdMap[input];
             State.WhitelistContract.DisableWhitelist.Send(whitelistId);
@@ -208,7 +208,7 @@ namespace AElf.Contracts.Ido
         public override Empty UpdateAdditionalInfo(UpdateAdditionalInfoInput input)
         {
             var projectInfo = ValidProjectExist(input.ProjectId);
-            Assert(projectInfo.Enabled,"project is not enabled");
+            Assert(projectInfo.Enabled,"Project is not enabled");
             ValidProjectOwner(input.ProjectId);
             State.ProjectInfoMap[input.ProjectId].AdditionalInfo = input.AdditionalInfo;
             Context.Fire(new AdditionalInfoUpdated()
@@ -222,7 +222,7 @@ namespace AElf.Contracts.Ido
         public override Empty Cancel(Hash input)
         {
             var projectInfo = ValidProjectExist(input);
-            Assert(projectInfo.Enabled,"project is not enabled");
+            Assert(projectInfo.Enabled,"Project is not enabled");
             ValidProjectOwner(input);
             Assert(Context.CurrentBlockTime <= projectInfo.EndTime,"time is expired");
             State.ProjectInfoMap[input].Enabled = false;
@@ -236,13 +236,13 @@ namespace AElf.Contracts.Ido
         public override Empty NextPeriod(Hash input)
         {
             var projectInfo = ValidProjectExist(input);
-            Assert(projectInfo.Enabled,"project is not enabled");
+            Assert(projectInfo.Enabled,"Project is not enabled");
             ValidProjectOwner(input);
             var projectListInfo = State.ProjectListInfoMap[input];
-            Assert(projectListInfo.LatestPeriod < projectListInfo.TotalPeriod,"insufficient period");
+            Assert(projectListInfo.LatestPeriod < projectListInfo.TotalPeriod,"Insufficient period");
             var nextPeriodTime =
                 projectInfo.EndTime.Seconds.Add(projectListInfo.PeriodDuration.Mul(projectListInfo.LatestPeriod));
-            Assert(Context.CurrentBlockTime.Seconds >= nextPeriodTime,"time is not ready");
+            Assert(Context.CurrentBlockTime.Seconds >= nextPeriodTime,"Time is not ready");
             var newPeriod = State.ProjectListInfoMap[input].LatestPeriod.Add(1);
             State.ProjectListInfoMap[input].LatestPeriod = newPeriod;
             Context.Fire(new PeriodUpdated()
@@ -258,16 +258,16 @@ namespace AElf.Contracts.Ido
         {
             //check status
             var projectInfo = ValidProjectExist(input.ProjectId);
-            Assert(projectInfo.Enabled,"project is not enabled");
+            Assert(projectInfo.Enabled,"Project is not enabled");
             var isEnableWhitelist = projectInfo.IsEnableWhitelist;
             if (isEnableWhitelist)
             {
                 WhitelistCheck(input.ProjectId, Context.Sender);
             }
-            Assert(projectInfo.AcceptedCurrency == input.Currency,"the currency is invalid");
+            Assert(projectInfo.AcceptedCurrency == input.Currency,"The currency is invalid");
             CheckInvestInput(input.ProjectId, Context.Sender, input.InvestAmount);
             var currentTimestamp = Context.CurrentBlockTime;
-            Assert(currentTimestamp >= projectInfo.StartTime && currentTimestamp <= projectInfo.EndTime,"can't invest right now");
+            Assert(currentTimestamp >= projectInfo.StartTime && currentTimestamp <= projectInfo.EndTime,"Can't invest right now");
             //invest 
             TransferIn(Context.Sender,input.Currency,input.InvestAmount);
             var investDetail =  State.InvestDetailMap[projectInfo.ProjectId][Context.Sender] ?? new InvestDetail()
@@ -275,7 +275,7 @@ namespace AElf.Contracts.Ido
                 InvestSymbol = input.Currency,
                 Amount = 0
             };
-            Assert(investDetail.IsUnInvest == false,"user has bad record");
+            Assert(investDetail.IsUnInvest == false,"User has bad record");
             var totalInvestAmount = investDetail.Amount.Add(input.InvestAmount);
             investDetail.Amount = totalInvestAmount;
             State.InvestDetailMap[projectInfo.ProjectId][Context.Sender] = investDetail;
@@ -301,14 +301,14 @@ namespace AElf.Contracts.Ido
         public override Empty UnInvest(Hash input)
         {
             var projectInfo = ValidProjectExist(input);
-            Assert(projectInfo.Enabled,"project is not enabled");
+            Assert(projectInfo.Enabled,"Project is not enabled");
             var currentTimestamp = Context.CurrentBlockTime;
-            Assert(currentTimestamp >= projectInfo.StartTime && currentTimestamp <= projectInfo.EndTime,"can't invest right now");
+            Assert(currentTimestamp >= projectInfo.StartTime && currentTimestamp <= projectInfo.EndTime,"Can't unInvest right now");
             //unInvest 
             var userinfo = State.InvestDetailMap[input][Context.Sender];
             var userAmount = userinfo.Amount;
-            Assert(userAmount > 0,"insufficient invest amount");
-            Assert(userinfo.IsUnInvest == false,"user has already unInvest");
+            Assert(userAmount > 0,"Insufficient invest amount");
+            Assert(userinfo.IsUnInvest == false,"User has already unInvest");
 
             State.LiquidatedDamageDetailsMap[input] =
                 State.LiquidatedDamageDetailsMap[input] ?? new LiquidatedDamageDetails();
@@ -405,10 +405,10 @@ namespace AElf.Contracts.Ido
         public override Empty Withdraw(Hash input)
         {
             var projectInfo = ValidProjectExist(input);
-            Assert(projectInfo.Enabled,"project is not enabled");
+            Assert(projectInfo.Enabled,"Project is not enabled");
             ValidProjectOwner(input);
             var projectListInfo = State.ProjectListInfoMap[input];
-            Assert(!projectListInfo.IsWithdraw,"already withdraw" );
+            Assert(!projectListInfo.IsWithdraw,"Already withdraw" );
             Assert(Context.CurrentBlockTime >= projectInfo.EndTime,"time is not ready");
             var withdrawAmount = projectInfo.CurrentRaisedAmount;
             if (withdrawAmount > 0)
