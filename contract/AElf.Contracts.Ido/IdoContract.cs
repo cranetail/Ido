@@ -205,7 +205,7 @@ namespace AElf.Contracts.Ido
         {
             var projectInfo = ValidProjectExist(input);
             Assert(projectInfo.Enabled,"Project is not enabled");
-            ValidProjectOwner(input);
+            AdminCheck();
             var projectListInfo = State.ProjectListInfoMap[input];
             Assert(projectListInfo.LatestPeriod < projectListInfo.TotalPeriod,"Insufficient period");
             var nextPeriodTime =
