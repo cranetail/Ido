@@ -124,7 +124,8 @@ namespace AElf.Contracts.Ido
                 State.ProfitDetailMap[projectId][user] = new ProfitDetail()
                 {
                     LatestPeriod = 0,
-                    Symbol = info.ProjectCurrency
+                    Symbol = info.ProjectCurrency,
+                    TotalProfit = 0
                 };
                 return 0;
             }

@@ -47,6 +47,14 @@ namespace AElf.Contracts.Whitelist
                 WhitelistId = {HashHelper.ComputeFrom(0)}
             };
         }
+
+        public override WhitelistInfo GetWhitelist(Hash input)
+        {
+            return new WhitelistInfo()
+            {
+                IsAvailable = true
+            };
+        }
     }
 
 

@@ -87,9 +87,7 @@ namespace AElf.Contracts.Ido
         public async Task WhitelistTest()
         {
             await RegisterTest();
-            await AdminStub.EnableWhitelist.SendAsync(projectId0);
-            var projectInfo = await AdminStub.GetProjectInfo.CallAsync(projectId0);
-            projectInfo.IsEnableWhitelist.ShouldBeTrue();
+        
             await AdminStub.AddWhitelists.SendAsync(new AddWhitelistsInput()
             {
                 ProjectId = projectId0,
@@ -102,9 +100,7 @@ namespace AElf.Contracts.Ido
                 Users = {UserTomAddress}
             });
 
-            await AdminStub.DisableWhitelist.SendAsync(projectId0); 
-            projectInfo = await AdminStub.GetProjectInfo.CallAsync(projectId0);
-            projectInfo.IsEnableWhitelist.ShouldBeFalse();
+  
         }
 
         [Fact]
@@ -112,7 +108,7 @@ namespace AElf.Contracts.Ido
         {
             var investAmount = 100;
             await RegisterTest();
-            await AdminStub.EnableWhitelist.SendAsync(projectId0);
+          
             
             blockTimeProvider.SetBlockTime(blockTimeProvider.GetBlockTime().AddSeconds(3));
             await TomTokenContractStub.Approve.SendAsync(new MultiToken.ApproveInput()
