@@ -459,7 +459,7 @@ namespace AElf.Contracts.Ido
                     Symbol = profitDetailInfo.Symbol,
                     Amount = profitPeriodAmount
                 });
-                claimedProfitsInfo.TotalClaimedAmount = claimedProfitsInfo.TotalClaimedAmount.Add(profitPeriodAmount);
+            
                 State.ClaimedProfitsInfoMap[input.User] = claimedProfitsInfo;
             
                 Context.Fire(new Claimed()
@@ -468,7 +468,6 @@ namespace AElf.Contracts.Ido
                     LatestPeriod = currentPeriod,
                     Amount = profitPeriodAmount,
                     ProjectCurrency = profitDetailInfo.Symbol,
-                    TotalClaimedAmount = claimedProfitsInfo.TotalClaimedAmount,
                     TotalPeriod = listInfo.LatestPeriod,
                     User = input.User
                 });

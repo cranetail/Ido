@@ -206,8 +206,7 @@ message ProfitDetail{
 }
 
 message ClaimedProfitsInfo{
-    int64 total_claimed_amount = 1;//金额
-    repeated ClaimedProfit details = 2;
+    repeated ClaimedProfit details = 1;
 }
 message ClaimedProfit{
     aelf.Hash project_id = 1;//项目id
@@ -328,9 +327,8 @@ message Claimed{
     aelf.Address user = 2; 
     string project_currency = 3;
     int64 amount = 4;
-    int64 total_claimed_amount = 5;
-    int32 latest_period = 6;
-    int32 total_period = 7;
+    int32 latest_period = 5;
+    int32 total_period = 6;
 }
 
 message ReFunded{
