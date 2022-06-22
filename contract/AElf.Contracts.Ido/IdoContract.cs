@@ -276,10 +276,10 @@ namespace AElf.Contracts.Ido
             Assert(currentTimestamp >= projectInfo.StartTime && currentTimestamp <= projectInfo.EndTime,"Can't unInvest right now");
             //unInvest 
             var userinfo = State.InvestDetailMap[input][Context.Sender];
+            Assert(userinfo != null,"No invest record");
+            Assert(!userinfo.IsUnInvest,"User has already unInvest");
             var userAmount = userinfo.Amount;
             Assert(userAmount > 0,"Insufficient invest amount");
-            Assert(userinfo.IsUnInvest == false,"User has already unInvest");
-
             State.LiquidatedDamageDetailsMap[input] =
                 State.LiquidatedDamageDetailsMap[input] ?? new LiquidatedDamageDetails();
             var liquidatedDamageDetails = State.LiquidatedDamageDetailsMap[input];
@@ -294,7 +294,10 @@ namespace AElf.Contracts.Ido
 
             State.InvestDetailMap[input][Context.Sender].IsUnInvest = true;
             var unInvestAmount = userAmount.Sub(liquidatedDamageAmount);
-            TransferOut(Context.Sender,userinfo.InvestSymbol, unInvestAmount);
+            if (unInvestAmount > 0)
+            {
+                TransferOut(Context.Sender,userinfo.InvestSymbol, unInvestAmount);
+            }
             
             State.InvestDetailMap[input][Context.Sender].Amount = 0;
             State.ProjectInfoMap[input].CurrentRaisedAmount = State.ProjectInfoMap[input]
@@ -415,21 +418,27 @@ namespace AElf.Contracts.Ido
         {
             //check status
             var projectInfo = ValidProjectExist(input);
-            Assert(projectInfo.Enabled == false,"Project should be disabled");
+            Assert(!projectInfo.Enabled,"Project should be disabled");
 
-            var detail = State.LiquidatedDamageDetailsMap[input].Details.First(x => x.User == Context.Sender);
-            Assert(detail != null,"No liquidatedDamage record");
-            Assert(detail.Claimed == false,"Already claimed");
-            TransferOut(detail.User,detail.Symbol,detail.Amount);
-
-            detail.Claimed = true;
-            Context.Fire(new LiquidatedDamageClaimed()
+            var details = State.LiquidatedDamageDetailsMap[input].Details.Where(x => x.User == Context.Sender);
+            foreach (var detail in details)
             {
-                ProjectId = input,
-                Amount = detail.Amount,
-                InvestSymbol = detail.Symbol,
-                User = detail.User
-            });
+                Assert(!detail.Claimed,"Already claimed");
+                if (detail.Amount > 0)
+                {
+                    TransferOut(detail.User, detail.Symbol, detail.Amount);
+                }
+                
+                detail.Claimed = true;
+                Context.Fire(new LiquidatedDamageClaimed()
+                {
+                    ProjectId = input,
+                    Amount = detail.Amount,
+                    InvestSymbol = detail.Symbol,
+                    User = detail.User
+                });
+            }
+         
             return new Empty();
         }
 
@@ -498,13 +507,13 @@ namespace AElf.Contracts.Ido
         public override Empty ReFund(Hash input)
         {
             var projectInfo = ValidProjectExist(input);
-            Assert(projectInfo.Enabled == false,"Project should be disabled");
+            Assert(!projectInfo.Enabled ,"Project should be disabled");
             //unInvest 
             
             var userinfo = State.InvestDetailMap[input][Context.Sender];
+            Assert(userinfo != null,"No invest record");
+            Assert(! userinfo.IsUnInvest  ,"User has already unInvest");
             Assert(userinfo.Amount > 0,"Insufficient invest amount");
-            Assert(userinfo.IsUnInvest == false,"User has already unInvest");
-           
             State.InvestDetailMap[input][Context.Sender].IsUnInvest = true;
             var unInvestAmount = userinfo.Amount;
             TransferOut(Context.Sender, userinfo.InvestSymbol, unInvestAmount);

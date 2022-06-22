@@ -131,6 +131,8 @@ namespace AElf.Contracts.Ido
                 User = UserTomAddress
             });
             investDetail.Amount.ShouldBe(investAmount);
+            
+         
         }
 
         [Fact]
@@ -219,6 +221,10 @@ namespace AElf.Contracts.Ido
                 User = UserTomAddress
             });
             profit.TotalProfit.ShouldBe(0);
+            
+            //User has already unInvest
+            var alreadyUnInvestException = await TomStub.UnInvest.SendWithExceptionAsync(projectId0);
+            alreadyUnInvestException.TransactionResult.Error.ShouldContain("User has already unInvest");
         }
 
 
