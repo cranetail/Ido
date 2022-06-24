@@ -22,21 +22,25 @@ namespace AElf.Contracts.Ido
 
         public override ProjectInfo GetProjectInfo(Hash input)
         {
+            ValidProjectExist(input);
             return State.ProjectInfoMap[input];
         }
 
         public override InvestDetail GetInvestDetail(GetInvestDetailInput input)
         {
+            ValidProjectExist(input.ProjectId);
             return State.InvestDetailMap[input.ProjectId][input.User];
         }
 
         public override ProfitDetail GetProfitDetail(GetProfitDetailInput input)
         {
+            ValidProjectExist(input.ProjectId);
             return State.ProfitDetailMap[input.ProjectId][input.User];
         }
 
         public override ProjectListInfo GetProjectListInfo(Hash input)
         {
+            ValidProjectExist(input);
             return State.ProjectListInfoMap[input];
         }
 
@@ -47,6 +51,7 @@ namespace AElf.Contracts.Ido
 
         public override LiquidatedDamageDetails GetLiquidatedDamageDetails(Hash input)
         {
+            ValidProjectExist(input);
             return State.LiquidatedDamageDetailsMap[input];
         }
     }
