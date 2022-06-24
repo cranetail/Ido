@@ -339,3 +339,13 @@ message ReFunded{
     int64 amount = 4;
 }
 
+message Withdrawn{
+    option (aelf.is_event) = true;
+    aelf.Hash project_id = 1;
+    string accepted_symbol = 2;
+    int64 withdraw_amount = 3;
+    string project_currency = 4;
+    bool is_burn_rest_token = 5;
+    int64 burn_amount = 6;
+}
+

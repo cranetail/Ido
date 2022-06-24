@@ -411,6 +411,16 @@ namespace AElf.Contracts.Ido
             {
                 TransferOut(Context.Sender, projectInfo.ProjectCurrency, toBurnAmount);
             }
+            
+            Context.Fire(new Withdrawn()
+            {
+                ProjectId = input,
+                AcceptedSymbol = projectInfo.AcceptedCurrency,
+                WithdrawAmount = withdrawAmount,
+                ProjectCurrency = projectInfo.ProjectCurrency,
+                IsBurnRestToken = projectInfo.IsBurnRestToken,
+                BurnAmount = toBurnAmount
+            });
             return new Empty();
         }
 
