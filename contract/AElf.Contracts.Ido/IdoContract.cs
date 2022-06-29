@@ -32,6 +32,7 @@ namespace AElf.Contracts.Ido
             Assert(input.StartTime <= input.EndTime && input.StartTime > Context.CurrentBlockTime,"Invalid startTime or endTime input");
             Assert(input.FirstDistributeProportion.Add(input.TotalPeriod.Sub(1).Mul(input.RestDistributeProportion)) <= ProportionMax,"Invalid distributeProportion input");
             var toRaisedAmount = Parse(new BigIntValue(input.CrowdFundingIssueAmount).Mul(Mantissa).Div(input.PreSalePrice).Value);
+            Assert(toRaisedAmount > 0 ,"Invalid raise amount calculated from input");
             var id = GetHash(input, Context.Sender);
             var projectInfo = new ProjectInfo()
             {
