@@ -22,6 +22,8 @@ namespace AElf.Contracts.Ido
         //白名单记录
         public MappedState<Hash, Hash> WhiteListIdMap { get; set; }
         
+        public MappedState<Hash,Address> ProjectAddressMap{ get; set; }
         
+        public MappedState<Address, int> ProjectCreatorIndexMap { get; set; }
     }
 }

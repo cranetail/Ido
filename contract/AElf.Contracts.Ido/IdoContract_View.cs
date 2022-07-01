@@ -54,5 +54,18 @@ namespace AElf.Contracts.Ido
             ValidProjectExist(input);
             return State.LiquidatedDamageDetailsMap[input];
         }
+
+        public override Address GetProjectAddressByProjectHash(Hash input)
+        {
+            ValidProjectExist(input);
+            return State.ProjectAddressMap[input];
+        }
+
+        public override Address GetPendingProjectAddress(Empty input)
+        {
+            var hash = GetProjectVirtualAddressHash();
+            var virtualAddress = Context.ConvertVirtualAddressToContractAddress(hash);
+            return virtualAddress;
+        }
     }
 }

@@ -141,13 +141,13 @@ namespace AElf.Contracts.Ido
             await InvestTest();
             blockTimeProvider.SetBlockTime(blockTimeProvider.GetBlockTime().AddSeconds(30));
             await AdminStub.NextPeriod.SendAsync(projectId0);
-            
+            var virtualAddress = await AdminStub.GetProjectAddressByProjectHash.CallAsync(projectId0);
             await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
             {
                 Amount = 100000000000,
                 Symbol = "TEST",
                 Memo = "ForUserClaim",
-                To = IdoContractAddress
+                To = virtualAddress
             });
             await TomStub.Claim.SendAsync(new ClaimInput()
             {
@@ -227,7 +227,7 @@ namespace AElf.Contracts.Ido
             alreadyUnInvestException.TransactionResult.Error.ShouldContain("User has already unInvest");
         }
 
-
+        
         // [Fact]
         // public async Task AddLiquidityTest()
         // {
@@ -272,6 +272,61 @@ namespace AElf.Contracts.Ido
         }
 
         [Fact]
+        public async Task RefundAllTest()
+        {
+            await InvestTest();
+            await AdminStub.Cancel.SendAsync(projectId0);
+            var balanceBefore = await TokenContractStub.GetBalance.CallAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = UserTomAddress,
+                Symbol = "ELF"
+            });
+            
+            await AdminStub.ReFundAll.SendAsync(new ReFundAllInput()
+            {
+                ProjectId = projectId0,
+                Users = { UserTomAddress}
+            });
+            var balanceAfter = await TokenContractStub.GetBalance.CallAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = UserTomAddress,
+                Symbol = "ELF"
+            });
+          
+            balanceAfter.Balance.Sub(balanceBefore.Balance).ShouldBePositive();
+            var profit = await TomStub.GetProfitDetail.CallAsync(new GetProfitDetailInput()
+            {
+                ProjectId = projectId0,
+                User = UserTomAddress
+            });
+            profit.TotalProfit.ShouldBe(0);
+        }
+        
+        [Fact]
+        public async Task ClaimLiquidatedDamageAllTest()
+        {
+            await UnInvestTest();
+            await AdminStub.Cancel.SendAsync(projectId0);
+            
+            var balanceBefore = await TokenContractStub.GetBalance.CallAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = UserTomAddress,
+                Symbol = "ELF"
+            });
+            await AdminStub.ClaimLiquidatedDamageAll.SendAsync(projectId0);
+            var balanceAfter = await TokenContractStub.GetBalance.CallAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = UserTomAddress,
+                Symbol = "ELF"
+            });
+            balanceAfter.Balance.Sub(balanceBefore.Balance).ShouldBePositive();
+            var liquidatedDamageDetails = await  TomStub.GetLiquidatedDamageDetails.CallAsync(projectId0);
+            var liquidatedDamage =  liquidatedDamageDetails.Details.First(x => x.User == UserTomAddress);
+            liquidatedDamage.Claimed.ShouldBe(true);
+        }
+        
+        
+        [Fact]
         public async Task WithdrawTest()
         {
             await InvestTest();
@@ -296,6 +351,58 @@ namespace AElf.Contracts.Ido
             });
             balanceAfter.Balance.Sub(balanceBefore.Balance).ShouldBePositive();
         }
+
+        [Fact]
+        public async Task GetPendingProjectAddressTest()
+        {
+            await InitializeTest();
+            var virtualAddressExpect = await AdminStub.GetPendingProjectAddress.CallAsync(new Empty());
+            var registerInput = new RegisterInput()
+            {
+                AcceptedCurrency = "ELF",
+                ProjectCurrency = "TEST",
+                CrowdFundingType = "标价销售",
+                CrowdFundingIssueAmount = 1_00000000,
+                PreSalePrice = 1_00000000,
+                StartTime = blockTimeProvider.GetBlockTime().AddSeconds(3),
+                EndTime = blockTimeProvider.GetBlockTime().AddSeconds(30),
+                MinSubscription = 10,
+                MaxSubscription = 100,
+                IsEnableWhitelist = false,
+                IsBurnRestToken = true,
+                AdditionalInfo = new AdditionalInfo(),
+                PublicSalePrice = 2_000000000,
+                LiquidityLockProportion = 50,
+                ListMarketInfo = new ListMarketInfo()
+                {
+                    Data = { new ListMarket()
+                    {
+                        Market = AwakenSwapContractAddress,
+                        Weight = 100
+                    }}
+                },
+                UnlockTime = Timestamp.FromDateTime(DateTime.UtcNow.Add(new TimeSpan(0, 0, 30000))),
+                TotalPeriod = 1,
+                FirstDistributeProportion = 100_000000,
+                RestDistributeProportion = 0,
+                PeriodDuration = 0
+            };
+            
+            var executionResult = await AdminStub.Register.SendAsync(registerInput);
+
+            var projectId = ProjectRegistered.Parser
+                .ParseFrom(executionResult.TransactionResult.Logs.First(l => l.Name.Contains(nameof(ProjectRegistered))).NonIndexed)
+                .ProjectId;
+
+            var whitelistId =  await AdminStub.GetWhitelistId.CallAsync(projectId);
+            whitelistId.ShouldBe(HashHelper.ComputeFrom(0));
+            projectId0 = projectId;
+            
+             var virtualAddress = await AdminStub.GetProjectAddressByProjectHash.CallAsync(projectId0);
+             virtualAddress.ShouldBe(virtualAddressExpect);
+        }
+
+        
         private async Task CreateAndGetToken()
         {
             //TEST

@@ -67,8 +67,9 @@ namespace AElf.Contracts.Ido
             Assert(isInWhitelist.Value,"User is not in the whitelist");
         }
         
-        private void TransferIn(Address from, string symbol, long amount)
-        {
+        private void TransferIn(Hash projectId, Address from, string symbol, long amount)
+        { 
+            var virtualAddress = State.ProjectAddressMap[projectId];
             State.TokenContract.TransferFrom.Send(
                 new TransferFromInput
                 {
@@ -76,13 +77,14 @@ namespace AElf.Contracts.Ido
                     Amount = amount,
                     From = from,
                     Memo = "TransferIn",
-                    To = Context.Self
+                    To = virtualAddress
                 });
         }
         
-        private void TransferOut(Address to, string symbol, long amount)
-        {
-            State.TokenContract.Transfer.Send(
+        private void TransferOut(Hash projectId, Address to, string symbol, long amount)
+        { 
+            var virtualAddressHash = State.ProjectInfoMap[projectId].VirtualAddressHash;
+            State.TokenContract.Transfer.VirtualSend(virtualAddressHash,
                 new TransferInput()
                 {
                     Symbol = symbol,
@@ -156,7 +158,36 @@ namespace AElf.Contracts.Ido
 
             return totalProjectTokenAmount;
         }
-        
+
+        private void ReFundInternal(Hash projectId, Address user)
+        {
+            var userinfo = State.InvestDetailMap[projectId][user];
+            Assert(userinfo != null,"No invest record");
+            Assert(! userinfo.IsUnInvest  ,"User has already unInvest");
+            Assert(userinfo.Amount > 0,"Insufficient invest amount");
+            State.InvestDetailMap[projectId][user].IsUnInvest = true;
+            var unInvestAmount = userinfo.Amount;
+            TransferOut(projectId, user, userinfo.InvestSymbol, unInvestAmount);
+            State.InvestDetailMap[projectId][user].Amount = 0;
+            ProfitDetailUpdate(projectId, user, 0);
+            Context.Fire(new ReFunded()
+            {
+                ProjectId = projectId,
+                User = user,
+                InvestSymbol = userinfo.InvestSymbol,
+                Amount = unInvestAmount,
+            });
+        }
+
+        private Hash GetProjectVirtualAddressHash()
+        {
+            var creatorIndex = State.ProjectCreatorIndexMap[Context.Sender];
+            var hash = HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(Context.Sender),
+                HashHelper.ComputeFrom(creatorIndex));
+            return hash;
+        }
+      
+      
         private static long Parse(string input)
         {
             if (!long.TryParse(input, out var output))

@@ -32,8 +32,12 @@ namespace AElf.Contracts.Ido
             Assert(input.StartTime <= input.EndTime && input.StartTime > Context.CurrentBlockTime,"Invalid startTime or endTime input");
             Assert(input.FirstDistributeProportion.Add(input.TotalPeriod.Sub(1).Mul(input.RestDistributeProportion)) <= ProportionMax,"Invalid distributeProportion input");
             var toRaisedAmount = Parse(new BigIntValue(input.CrowdFundingIssueAmount).Mul(Mantissa).Div(input.PreSalePrice).Value);
-            Assert(toRaisedAmount > 0 ,"Invalid raise amount calculated from input");
+            Assert(toRaisedAmount > 0, "Invalid raise amount calculated from input");
             var id = GetHash(input, Context.Sender);
+            var virtualAddressHash = GetProjectVirtualAddressHash(); 
+            var virtualAddress = Context.ConvertVirtualAddressToContractAddress(virtualAddressHash);
+            State.ProjectAddressMap[id] = virtualAddress;
+            State.ProjectCreatorIndexMap[Context.Sender] = State.ProjectCreatorIndexMap[Context.Sender].Add(1);
             var projectInfo = new ProjectInfo()
             {
                 ProjectId = id,
@@ -50,7 +54,8 @@ namespace AElf.Contracts.Ido
                 AdditionalInfo = input.AdditionalInfo,
                 Creator = Context.Sender,
                 ToRaisedAmount = toRaisedAmount,
-                Enabled = true
+                Enabled = true,
+                VirtualAddressHash = virtualAddressHash
             };
             State.ProjectInfoMap[id] = projectInfo;
             var listInfo = new ProjectListInfo()
@@ -239,7 +244,8 @@ namespace AElf.Contracts.Ido
             var currentTimestamp = Context.CurrentBlockTime;
             Assert(currentTimestamp >= projectInfo.StartTime && currentTimestamp <= projectInfo.EndTime,"Can't invest right now");
             //invest 
-            TransferIn(Context.Sender,input.Currency,input.InvestAmount);
+          
+            TransferIn(input.ProjectId, Context.Sender, input.Currency, input.InvestAmount);
             var investDetail =  State.InvestDetailMap[projectInfo.ProjectId][Context.Sender] ?? new InvestDetail()
             {
                 InvestSymbol = input.Currency,
@@ -297,7 +303,7 @@ namespace AElf.Contracts.Ido
             var unInvestAmount = userAmount.Sub(liquidatedDamageAmount);
             if (unInvestAmount > 0)
             {
-                TransferOut(Context.Sender,userinfo.InvestSymbol, unInvestAmount);
+                TransferOut(input, Context.Sender,userinfo.InvestSymbol, unInvestAmount);
             }
             
             State.InvestDetailMap[input][Context.Sender].Amount = 0;
@@ -330,51 +336,51 @@ namespace AElf.Contracts.Ido
 
         // public override Empty LockLiquidity(Hash input)
         // {
-        //     var projectInfo = ValidProjectExist(input);
-        //     Assert(projectInfo.Enabled,"project is not enabled");
-        //     // ValidProjectOwner(input);
-        //     var projectListInfo = State.ProjectListInfoMap[input];
-        //     Assert(!projectListInfo.IsListed, "already listed");
-        //     Assert(Context.CurrentBlockTime >= projectListInfo.UnlockTime,"time is not ready");
-        //     var acceptedCurrencyAmount = projectInfo.CurrentRaisedAmount.Mul(projectListInfo.LiquidityLockProportion)
-        //         .Div(ProportionMax);
-        //
-        //     var projectCurrencyAmount = acceptedCurrencyAmount.Mul(projectListInfo.PublicSalePrice).Div(Mantissa);
-        //
-        //     foreach (var market in projectListInfo.ListMarketInfo.Data )
-        //     {
-        //         var amountADesired = acceptedCurrencyAmount.Mul(market.Weight).Div(ProportionMax);
-        //         var amountBDesired = projectCurrencyAmount.Mul(market.Weight).Div(ProportionMax);
-        //         
-        //         State.TokenContract.Approve.Send(new ApproveInput()
-        //         {
-        //             Spender = market.Market,
-        //             Symbol = projectInfo.AcceptedCurrency,
-        //             Amount = amountADesired
-        //         });
-        //         State.TokenContract.Approve.Send(new ApproveInput()
-        //         {
-        //             Spender = market.Market,
-        //             Symbol = projectInfo.ProjectCurrency,
-        //             Amount = amountBDesired
-        //         });
-        //         State.SwapContract.Value = market.Market;
-        //         State.SwapContract.AddLiquidity.Send(new AddLiquidityInput()
-        //         {
-        //             SymbolA = projectInfo.AcceptedCurrency,
-        //             SymbolB = projectInfo.ProjectCurrency,
-        //             AmountADesired = amountADesired,
-        //             AmountBDesired = amountBDesired,
-        //             AmountAMin = 0,
-        //             AmountBMin = 0,
-        //             Channel = "",
-        //             Deadline = Context.CurrentBlockTime.AddMinutes(3),
-        //             To = Context.Sender
-        //         });
-        //         State.ProjectListInfoMap[input].IsListed = true;
-        //     }
-        //     return new Empty();
-        // }
+            // var projectInfo = ValidProjectExist(input);
+            // Assert(projectInfo.Enabled,"project is not enabled");
+            // // ValidProjectOwner(input);
+            // var projectListInfo = State.ProjectListInfoMap[input];
+            // Assert(!projectListInfo.IsListed, "already listed");
+            // Assert(Context.CurrentBlockTime >= projectListInfo.UnlockTime,"time is not ready");
+            // var acceptedCurrencyAmount = projectInfo.CurrentRaisedAmount.Mul(projectListInfo.LiquidityLockProportion)
+            //     .Div(ProportionMax);
+            //
+            // var projectCurrencyAmount = acceptedCurrencyAmount.Mul(projectListInfo.PublicSalePrice).Div(Mantissa);
+            //
+            // foreach (var market in projectListInfo.ListMarketInfo.Data )
+            // {
+            //     var amountADesired = acceptedCurrencyAmount.Mul(market.Weight).Div(ProportionMax);
+            //     var amountBDesired = projectCurrencyAmount.Mul(market.Weight).Div(ProportionMax);
+            //     
+            //     State.TokenContract.Approve.Send(new ApproveInput()
+            //     {
+            //         Spender = market.Market,
+            //         Symbol = projectInfo.AcceptedCurrency,
+            //         Amount = amountADesired
+            //     });
+            //     State.TokenContract.Approve.Send(new ApproveInput()
+            //     {
+            //         Spender = market.Market,
+            //         Symbol = projectInfo.ProjectCurrency,
+            //         Amount = amountBDesired
+            //     });
+            //     State.SwapContract.Value = market.Market;
+            //     State.SwapContract.AddLiquidity.Send(new AddLiquidityInput()
+            //     {
+            //         SymbolA = projectInfo.AcceptedCurrency,
+            //         SymbolB = projectInfo.ProjectCurrency,
+            //         AmountADesired = amountADesired,
+            //         AmountBDesired = amountBDesired,
+            //         AmountAMin = 0,
+            //         AmountBMin = 0,
+            //         Channel = "",
+            //         Deadline = Context.CurrentBlockTime.AddMinutes(3),
+            //         To = Context.Sender
+            //     });
+            //     State.ProjectListInfoMap[input].IsListed = true;
+            // }
+            //      return new Empty();
+            // }
 
         public override Empty Withdraw(Hash input)
         {
@@ -387,14 +393,14 @@ namespace AElf.Contracts.Ido
             var withdrawAmount = projectInfo.CurrentRaisedAmount;
             if (withdrawAmount > 0)
             {
-                TransferOut(Context.Sender, projectInfo.AcceptedCurrency, withdrawAmount);
+                TransferOut(input, Context.Sender, projectInfo.AcceptedCurrency, withdrawAmount);
             }
            
             State.ProjectListInfoMap[input].IsWithdraw = true;
             var liquidatedDamageDetails = State.LiquidatedDamageDetailsMap[input];
             if (liquidatedDamageDetails != null && liquidatedDamageDetails.TotalAmount > 0)
             {
-                TransferOut(Context.Sender, projectInfo.AcceptedCurrency, liquidatedDamageDetails.TotalAmount);
+                TransferOut(input, Context.Sender, projectInfo.AcceptedCurrency, liquidatedDamageDetails.TotalAmount);
             }
             var profitStr =  new BigIntValue(projectInfo.CurrentRaisedAmount).Mul(projectInfo.PreSalePrice).Div(Mantissa).Value;
             var profit = Parse(profitStr);
@@ -410,7 +416,7 @@ namespace AElf.Contracts.Ido
             }
             else
             {
-                TransferOut(Context.Sender, projectInfo.ProjectCurrency, toBurnAmount);
+                TransferOut(input, Context.Sender, projectInfo.ProjectCurrency, toBurnAmount);
             }
             
             Context.Fire(new Withdrawn()
@@ -425,33 +431,7 @@ namespace AElf.Contracts.Ido
             return new Empty();
         }
 
-        public override Empty ClaimLiquidatedDamage(Hash input)
-        {
-            //check status
-            var projectInfo = ValidProjectExist(input);
-            Assert(!projectInfo.Enabled,"Project should be disabled");
-
-            var details = State.LiquidatedDamageDetailsMap[input].Details.Where(x => x.User == Context.Sender);
-            foreach (var detail in details)
-            {
-                Assert(!detail.Claimed,"Already claimed");
-                if (detail.Amount > 0)
-                {
-                    TransferOut(detail.User, detail.Symbol, detail.Amount);
-                }
-                
-                detail.Claimed = true;
-                Context.Fire(new LiquidatedDamageClaimed()
-                {
-                    ProjectId = input,
-                    Amount = detail.Amount,
-                    InvestSymbol = detail.Symbol,
-                    User = detail.User
-                });
-            }
-         
-            return new Empty();
-        }
+      
 
         public override Empty Claim(ClaimInput input)
         {
@@ -470,7 +450,7 @@ namespace AElf.Contracts.Ido
                 var profitPeriodAmount = profitDetailInfo.AmountsMap[currentPeriod];
                 if (profitPeriodAmount > 0)
                 {
-                    TransferOut(input.User, profitDetailInfo.Symbol, profitPeriodAmount);
+                    TransferOut(input.ProjectId, input.User, profitDetailInfo.Symbol, profitPeriodAmount);
                 }
                 claimedProfitsInfo.Details.Add(new ClaimedProfit()
                 {
@@ -520,23 +500,74 @@ namespace AElf.Contracts.Ido
             var projectInfo = ValidProjectExist(input);
             Assert(!projectInfo.Enabled ,"Project should be disabled");
             //unInvest 
-            
-            var userinfo = State.InvestDetailMap[input][Context.Sender];
-            Assert(userinfo != null,"No invest record");
-            Assert(! userinfo.IsUnInvest  ,"User has already unInvest");
-            Assert(userinfo.Amount > 0,"Insufficient invest amount");
-            State.InvestDetailMap[input][Context.Sender].IsUnInvest = true;
-            var unInvestAmount = userinfo.Amount;
-            TransferOut(Context.Sender, userinfo.InvestSymbol, unInvestAmount);
-            State.InvestDetailMap[input][Context.Sender].Amount = 0;
-            ProfitDetailUpdate(input, Context.Sender, 0);
-            Context.Fire(new ReFunded()
+            ReFundInternal(input, Context.Sender);
+            return new Empty();
+        }
+
+        public override Empty ReFundAll(ReFundAllInput input)
+        {
+            var projectInfo = ValidProjectExist(input.ProjectId);
+            Assert(!projectInfo.Enabled ,"Project should be disabled");
+            AdminCheck();
+            foreach (var user in input.Users)
             {
-                ProjectId = input,
-                User = Context.Sender,
-                InvestSymbol = userinfo.InvestSymbol,
-                Amount = unInvestAmount,
-            });
+                ReFundInternal(input.ProjectId, user);
+            }
+            
+            return new Empty();
+        }
+
+        public override Empty ClaimLiquidatedDamage(Hash input)
+        {
+            //check status
+            var projectInfo = ValidProjectExist(input);
+            Assert(!projectInfo.Enabled,"Project should be disabled");
+
+            var details = State.LiquidatedDamageDetailsMap[input].Details.Where(x => x.User == Context.Sender);
+            foreach (var detail in details)
+            {
+                Assert(!detail.Claimed,"Already claimed");
+                if (detail.Amount > 0)
+                {
+                    TransferOut(input, detail.User, detail.Symbol, detail.Amount);
+                }
+                
+                detail.Claimed = true;
+                Context.Fire(new LiquidatedDamageClaimed()
+                {
+                    ProjectId = input,
+                    Amount = detail.Amount,
+                    InvestSymbol = detail.Symbol,
+                    User = detail.User
+                });
+            }
+         
+            return new Empty();
+        }
+        public override Empty ClaimLiquidatedDamageAll(Hash input)
+        {
+            var projectInfo = ValidProjectExist(input);
+            Assert(!projectInfo.Enabled,"Project should be disabled");
+            AdminCheck();
+            var details = State.LiquidatedDamageDetailsMap[input].Details;
+            foreach (var detail in details)
+            {
+                Assert(!detail.Claimed,"Already claimed");
+                if (detail.Amount > 0)
+                {
+                    TransferOut(input, detail.User, detail.Symbol, detail.Amount);
+                }
+                
+                detail.Claimed = true;
+                Context.Fire(new LiquidatedDamageClaimed()
+                {
+                    ProjectId = input,
+                    Amount = detail.Amount,
+                    InvestSymbol = detail.Symbol,
+                    User = detail.User
+                });
+            }
+
             return new Empty();
         }
     }

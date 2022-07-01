@@ -41,12 +41,14 @@ service IdoContract {
     }
     rpc ReFund(aelf.Hash) returns(google.protobuf.Empty) {
     }
-    
+    rpc ReFundAll(ReFundAllInput) returns(google.protobuf.Empty) {
+    }  
     rpc Claim (ClaimInput) returns (google.protobuf.Empty) {
     }
     rpc ClaimLiquidatedDamage (aelf.Hash) returns (google.protobuf.Empty) {
     }
-    
+    rpc ClaimLiquidatedDamageAll (aelf.Hash) returns (google.protobuf.Empty) {
+    }
     //view function
     rpc GetWhitelistContractAddress(google.protobuf.Empty)  returns (aelf.Address) {
         option (aelf.is_view) = true;
@@ -77,6 +79,12 @@ service IdoContract {
         option (aelf.is_view) = true;
     }
     rpc GetLiquidatedDamageDetails(aelf.Hash) returns (LiquidatedDamageDetails) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetProjectAddressByProjectHash(aelf.Hash) returns (aelf.Address) {
+        option (aelf.is_view) = true;
+    }
+    rpc GetPendingProjectAddress(google.protobuf.Empty) returns (aelf.Address) {
         option (aelf.is_view) = true;
     }
 }
@@ -149,6 +157,10 @@ message SetWhitelistIdInput{
     aelf.Hash project_id = 1;//项目id
     bool is_enable_whitelist = 2;
 }
+message ReFundAllInput{
+    aelf.Hash project_id = 1;//项目id
+    repeated aelf.Address users = 2;
+}
 //Output
 message ExtraInfoIdList {
     repeated ExtraInfoId value = 1;
@@ -177,6 +189,7 @@ message ProjectInfo{
     int64 to_raised_amount = 15;
     int64 current_raised_amount = 16;//已募集金额
     bool enabled = 17; //是否取消众筹
+    aelf.Hash virtual_address_hash = 18;
 } 
 message ProjectListInfo{
     aelf.Hash project_id = 1;
@@ -264,6 +277,7 @@ message ProjectRegistered{
     int32 first_distribute_proportion = 22;
     int32 rest_distribute_proportion = 23;
     int64 period_duration = 24;
+    aelf.Address virtual_address = 25;
 }
 message NewWhitelistIdSet{
     option (aelf.is_event) = true;
