@@ -35,6 +35,14 @@ namespace AElf.Contracts.Ido
            });
            var whitelistAddress = await AdminStub.GetWhitelistContractAddress.CallAsync(new Empty());
            whitelistAddress.ShouldNotBe(new Address());
+           var virtualAddress = await AdminStub.GetPendingProjectAddress.CallAsync(new Empty());
+           await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
+           {
+               Amount = 100000000000,
+               Symbol = "TEST",
+               Memo = "ForUserClaim",
+               To = virtualAddress
+           });
         }
 
         [Fact]
@@ -141,14 +149,7 @@ namespace AElf.Contracts.Ido
             await InvestTest();
             blockTimeProvider.SetBlockTime(blockTimeProvider.GetBlockTime().AddSeconds(30));
             await AdminStub.NextPeriod.SendAsync(projectId0);
-            var virtualAddress = await AdminStub.GetProjectAddressByProjectHash.CallAsync(projectId0);
-            await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
-            {
-                Amount = 100000000000,
-                Symbol = "TEST",
-                Memo = "ForUserClaim",
-                To = virtualAddress
-            });
+          
             await TomStub.Claim.SendAsync(new ClaimInput()
             {
                 ProjectId = projectId0,

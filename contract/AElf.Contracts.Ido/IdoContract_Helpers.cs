@@ -30,6 +30,17 @@ namespace AElf.Contracts.Ido
             Assert(tokenInfo.Issuer == owner,$"Token {token}'s issuer not {owner}.");
         }
 
+        private void ValidTokenBalance(string token, Address virtualAddress, long expectBalance)
+        {
+
+            var balanceOutput = State.TokenContract.GetBalance.Call(new GetBalanceInput()
+            {
+                Owner = virtualAddress,
+                Symbol = token
+            });
+            Assert(balanceOutput.Balance >= expectBalance ,$"Insufficient {token} balance, expect balance is {expectBalance}");
+        }
+
         private static Hash GetHash(RegisterInput registerInput, Address registerAddress)
         {
             var hash = HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(registerInput),

@@ -36,6 +36,7 @@ namespace AElf.Contracts.Ido
             var id = GetHash(input, Context.Sender);
             var virtualAddressHash = GetProjectVirtualAddressHash(); 
             var virtualAddress = Context.ConvertVirtualAddressToContractAddress(virtualAddressHash);
+            ValidTokenBalance(input.ProjectCurrency, virtualAddress, input.CrowdFundingIssueAmount);
             State.ProjectAddressMap[id] = virtualAddress;
             State.ProjectCreatorIndexMap[Context.Sender] = State.ProjectCreatorIndexMap[Context.Sender].Add(1);
             var projectInfo = new ProjectInfo()
