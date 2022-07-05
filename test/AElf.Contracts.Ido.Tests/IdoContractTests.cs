@@ -38,7 +38,7 @@ namespace AElf.Contracts.Ido
            var virtualAddress = await AdminStub.GetPendingProjectAddress.CallAsync(new Empty());
            await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
            {
-               Amount = 100000000000,
+               Amount = 1_00000000,
                Symbol = "TEST",
                Memo = "ForUserClaim",
                To = virtualAddress
@@ -169,10 +169,24 @@ namespace AElf.Contracts.Ido
             await InvestTest();
             var projectInfoBefore = await AdminStub.GetProjectInfo.CallAsync(projectId0);
             projectInfoBefore.Enabled.ShouldBeTrue();
+            var virtualAddress = await AdminStub.GetProjectAddressByProjectHash.CallAsync(projectId0);
+            var balanceBefore = await TokenContractStub.GetBalance.CallAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = virtualAddress,
+                Symbol = "TEST"
+            });
+            
             await AdminStub.Cancel.SendAsync(projectId0);
             
             var projectInfoAfter = await AdminStub.GetProjectInfo.CallAsync(projectId0);
             projectInfoAfter.Enabled.ShouldBeFalse();
+            var balanceAfter = await TokenContractStub.GetBalance.CallAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
+            {
+                Owner = virtualAddress,
+                Symbol = "TEST"
+            });
+            balanceBefore.Balance.ShouldBePositive();
+            balanceAfter.Balance.ShouldBe(0);
         }
         [Fact]
         public async Task ClaimLiquidatedDamageTest()
@@ -331,13 +345,7 @@ namespace AElf.Contracts.Ido
         public async Task WithdrawTest()
         {
             await InvestTest();
-            await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
-            {
-                Amount = 10000_00000000,
-                Symbol = "TEST",
-                Memo = "ForUserClaim",
-                To = IdoContractAddress
-            });
+            
             blockTimeProvider.SetBlockTime(blockTimeProvider.GetBlockTime().AddSeconds(30));
             var balanceBefore = await TokenContractStub.GetBalance.CallAsync(new AElf.Contracts.MultiToken.GetBalanceInput()
             {

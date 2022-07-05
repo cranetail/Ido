@@ -205,6 +205,22 @@ namespace AElf.Contracts.Ido
             {
                 ProjectId = input
             });
+            
+            //burn or back to creator
+            var toBurnAmount = projectInfo.CrowdFundingIssueAmount;
+            if (projectInfo.IsBurnRestToken)
+            {
+                State.TokenContract.Burn.VirtualSend(projectInfo.VirtualAddressHash, new BurnInput()
+                {
+                    Symbol = projectInfo.ProjectCurrency,
+                    Amount = toBurnAmount
+                });
+            }
+            else
+            {
+                TransferOut(input, projectInfo.Creator, projectInfo.ProjectCurrency, toBurnAmount);
+            }
+
             return new Empty();
         }
 
@@ -409,7 +425,7 @@ namespace AElf.Contracts.Ido
             if (projectInfo.IsBurnRestToken)
             {
               
-                State.TokenContract.Burn.Send(new BurnInput()
+                State.TokenContract.Burn.VirtualSend(projectInfo.VirtualAddressHash, new BurnInput()
                 {
                     Symbol = projectInfo.ProjectCurrency,
                     Amount = toBurnAmount
