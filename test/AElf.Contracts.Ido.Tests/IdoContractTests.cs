@@ -35,7 +35,7 @@ namespace AElf.Contracts.Ido
            });
            var whitelistAddress = await AdminStub.GetWhitelistContractAddress.CallAsync(new Empty());
            whitelistAddress.ShouldNotBe(new Address());
-           var virtualAddress = await AdminStub.GetPendingProjectAddress.CallAsync(new Empty());
+           var virtualAddress = await AdminStub.GetPendingProjectAddress.CallAsync(AdminAddress);
            await TokenContractStub.Transfer.SendAsync(new AElf.Contracts.MultiToken.TransferInput()
            {
                Amount = 1_00000000,
@@ -365,7 +365,7 @@ namespace AElf.Contracts.Ido
         public async Task GetPendingProjectAddressTest()
         {
             await InitializeTest();
-            var virtualAddressExpect = await AdminStub.GetPendingProjectAddress.CallAsync(new Empty());
+            var virtualAddressExpect = await AdminStub.GetPendingProjectAddress.CallAsync(AdminAddress);
             var registerInput = new RegisterInput()
             {
                 AcceptedCurrency = "ELF",

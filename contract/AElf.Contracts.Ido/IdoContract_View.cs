@@ -61,9 +61,9 @@ namespace AElf.Contracts.Ido
             return State.ProjectAddressMap[input];
         }
 
-        public override Address GetPendingProjectAddress(Empty input)
+        public override Address GetPendingProjectAddress(Address input)
         {
-            var hash = GetProjectVirtualAddressHash();
+            var hash = GetProjectVirtualAddressHash(input);
             var virtualAddress = Context.ConvertVirtualAddressToContractAddress(hash);
             return virtualAddress;
         }

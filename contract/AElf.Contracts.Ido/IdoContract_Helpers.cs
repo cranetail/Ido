@@ -190,10 +190,10 @@ namespace AElf.Contracts.Ido
             });
         }
 
-        private Hash GetProjectVirtualAddressHash()
+        private Hash GetProjectVirtualAddressHash(Address creator)
         {
-            var creatorIndex = State.ProjectCreatorIndexMap[Context.Sender];
-            var hash = HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(Context.Sender),
+            var creatorIndex = State.ProjectCreatorIndexMap[creator];
+            var hash = HashHelper.ConcatAndCompute(HashHelper.ComputeFrom(creator),
                 HashHelper.ComputeFrom(creatorIndex));
             return hash;
         }

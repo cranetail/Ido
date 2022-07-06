@@ -84,7 +84,7 @@ service IdoContract {
     rpc GetProjectAddressByProjectHash(aelf.Hash) returns (aelf.Address) {
         option (aelf.is_view) = true;
     }
-    rpc GetPendingProjectAddress(google.protobuf.Empty) returns (aelf.Address) {
+    rpc GetPendingProjectAddress(aelf.Address) returns (aelf.Address) {
         option (aelf.is_view) = true;
     }
 }

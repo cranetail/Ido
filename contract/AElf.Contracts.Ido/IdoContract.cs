@@ -34,7 +34,7 @@ namespace AElf.Contracts.Ido
             var toRaisedAmount = Parse(new BigIntValue(input.CrowdFundingIssueAmount).Mul(Mantissa).Div(input.PreSalePrice).Value);
             Assert(toRaisedAmount > 0, "Invalid raise amount calculated from input");
             var id = GetHash(input, Context.Sender);
-            var virtualAddressHash = GetProjectVirtualAddressHash(); 
+            var virtualAddressHash = GetProjectVirtualAddressHash(Context.Sender); 
             var virtualAddress = Context.ConvertVirtualAddressToContractAddress(virtualAddressHash);
             ValidTokenBalance(input.ProjectCurrency, virtualAddress, input.CrowdFundingIssueAmount);
             State.ProjectAddressMap[id] = virtualAddress;
