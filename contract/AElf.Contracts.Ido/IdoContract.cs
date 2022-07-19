@@ -403,21 +403,21 @@ namespace AElf.Contracts.Ido
         {
             var projectInfo = ValidProjectExist(input);
             Assert(projectInfo.Enabled,"Project is not enabled");
-            ValidProjectOwner(input);
+            AdminCheck();
             var projectListInfo = State.ProjectListInfoMap[input];
             Assert(!projectListInfo.IsWithdraw,"Already withdraw" );
             Assert(Context.CurrentBlockTime >= projectInfo.EndTime,"Time is not ready");
             var withdrawAmount = projectInfo.CurrentRaisedAmount;
             if (withdrawAmount > 0)
             {
-                TransferOut(input, Context.Sender, projectInfo.AcceptedCurrency, withdrawAmount);
+                TransferOut(input, projectInfo.Creator, projectInfo.AcceptedCurrency, withdrawAmount);
             }
            
             State.ProjectListInfoMap[input].IsWithdraw = true;
             var liquidatedDamageDetails = State.LiquidatedDamageDetailsMap[input];
             if (liquidatedDamageDetails != null && liquidatedDamageDetails.TotalAmount > 0)
             {
-                TransferOut(input, Context.Sender, projectInfo.AcceptedCurrency, liquidatedDamageDetails.TotalAmount);
+                TransferOut(input, projectInfo.Creator, projectInfo.AcceptedCurrency, liquidatedDamageDetails.TotalAmount);
             }
             var profitStr =  new BigIntValue(projectInfo.CurrentRaisedAmount).Mul(projectInfo.PreSalePrice).Div(Mantissa).Value;
             var profit = Parse(profitStr);
@@ -433,7 +433,7 @@ namespace AElf.Contracts.Ido
             }
             else
             {
-                TransferOut(input, Context.Sender, projectInfo.ProjectCurrency, toBurnAmount);
+                TransferOut(input, projectInfo.Creator, projectInfo.ProjectCurrency, toBurnAmount);
             }
             
             Context.Fire(new Withdrawn()
